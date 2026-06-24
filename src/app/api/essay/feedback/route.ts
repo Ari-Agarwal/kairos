@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { anthropic, MODEL, ESSAY_FEEDBACK_PROMPT, extractJson } from "@/lib/anthropic";
+import { getAnthropic, MODEL, ESSAY_FEEDBACK_PROMPT, extractJson } from "@/lib/anthropic";
 import { canAccessFeature } from "@/lib/access";
 
 export async function POST(req: Request) {
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const response = await anthropic.messages.create({
+    const response = await getAnthropic().messages.create({
       model: MODEL,
       max_tokens: 2048,
       system: ESSAY_FEEDBACK_PROMPT,

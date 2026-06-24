@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { anthropic, MODEL, TIMELINE_PROMPT, extractJson } from "@/lib/anthropic";
+import { getAnthropic, MODEL, TIMELINE_PROMPT, extractJson } from "@/lib/anthropic";
 
 interface TimelineEntry {
   title: string;
@@ -40,7 +40,7 @@ ${matches.map((m) => `- ${m.school_name} (${m.category})`).join("\n")}`;
   let logistics: TimelineEntry[];
   let strategic_advice: TimelineEntry[];
   try {
-    const response = await anthropic.messages.create({
+    const response = await getAnthropic().messages.create({
       model: MODEL,
       max_tokens: 4096,
       system: TIMELINE_PROMPT,
