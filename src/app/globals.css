@@ -1,26 +1,59 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #000000;
+  --card: #000000;
+  --primary: #FFFFFF;
+  --primary-hover: rgba(255, 255, 255, 0.85);
+  --amber: #FFFFFF;
+  --amber-tint: rgba(255, 255, 255, 0.14);
+  --amber-text-on-tint: #FFFFFF;
+  --green: #FFFFFF;
+  --green-tint: rgba(255, 255, 255, 0.08);
+  --red: #FFFFFF;
+  --red-tint: rgba(255, 255, 255, 0.2);
+  --premium: #FFFFFF;
+  --premium-tint: rgba(255, 255, 255, 0.1);
+  --secondary: #FFFFFF;
+  --secondary-tint: rgba(255, 255, 255, 0.06);
+  --text: #FFFFFF;
+  --text-gray: #FFFFFF;
+  --border: rgba(255, 255, 255, 0.15);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-amber: var(--amber);
+  --color-amber-tint: var(--amber-tint);
+  --color-amber-text-on-tint: var(--amber-text-on-tint);
+  --color-green: var(--green);
+  --color-green-tint: var(--green-tint);
+  --color-red: var(--red);
+  --color-red-tint: var(--red-tint);
+  --color-premium: var(--premium);
+  --color-premium-tint: var(--premium-tint);
+  --color-secondary: var(--secondary);
+  --color-secondary-tint: var(--secondary-tint);
+  --color-text: var(--text);
+  --color-text-gray: var(--text-gray);
+  --color-border: var(--border);
+  --font-serif: var(--font-georgia);
+  --font-sans: var(--font-system);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-system);
+}
+
+h1, h2, h3, .font-serif {
+  font-family: Georgia, "Times New Roman", serif;
 }
