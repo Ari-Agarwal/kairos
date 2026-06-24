@@ -57,7 +57,7 @@ export default function TimelineClient({
       <div className="flex-1 flex flex-col items-center justify-center px-6 text-center min-h-[60vh]">
         {error && <p className="text-red text-sm mb-3">{error}</p>}
         <p className="text-text-gray text-sm mb-4">No timeline yet.</p>
-        <button onClick={handleGenerate} className="rounded-xl bg-primary hover:bg-primary-hover text-white font-medium px-6 py-2.5">
+        <button onClick={handleGenerate} className="rounded-xl bg-primary hover:bg-primary-hover text-bg font-medium px-6 py-2.5">
           Generate Timeline
         </button>
       </div>
@@ -90,7 +90,7 @@ export default function TimelineClient({
               {isHere ? (
                 <motion.div
                   className="absolute -left-8 top-1.5 w-3.5 h-3.5 rounded-full bg-amber border-2 border-amber"
-                  animate={{ boxShadow: ["0 0 0 0 rgba(212,162,76,0.5)", "0 0 0 6px rgba(212,162,76,0)"] }}
+                  animate={{ boxShadow: ["0 0 0 0 rgba(255,255,255,0.5)", "0 0 0 6px rgba(255,255,255,0)"] }}
                   transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
                 />
               ) : (
@@ -113,7 +113,7 @@ export default function TimelineClient({
                     {item.title}
                   </p>
                   {item.is_strategic && (
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-premium text-white">
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-premium text-bg">
                       PREMIUM
                     </span>
                   )}

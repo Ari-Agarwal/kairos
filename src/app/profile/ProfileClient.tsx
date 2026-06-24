@@ -16,10 +16,12 @@ interface Profile {
 
 export default function ProfileClient({
   profile,
+  fullName,
   email,
   activeSchoolCount,
 }: {
   profile: Profile;
+  fullName: string;
   email: string;
   activeSchoolCount: number;
 }) {
@@ -28,6 +30,7 @@ export default function ProfileClient({
   const searchParams = useSearchParams();
   const [editing, setEditing] = useState(searchParams.get("edit") === "true");
   const [form, setForm] = useState({
+    full_name: fullName,
     grade_level: profile.grade_level,
     gpa: String(profile.gpa),
     intended_major: profile.intended_major ?? "",
@@ -38,11 +41,13 @@ export default function ProfileClient({
   const [saving, setSaving] = useState(false);
 
   const ecCount = profile.extracurriculars?.length ?? 0;
+  const displayName = fullName || email || "Student";
 
   async function handleSave() {
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    await supabase.auth.updateUser({ data: { full_name: form.full_name || null } });
     await supabase
       .from("profiles")
       .update({
@@ -66,6 +71,15 @@ export default function ProfileClient({
       <div className="px-5 md:px-8 py-8 max-w-xl mx-auto w-full">
         <h1 className="font-serif text-2xl text-text mb-6">Edit Profile</h1>
         <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+          <div>
+            <label className="block text-sm text-text-gray mb-1">Full Name</label>
+            <input
+              type="text"
+              value={form.full_name}
+              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+            />
+          </div>
           <div>
             <label className="block text-sm text-text-gray mb-1">Grade Level</label>
             <select
@@ -130,7 +144,7 @@ export default function ProfileClient({
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 rounded-xl bg-primary hover:bg-primary-hover text-white font-medium py-2.5 disabled:opacity-50"
+              className="flex-1 rounded-xl bg-primary hover:bg-primary-hover text-bg font-medium py-2.5 disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save"}
             </button>
@@ -150,7 +164,7 @@ export default function ProfileClient({
     <div className="px-5 md:px-8 py-8 max-w-xl mx-auto w-full">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="font-serif text-2xl text-text">{email}</h1>
+          <h1 className="font-serif text-2xl text-text">{displayName}</h1>
           <p className="text-text-gray text-sm">
             {profile.grade_level} · GPA {profile.gpa} · {profile.intended_major || "Major undecided"}
           </p>

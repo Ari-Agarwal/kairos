@@ -46,7 +46,7 @@ export default function EssayFeedbackClient() {
       <button
         onClick={handleSubmit}
         disabled={loading || !essay.trim()}
-        className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-white font-medium px-6 py-2.5 disabled:opacity-50 mb-6"
+        className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-6 py-2.5 disabled:opacity-50 mb-6"
       >
         {loading ? "Reading your draft..." : "Get Feedback"}
       </button>

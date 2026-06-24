@@ -56,7 +56,7 @@ export default function UpgradeClient({ isPremium }: { isPremium: boolean }) {
             <button
               onClick={() => handleCheckout("monthly")}
               disabled={loadingPlan !== null}
-              className="flex-1 rounded-xl bg-premium hover:opacity-90 transition-opacity text-white font-medium py-3 disabled:opacity-50"
+              className="flex-1 rounded-xl bg-premium hover:opacity-90 transition-opacity text-bg font-medium py-3 disabled:opacity-50"
             >
               {loadingPlan === "monthly" ? "Redirecting..." : "$12/month"}
             </button>

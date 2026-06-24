@@ -1,7 +1,7 @@
 // SCREEN 2 COMPLETE
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -11,6 +11,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  const [fullName, setFullName] = useState("");
   const [gradeLevel, setGradeLevel] = useState("");
   const [gpa, setGpa] = useState("");
   const [intendedMajor, setIntendedMajor] = useState("");
@@ -19,6 +20,13 @@ export default function OnboardingPage() {
   const [collegeGoals, setCollegeGoals] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      const existing = user?.user_metadata?.full_name as string | undefined;
+      if (existing) setFullName(existing);
+    });
+  }, [supabase]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,6 +38,8 @@ export default function OnboardingPage() {
       router.push("/login");
       return;
     }
+
+    await supabase.auth.updateUser({ data: { full_name: fullName } });
 
     const ecArray = extracurriculars
       .split(",")
@@ -79,6 +89,17 @@ export default function OnboardingPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-6 space-y-5">
+        <div>
+          <label className="block text-sm text-text-gray mb-1">Full Name *</label>
+          <input
+            type="text"
+            required
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+          />
+        </div>
+
         <div>
           <label className="block text-sm text-text-gray mb-1">Grade Level *</label>
           <select
@@ -156,7 +177,7 @@ export default function OnboardingPage() {
 
         <button
           type="submit"
-          className="w-full rounded-xl bg-primary hover:bg-primary-hover transition-colors text-white font-medium py-3"
+          className="w-full rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium py-3"
         >
           Continue
         </button>

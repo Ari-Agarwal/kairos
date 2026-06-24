@@ -18,10 +18,13 @@ export default async function ProfilePage() {
     .eq("user_id", user.id)
     .eq("is_active", true);
 
+  const fullName = (user.user_metadata?.full_name as string | undefined) ?? "";
+
   return (
     <NavShell>
       <ProfileClient
         profile={profile}
+        fullName={fullName}
         email={user.email ?? ""}
         activeSchoolCount={activeSchoolCount ?? 0}
       />
