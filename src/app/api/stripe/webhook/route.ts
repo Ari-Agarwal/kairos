@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { createServiceClient } from "@/lib/supabase/server";
 import Stripe from "stripe";
 
@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
+    event = getStripe().webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     }
     case "customer.subscription.deleted": {
       const subscription = event.data.object as Stripe.Subscription;
-      const customer = await stripe.customers.retrieve(subscription.customer as string);
+      const customer = await getStripe().customers.retrieve(subscription.customer as string);
       const email = "deleted" in customer ? null : customer.email;
       if (email) {
         const { data } = await supabase.auth.admin.listUsers();
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     }
     case "invoice.payment_failed": {
       const invoice = event.data.object as Stripe.Invoice;
-      const customer = await stripe.customers.retrieve(invoice.customer as string);
+      const customer = await getStripe().customers.retrieve(invoice.customer as string);
       const email = "deleted" in customer ? null : customer.email;
       if (email) {
         const { data } = await supabase.auth.admin.listUsers();

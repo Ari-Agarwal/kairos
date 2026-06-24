@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { anthropic, MODEL, SCHOOL_MATCHING_PROMPT, extractJson } from "@/lib/anthropic";
+import { getAnthropic, MODEL, SCHOOL_MATCHING_PROMPT, extractJson } from "@/lib/anthropic";
 import { canAccessFeature } from "@/lib/access";
 
 interface SchoolResult {
@@ -86,7 +86,7 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
 
   let schools: SchoolResult[];
   try {
-    const response = await anthropic.messages.create({
+    const response = await getAnthropic().messages.create({
       model: MODEL,
       max_tokens: 4096,
       system: SCHOOL_MATCHING_PROMPT,
