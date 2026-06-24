@@ -62,7 +62,7 @@ export default function ProfileCompletenessModal({ profile }: { profile: Profile
         <div className="flex flex-col gap-2">
           <button
             onClick={() => router.push("/profile?edit=true")}
-            className="w-full rounded-xl bg-primary hover:bg-primary-hover transition-colors text-white font-medium py-2.5"
+            className="w-full rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium py-2.5"
           >
             Complete My Profile
           </button>

@@ -56,7 +56,7 @@ export default function SchoolDetailClient({ match, isPremium }: { match: Match;
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setTab("info")}
-          className={`text-sm px-4 py-2 rounded-xl ${tab === "info" ? "bg-primary text-white" : "bg-card border border-border text-text-gray"}`}
+          className={`text-sm px-4 py-2 rounded-xl ${tab === "info" ? "bg-primary text-bg" : "bg-card border border-border text-text-gray"}`}
         >
           Info
         </button>
@@ -65,7 +65,7 @@ export default function SchoolDetailClient({ match, isPremium }: { match: Match;
             setTab("career");
             if (isPremium) loadCareerPath();
           }}
-          className={`text-sm px-4 py-2 rounded-xl ${tab === "career" ? "bg-primary text-white" : "bg-card border border-border text-text-gray"}`}
+          className={`text-sm px-4 py-2 rounded-xl ${tab === "career" ? "bg-primary text-bg" : "bg-card border border-border text-text-gray"}`}
         >
           Career Path
         </button>
@@ -108,7 +108,7 @@ export default function SchoolDetailClient({ match, isPremium }: { match: Match;
           </div>
           <Link
             href="/upgrade"
-            className="inline-block rounded-xl bg-premium hover:opacity-90 transition-opacity text-white font-medium px-5 py-2.5"
+            className="inline-block rounded-xl bg-premium hover:opacity-90 transition-opacity text-bg font-medium px-5 py-2.5"
           >
             See Premium Plans
           </Link>

@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import NavShell from "@/components/NavShell";
 import ProfileCompletenessModal from "@/components/ProfileCompletenessModal";
+import { Features } from "@/components/blocks/features-6";
 
 export default async function DashboardPage({
   searchParams,
@@ -79,24 +79,7 @@ export default async function DashboardPage({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Link href="/matches" className="bg-card border border-border rounded-2xl p-5 hover:border-primary transition-colors">
-            <p className="text-text font-medium mb-1">Matches</p>
-            <p className="text-text-gray text-xs">{activeMatchCount ?? 0} active schools</p>
-          </Link>
-          <Link href="/timeline" className="bg-card border border-border rounded-2xl p-5 hover:border-primary transition-colors">
-            <p className="text-text font-medium mb-1">Timeline</p>
-            <p className="text-text-gray text-xs">Deadlines &amp; strategic advice</p>
-          </Link>
-          <Link href="/essay-feedback" className="bg-card border border-border rounded-2xl p-5 hover:border-primary transition-colors">
-            <p className="text-text font-medium mb-1">Essay Feedback</p>
-            <p className="text-text-gray text-xs">Direct, honest feedback</p>
-          </Link>
-          <Link href="/profile" className="bg-card border border-border rounded-2xl p-5 hover:border-primary transition-colors">
-            <p className="text-text font-medium mb-1">Profile</p>
-            <p className="text-text-gray text-xs">Your living resume</p>
-          </Link>
-        </div>
+        <Features activeMatchCount={activeMatchCount ?? 0} />
       </div>
     </NavShell>
   );

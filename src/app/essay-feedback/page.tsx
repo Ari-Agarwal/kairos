@@ -30,7 +30,7 @@ export default async function EssayFeedbackPage() {
             </p>
             <Link
               href="/upgrade"
-              className="inline-block rounded-xl bg-premium hover:opacity-90 transition-opacity text-white font-medium px-5 py-2.5"
+              className="inline-block rounded-xl bg-premium hover:opacity-90 transition-opacity text-bg font-medium px-5 py-2.5"
             >
               See Premium Plans
             </Link>

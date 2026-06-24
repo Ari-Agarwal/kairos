@@ -1,24 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #14121F;
-  --card: #1F1B2E;
-  --primary: #8B7FE8;
-  --primary-hover: #A99FF0;
-  --amber: #D4A24C;
-  --amber-tint: #3A2F1C;
-  --amber-text-on-tint: #E8C381;
-  --green: #5BBE94;
-  --green-tint: #1E332B;
-  --red: #E08079;
-  --red-tint: #3A2422;
-  --premium: #B68FE8;
-  --premium-tint: #2E2444;
-  --secondary: #5FBEDB;
-  --secondary-tint: #1C313B;
-  --text: #F0EEFA;
-  --text-gray: #A39FC0;
-  --border: #322C48;
+  --bg: #000000;
+  --card: #000000;
+  --primary: #FFFFFF;
+  --primary-hover: rgba(255, 255, 255, 0.85);
+  --amber: #FFFFFF;
+  --amber-tint: rgba(255, 255, 255, 0.14);
+  --amber-text-on-tint: #FFFFFF;
+  --green: #FFFFFF;
+  --green-tint: rgba(255, 255, 255, 0.08);
+  --red: #FFFFFF;
+  --red-tint: rgba(255, 255, 255, 0.2);
+  --premium: #FFFFFF;
+  --premium-tint: rgba(255, 255, 255, 0.1);
+  --secondary: #FFFFFF;
+  --secondary-tint: rgba(255, 255, 255, 0.06);
+  --text: #FFFFFF;
+  --text-gray: #FFFFFF;
+  --border: rgba(255, 255, 255, 0.15);
 }
 
 @theme inline {

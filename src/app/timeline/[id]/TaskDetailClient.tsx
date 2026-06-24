@@ -68,7 +68,7 @@ export default function TaskDetailClient({ item }: { item: TimelineItem }) {
       <button
         onClick={handleComplete}
         disabled={completed || saving}
-        className="w-full rounded-xl bg-primary hover:bg-primary-hover transition-colors text-white font-medium py-3 disabled:opacity-50"
+        className="w-full rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium py-3 disabled:opacity-50"
       >
         {completed ? "Completed" : saving ? "Saving..." : "Mark as Complete"}
       </button>

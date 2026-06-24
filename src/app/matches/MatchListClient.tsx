@@ -72,7 +72,7 @@ export default function MatchListClient({
         <button
           onClick={handleRegenerate}
           disabled={!isPremium && remaining === 0}
-          className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-white text-sm font-medium px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Regenerate List
         </button>

@@ -27,10 +27,10 @@ export default function LoginPage() {
     router.refresh();
   }
 
-  async function handleGoogle() {
+  async function handleOAuth(provider: "google" | "azure") {
     setError(null);
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider,
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
     if (error) setError(error.message);
@@ -65,7 +65,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-primary hover:bg-primary-hover transition-colors text-white font-medium py-2.5 disabled:opacity-50"
+            className="w-full rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium py-2.5 disabled:opacity-50"
           >
             {loading ? "Signing in..." : "Log In"}
           </button>
@@ -77,12 +77,20 @@ export default function LoginPage() {
           <div className="flex-1 h-px bg-border" />
         </div>
 
-        <button
-          onClick={handleGoogle}
-          className="w-full rounded-xl border border-border text-text hover:bg-card transition-colors font-medium py-2.5"
-        >
-          Continue with Google
-        </button>
+        <div className="space-y-2">
+          <button
+            onClick={() => handleOAuth("google")}
+            className="w-full rounded-xl border border-border text-text hover:bg-card transition-colors font-medium py-2.5"
+          >
+            Continue with Google
+          </button>
+          <button
+            onClick={() => handleOAuth("azure")}
+            className="w-full rounded-xl border border-border text-text hover:bg-card transition-colors font-medium py-2.5"
+          >
+            Continue with Microsoft
+          </button>
+        </div>
 
         <p className="text-center text-text-gray text-sm mt-4">
           Don&apos;t have an account?{" "}
