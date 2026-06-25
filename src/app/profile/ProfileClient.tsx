@@ -2,7 +2,10 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 interface Profile {
   grade_level: string;
@@ -68,7 +71,12 @@ export default function ProfileClient({
 
   if (editing) {
     return (
-      <div className="px-5 md:px-8 py-8 max-w-xl mx-auto w-full">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: EASE }}
+        className="px-5 md:px-8 py-8 max-w-xl mx-auto w-full"
+      >
         <h1 className="font-serif text-2xl text-text mb-6">Edit Profile</h1>
         <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <div>
@@ -156,12 +164,44 @@ export default function ProfileClient({
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
+  const stats = [
+    { label: "GPA", value: profile.gpa },
+    { label: "Active Schools", value: activeSchoolCount },
+    { label: "Extracurriculars", value: ecCount },
+  ];
+
+  const sections = [
+    {
+      title: "Extracurriculars",
+      content:
+        ecCount > 0 ? (
+          <ul className="space-y-1">
+            {profile.extracurriculars!.map((ec, idx) => (
+              <li key={idx} className="text-text-gray text-sm">
+                • {ec}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EmptyNote />
+        ),
+    },
+    { title: "Classes", content: <EmptyNote /> },
+    { title: "Internships and Research", content: <EmptyNote /> },
+    { title: "Achievements", content: <EmptyNote /> },
+  ];
+
   return (
-    <div className="px-5 md:px-8 py-8 max-w-xl mx-auto w-full">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: EASE }}
+      className="px-5 md:px-8 py-8 max-w-xl mx-auto w-full"
+    >
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="font-serif text-2xl text-text">{displayName}</h1>
@@ -178,52 +218,37 @@ export default function ProfileClient({
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-card border border-border rounded-2xl p-4 text-center">
-          <p className="font-serif text-xl text-primary">{profile.gpa}</p>
-          <p className="text-text-gray text-xs">GPA</p>
-        </div>
-        <div className="bg-card border border-border rounded-2xl p-4 text-center">
-          <p className="font-serif text-xl text-primary">{activeSchoolCount}</p>
-          <p className="text-text-gray text-xs">Active Schools</p>
-        </div>
-        <div className="bg-card border border-border rounded-2xl p-4 text-center">
-          <p className="font-serif text-xl text-primary">{ecCount}</p>
-          <p className="text-text-gray text-xs">Extracurriculars</p>
-        </div>
+        {stats.map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: EASE, delay: i * 0.06 }}
+            className="bg-card border border-border rounded-2xl p-4 text-center"
+          >
+            <p className="font-serif text-xl text-primary">{stat.value}</p>
+            <p className="text-text-gray text-xs">{stat.label}</p>
+          </motion.div>
+        ))}
       </div>
 
       <div className="space-y-4">
-        <Section title="Extracurriculars">
-          {ecCount > 0 ? (
-            <ul className="space-y-1">
-              {profile.extracurriculars!.map((ec, idx) => (
-                <li key={idx} className="text-text-gray text-sm">
-                  • {ec}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyNote />
-          )}
-        </Section>
-
-        <Section title="Classes">
-          <EmptyNote />
-        </Section>
-
-        <Section title="Internships and Research">
-          <EmptyNote />
-        </Section>
-
-        <Section title="Achievements">
-          <EmptyNote />
-        </Section>
+        {sections.map((section, i) => (
+          <motion.div
+            key={section.title}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: EASE, delay: 0.18 + i * 0.06 }}
+          >
+            <Section title={section.title}>{section.content}</Section>
+          </motion.div>
+        ))}
       </div>
 
       <p className="text-text-gray text-xs text-center mt-8">
         This profile updates automatically as you check off items on your timeline.
       </p>
-    </div>
+    </motion.div>
   );
 }
 

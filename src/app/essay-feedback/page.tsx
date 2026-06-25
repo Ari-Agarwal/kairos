@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Lock } from "lucide-react";
 import NavShell from "@/components/NavShell";
 import EssayFeedbackClient from "./EssayFeedbackClient";
+import LockedCard from "./LockedCard";
 
 export default async function EssayFeedbackPage() {
   const supabase = await createClient();
@@ -22,7 +23,7 @@ export default async function EssayFeedbackPage() {
         <h1 className="font-serif text-2xl text-text mb-6">Essay &amp; Supplemental Feedback</h1>
 
         {!isPremium ? (
-          <div className="bg-premium-tint border border-border rounded-2xl p-6 text-center">
+          <LockedCard>
             <Lock className="text-premium w-7 h-7 mx-auto mb-2" />
             <p className="text-text font-medium mb-1">Essay Feedback is a Premium feature</p>
             <p className="text-text-gray text-sm mb-4">
@@ -34,7 +35,7 @@ export default async function EssayFeedbackPage() {
             >
               See Premium Plans
             </Link>
-          </div>
+          </LockedCard>
         ) : (
           <EssayFeedbackClient />
         )}

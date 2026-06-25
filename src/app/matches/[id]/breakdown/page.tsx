@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import NavShell from "@/components/NavShell";
+import FactorCard from "./FactorCard";
 
 const CATEGORY_STYLES: Record<string, string> = {
   reach: "bg-red-tint text-red",
@@ -61,25 +62,12 @@ export default async function BreakdownPage({ params }: { params: Promise<{ id: 
         </div>
 
         <div className="space-y-6">
-          {Object.entries(FACTOR_LABELS).map(([key, label]) => {
+          {Object.entries(FACTOR_LABELS).map(([key, label], i) => {
             const text = factors?.[key] ?? "Not available";
             const width = barWidth(text);
             const missing = width === 0;
             return (
-              <div key={key} className="bg-card border border-border rounded-2xl p-5">
-                <p className="text-text font-medium text-sm mb-3">{label}</p>
-                <div className="w-full h-2.5 rounded-full bg-bg border border-border mb-3 overflow-hidden">
-                  {!missing && (
-                    <div className="h-full bg-primary rounded-full" style={{ width: `${width}%` }} />
-                  )}
-                </div>
-                <p className="text-text-gray text-sm leading-relaxed">{text}</p>
-                {missing && (
-                  <Link href="/profile?edit=true" className="text-primary text-xs hover:text-primary-hover mt-2 inline-block">
-                    Add this to your profile →
-                  </Link>
-                )}
-              </div>
+              <FactorCard key={key} label={label} text={text} width={width} missing={missing} index={i} />
             );
           })}
         </div>
