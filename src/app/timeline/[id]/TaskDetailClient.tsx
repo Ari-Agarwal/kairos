@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 interface TimelineItem {
   id: string;
@@ -41,7 +45,12 @@ export default function TaskDetailClient({ item }: { item: TimelineItem }) {
   }
 
   return (
-    <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: EASE }}
+      className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full"
+    >
       <Link href="/timeline" className="text-text-gray text-sm hover:text-text mb-4 inline-block">
         ← Back to timeline
       </Link>
@@ -68,10 +77,27 @@ export default function TaskDetailClient({ item }: { item: TimelineItem }) {
       <button
         onClick={handleComplete}
         disabled={completed || saving}
-        className="w-full rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium py-3 disabled:opacity-50"
+        className="relative w-full rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium py-3 disabled:opacity-50 overflow-hidden"
       >
-        {completed ? "Completed" : saving ? "Saving..." : "Mark as Complete"}
+        <AnimatePresence mode="wait" initial={false}>
+          {completed ? (
+            <motion.span
+              key="completed"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, ease: EASE }}
+              className="flex items-center justify-center gap-2"
+            >
+              <Check className="size-4" />
+              Completed
+            </motion.span>
+          ) : (
+            <motion.span key="pending" exit={{ opacity: 0 }}>
+              {saving ? "Saving..." : "Mark as Complete"}
+            </motion.span>
+          )}
+        </AnimatePresence>
       </button>
-    </div>
+    </motion.div>
   );
 }

@@ -65,7 +65,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
         initial={{ width: collapsed ? 72 : 240 }}
         animate={{ width: collapsed ? 72 : 240 }}
         transition={{ duration: 0.25, ease: "easeInOut" }}
-        className="hidden md:flex flex-col border-r border-border shrink-0 overflow-hidden relative z-[60]"
+        className="hidden md:flex flex-col border-r border-border shrink-0 relative z-[60]"
       >
         <div className="relative px-3 py-4 border-b border-border">
           <div className={`flex items-center ${collapsed ? "flex-col gap-2" : "justify-between gap-2"}`}>
@@ -111,7 +111,9 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -6, scale: 0.97 }}
                 transition={{ duration: 0.15 }}
-                className="absolute left-3 right-3 top-full mt-1 z-30 rounded-xl border border-border bg-bg shadow-lg overflow-hidden"
+                className={`absolute top-full mt-1 z-30 rounded-xl border border-border bg-bg shadow-lg overflow-hidden ${
+                  collapsed ? "left-3 w-48" : "left-3 right-3"
+                }`}
               >
                 <Link
                   href="/profile"

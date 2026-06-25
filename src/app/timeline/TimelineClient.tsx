@@ -76,7 +76,7 @@ export default function TimelineClient({
 
       <div className="relative pl-8">
         <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
-        {items.map((item) => {
+        {items.map((item, i) => {
           const isHere = item.id === youAreHereId;
           const locked = item.is_strategic && !isPremium;
           return (
@@ -85,7 +85,7 @@ export default function TimelineClient({
               className="relative mb-5"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.3, delay: Math.min(i * 0.05, 0.5) }}
             >
               {isHere ? (
                 <motion.div

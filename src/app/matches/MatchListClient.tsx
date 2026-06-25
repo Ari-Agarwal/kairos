@@ -3,7 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 interface Match {
   id: string;
@@ -84,41 +87,50 @@ export default function MatchListClient({
       {error && <p className="text-red text-sm mb-4">{error}</p>}
 
       <div className="space-y-4">
-        {matches.map((m) => (
-          <div key={m.id} className="bg-card border border-border rounded-2xl p-5 relative">
-            <button
-              onClick={() => handleRemove(m.id)}
-              className="absolute top-4 right-4 text-text-gray hover:text-red text-xs"
-              aria-label="Remove school"
+        <AnimatePresence initial={false}>
+          {matches.map((m, i) => (
+            <motion.div
+              key={m.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.2, ease: EASE } }}
+              transition={{ duration: 0.35, ease: EASE, delay: i * 0.05 }}
+              className="bg-card border border-border rounded-2xl p-5 relative hover:border-text-gray/40 transition-colors"
             >
-              Remove
-            </button>
+              <button
+                onClick={() => handleRemove(m.id)}
+                className="absolute top-3 right-3 text-text-gray hover:text-red text-xs px-2.5 py-2 rounded-lg transition-colors"
+                aria-label="Remove school"
+              >
+                Remove
+              </button>
 
-            <div className="flex items-start justify-between pr-14 mb-2">
-              <div>
-                <span
-                  className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full mb-2 capitalize ${CATEGORY_STYLES[m.category]}`}
+              <div className="flex items-start justify-between pr-14 mb-2">
+                <div>
+                  <span
+                    className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full mb-2 capitalize ${CATEGORY_STYLES[m.category]}`}
+                  >
+                    {m.category}
+                  </span>
+                  <Link href={`/schools/${m.id}`} className="block font-serif text-lg text-text hover:text-primary">
+                    {m.school_name}
+                  </Link>
+                </div>
+                <Link
+                  href={`/matches/${m.id}/breakdown`}
+                  className="font-serif text-2xl text-primary shrink-0"
                 >
-                  {m.category}
-                </span>
-                <Link href={`/schools/${m.id}`} className="block font-serif text-lg text-text hover:text-primary">
-                  {m.school_name}
+                  {m.percentage}%
                 </Link>
               </div>
-              <Link
-                href={`/matches/${m.id}/breakdown`}
-                className="font-serif text-2xl text-primary shrink-0"
-              >
-                {m.percentage}%
-              </Link>
-            </div>
 
-            <p className="text-text-gray text-sm mb-2">{m.why_text}</p>
-            <p className="text-text-gray text-xs opacity-70">
-              Tap % for the breakdown · Tap card for school info &amp; career paths
-            </p>
-          </div>
-        ))}
+              <p className="text-text-gray text-sm mb-2">{m.why_text}</p>
+              <p className="text-text-gray text-xs">
+                Tap % for the breakdown · Tap card for school info &amp; career paths
+              </p>
+            </motion.div>
+          ))}
+        </AnimatePresence>
         {matches.length === 0 && (
           <p className="text-text-gray text-sm text-center py-12">
             No active matches. Try regenerating your list.

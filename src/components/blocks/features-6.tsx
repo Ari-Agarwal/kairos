@@ -1,5 +1,9 @@
+"use client";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Target, CalendarClock, PenLine, Unlock } from "lucide-react";
+
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 const FEATURES = [
   {
@@ -59,8 +63,15 @@ export function Features({ activeMatchCount }: { activeMatchCount?: number }) {
               <span className="text-text-gray text-xs">15 schools</span>
             </div>
             <div className="space-y-3">
-              {PREVIEW_SCHOOLS.map((school) => (
-                <div key={school.name} className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3">
+              {PREVIEW_SCHOOLS.map((school, i) => (
+                <motion.div
+                  key={school.name}
+                  initial={{ opacity: 0, y: 8 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, ease: EASE, delay: i * 0.08 }}
+                  className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3"
+                >
                   <div>
                     <span className={`inline-block text-[10px] font-medium px-2 py-0.5 rounded-full mb-1.5 capitalize ${CATEGORY_STYLES[school.category]}`}>
                       {school.category}
@@ -68,27 +79,35 @@ export function Features({ activeMatchCount }: { activeMatchCount?: number }) {
                     <p className="font-serif text-sm text-text">{school.name}</p>
                   </div>
                   <span className="font-serif text-xl text-primary">{school.percentage}%</span>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
         </div>
 
         <div className="relative grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-8 lg:grid-cols-4">
-          {FEATURES.map(({ icon: Icon, title, description, href }) => (
-            <Link key={title} href={href} className="space-y-3 group">
-              <div className="flex items-center gap-2">
-                <Icon className="size-4 text-primary" />
-                <h3 className="text-sm font-medium text-text group-hover:text-primary transition-colors">
-                  {title}
-                </h3>
-              </div>
-              <p className="text-text-gray text-sm leading-relaxed">
-                {title === "Matches" && activeMatchCount !== undefined
-                  ? `${activeMatchCount} active schools`
-                  : description}
-              </p>
-            </Link>
+          {FEATURES.map(({ icon: Icon, title, description, href }, i) => (
+            <motion.div
+              key={title}
+              initial={{ opacity: 0, y: 8 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, ease: EASE, delay: i * 0.06 }}
+            >
+              <Link href={href} className="space-y-3 group block">
+                <div className="flex items-center gap-2">
+                  <Icon className="size-4 text-primary transition-transform duration-200 group-hover:-translate-y-0.5" />
+                  <h3 className="text-sm font-medium text-text group-hover:text-primary transition-colors">
+                    {title}
+                  </h3>
+                </div>
+                <p className="text-text-gray text-sm leading-relaxed">
+                  {title === "Matches" && activeMatchCount !== undefined
+                    ? `${activeMatchCount} active schools`
+                    : description}
+                </p>
+              </Link>
+            </motion.div>
           ))}
         </div>
       </div>

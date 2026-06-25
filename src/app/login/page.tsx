@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -11,7 +12,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState<"google" | "azure" | null>(null);
+
+  function showError(message: string) {
+    setError(message);
+    setErrorKey((k) => k + 1);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -20,7 +28,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      setError(error.message);
+      showError(error.message);
       return;
     }
     router.push("/dashboard");
@@ -29,17 +37,28 @@ export default function LoginPage() {
 
   async function handleOAuth(provider: "google" | "azure") {
     setError(null);
+    setOauthLoading(provider);
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
-    if (error) setError(error.message);
+    if (error) {
+      setOauthLoading(null);
+      showError(error.message);
+    }
   }
 
   return (
     <div className="flex-1 flex items-center justify-center px-6 py-12">
-      <div className="w-full max-w-sm">
-        <h1 className="font-serif text-3xl text-text mb-6 text-center">Metam</h1>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-sm"
+      >
+        <Link href="/" className="block text-center mb-6">
+          <h1 className="font-serif text-3xl text-text">Metam</h1>
+        </Link>
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <div>
             <label className="block text-sm text-text-gray mb-1">Email</label>
@@ -48,7 +67,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary transition-colors"
             />
           </div>
           <div>
@@ -58,10 +77,14 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary transition-colors"
             />
           </div>
-          {error && <p className="text-red text-sm">{error}</p>}
+          {error && (
+            <p key={errorKey} role="alert" className="text-red text-sm animate-auth-error">
+              {error}
+            </p>
+          )}
           <button
             type="submit"
             disabled={loading}
@@ -80,15 +103,17 @@ export default function LoginPage() {
         <div className="space-y-2">
           <button
             onClick={() => handleOAuth("google")}
-            className="w-full rounded-xl border border-border text-text hover:bg-card transition-colors font-medium py-2.5"
+            disabled={oauthLoading !== null}
+            className="w-full rounded-xl border border-border text-text hover:bg-card transition-colors font-medium py-2.5 disabled:opacity-50"
           >
-            Continue with Google
+            {oauthLoading === "google" ? "Redirecting..." : "Continue with Google"}
           </button>
           <button
             onClick={() => handleOAuth("azure")}
-            className="w-full rounded-xl border border-border text-text hover:bg-card transition-colors font-medium py-2.5"
+            disabled={oauthLoading !== null}
+            className="w-full rounded-xl border border-border text-text hover:bg-card transition-colors font-medium py-2.5 disabled:opacity-50"
           >
-            Continue with Microsoft
+            {oauthLoading === "azure" ? "Redirecting..." : "Continue with Microsoft"}
           </button>
         </div>
 
@@ -98,7 +123,7 @@ export default function LoginPage() {
             Sign up
           </Link>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }

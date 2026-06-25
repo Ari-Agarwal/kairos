@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 interface FeedbackItem {
   label: string;
@@ -60,16 +63,24 @@ export default function EssayFeedbackClient() {
         </div>
       )}
 
-      {feedback && (
-        <div className="space-y-3">
-          {feedback.map((f, idx) => (
-            <div key={idx} className="bg-card border border-border rounded-2xl p-4">
-              <p className="text-primary text-sm font-medium mb-1">{f.label}</p>
-              <p className="text-text-gray text-sm leading-relaxed">{f.text}</p>
-            </div>
-          ))}
-        </div>
-      )}
+      <AnimatePresence>
+        {feedback && (
+          <div className="space-y-3">
+            {feedback.map((f, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: EASE, delay: idx * 0.08 }}
+                className="bg-card border border-border rounded-2xl p-4"
+              >
+                <p className="text-primary text-sm font-medium mb-1">{f.label}</p>
+                <p className="text-text-gray text-sm leading-relaxed">{f.text}</p>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
