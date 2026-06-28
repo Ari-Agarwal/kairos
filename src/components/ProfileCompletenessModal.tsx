@@ -31,7 +31,7 @@ export function getMissingFields(profile: Profile | null | undefined): string[] 
   return missing;
 }
 
-const DISMISS_KEY = "metam_completeness_dismissed";
+const DISMISS_KEY = "telos_completeness_dismissed";
 
 export default function ProfileCompletenessModal({ profile }: { profile: Profile | null | undefined }) {
   const router = useRouter();

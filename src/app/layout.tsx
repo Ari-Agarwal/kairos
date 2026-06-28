@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Metam — College guidance for every student",
+  title: "Telos — College guidance for every student",
   description: "Personalized college admissions guidance, regardless of what you can afford.",
 };
 

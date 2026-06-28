@@ -69,7 +69,7 @@ export default async function DashboardPage({
               need this guidance the most are the students who can afford it the least.
             </p>
             <p>
-              Metam was built to sever that connection between cost and access. It performs the
+              Telos was built to sever that connection between cost and access. It performs the
               same quality of analysis, weighing a student&apos;s actual profile against real
               admissions patterns, and returns a list of schools that reflects genuine potential
               rather than guesswork. It is free to start, on the idea that clarity about

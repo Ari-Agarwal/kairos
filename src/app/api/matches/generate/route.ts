@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAnthropic, MODEL, SCHOOL_MATCHING_PROMPT, extractJson } from "@/lib/anthropic";
-import { canAccessFeature } from "@/lib/access";
+import { canRegenerate, weekStart } from "@/lib/access";
 
 interface SchoolResult {
   name: string;
@@ -34,14 +34,6 @@ function missingFields(profile: Profile): string[] {
   return missing;
 }
 
-function weekStart(): string {
-  const d = new Date();
-  const day = d.getUTCDay();
-  const diff = (day + 6) % 7; // days since Monday
-  d.setUTCDate(d.getUTCDate() - diff);
-  return d.toISOString().slice(0, 10);
-}
-
 export async function POST() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -55,7 +47,7 @@ export async function POST() {
 
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-  const week = weekStart();
+  const week = weekStart(new Date());
   const { data: regenRow } = await supabase
     .from("regeneration_log")
     .select("count")
@@ -63,10 +55,9 @@ export async function POST() {
     .eq("week_start_date", week)
     .maybeSingle();
 
-  const isPremium = canAccessFeature(profile, "unlimited_regenerations");
   const currentCount = regenRow?.count ?? 0;
 
-  if (!isPremium && currentCount >= 3) {
+  if (!canRegenerate(profile, currentCount)) {
     return NextResponse.json(
       { error: "Weekly regeneration limit reached. Upgrade to Premium for unlimited regenerations." },
       { status: 403 }

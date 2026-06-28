@@ -138,7 +138,7 @@ function HeroSectionDarkMock() {
           </span>
         </h1>
         <p className="text-text-gray leading-relaxed mb-8">
-          Metam gives you the kind of guidance a private counselor would, free to start.
+          Telos gives you the kind of guidance a private counselor would, free to start.
         </p>
         <button className="relative rounded-xl bg-primary text-bg font-medium px-6 py-3 overflow-hidden">
           Get Started
@@ -156,7 +156,7 @@ function HeroSection1Mock() {
   return (
     <div className="min-h-[85vh] bg-bg">
       <div className="flex items-center justify-between px-6 md:px-12 py-5">
-        <span className="font-serif text-lg text-primary">Metam</span>
+        <span className="font-serif text-lg text-primary">Telos</span>
         <div className="hidden md:flex gap-6 text-sm text-text-gray">
           <span>How it works</span>
           <span>Pricing</span>

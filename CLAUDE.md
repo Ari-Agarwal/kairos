@@ -1,4 +1,4 @@
-# Metam Project Instructions
+# Telos Project Instructions
 
 ## Build behavior
 - Never stop and ask for clarification on design decisions. Use the spec.
