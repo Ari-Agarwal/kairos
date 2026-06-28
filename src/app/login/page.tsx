@@ -25,11 +25,27 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
       showError(error.message);
       return;
+    }
+    if (data.user) {
+      const { data: counselor } = await supabase
+        .from("counselors")
+        .select("counselor_id")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+      if (counselor) {
+        router.push("/counselor");
+        router.refresh();
+        return;
+      }
+      await supabase
+        .from("profiles")
+        .update({ last_login_at: new Date().toISOString() })
+        .eq("user_id", data.user.id);
     }
     router.push("/dashboard");
     router.refresh();
@@ -57,7 +73,7 @@ export default function LoginPage() {
         className="w-full max-w-sm"
       >
         <Link href="/" className="block text-center mb-6">
-          <h1 className="font-serif text-3xl text-text">Metam</h1>
+          <h1 className="font-serif text-3xl text-text">Telos</h1>
         </Link>
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <div>

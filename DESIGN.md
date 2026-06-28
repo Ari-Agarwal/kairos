@@ -1,5 +1,5 @@
 ---
-name: Metam
+name: Telos
 description: AI college-admissions counselor — monochrome, high-craft, data-driven
 colors:
   bg: "#000000"
@@ -53,13 +53,13 @@ components:
     rounded: "{rounded.lg}"
 ---
 
-# Design System: Metam
+# Design System: Telos
 
 ## 1. Overview
 
 **Creative North Star: "The Confidential Briefing"**
 
-Metam reads like a confidential strategic briefing, not a SaaS sales page: pure black and white, no hue anywhere, hierarchy built entirely from size, weight, and shade rather than color. The system rejects the cream/sand AI-default neutral and the generic gradient-hero SaaS template explicitly — there is no warmth-by-decoration here, only precision. Numbers (match percentages, deadlines, statistics) are the trust device; typography exists to make them legible above all else.
+Telos reads like a confidential strategic briefing, not a SaaS sales page: pure black and white, no hue anywhere, hierarchy built entirely from size, weight, and shade rather than color. The system rejects the cream/sand AI-default neutral and the generic gradient-hero SaaS template explicitly — there is no warmth-by-decoration here, only precision. Numbers (match percentages, deadlines, statistics) are the trust device; typography exists to make them legible above all else.
 
 The app register (dashboard, matches, timeline, essay feedback) stays dense and quiet — a working tool a student returns to in short sessions. The landing page (`/`) is the one surface permitted a bold visual centerpiece: a technical, motion-driven 3D hero in the spirit of Tailark's Hero Section 5, still rendered entirely in monochrome.
 
@@ -105,7 +105,7 @@ A pure two-value palette: every visual role is white at full or partial opacity 
 
 ## 4. Elevation
 
-Flat by default. Metam has no shadow vocabulary — depth and grouping are conveyed entirely through the 15%-opacity hairline border and, occasionally, a denser fill step (the same white-on-black opacity ramp used for accents). Nothing lifts off the page; everything sits flush.
+Flat by default. Telos has no shadow vocabulary — depth and grouping are conveyed entirely through the 15%-opacity hairline border and, occasionally, a denser fill step (the same white-on-black opacity ramp used for accents). Nothing lifts off the page; everything sits flush.
 
 ### Named Rules
 **The Flat-By-Default Rule.** Box-shadow is prohibited everywhere except a single soft ambient glow permitted on the landing-page 3D hero element, where it is structural to the centerpiece rather than decorative card chrome.

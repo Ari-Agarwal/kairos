@@ -68,7 +68,7 @@ export default function SignupPage() {
           className="w-full max-w-sm text-center"
         >
           <Link href="/" className="block mb-6">
-            <h1 className="font-serif text-3xl text-text">Metam</h1>
+            <h1 className="font-serif text-3xl text-text">Telos</h1>
           </Link>
           <div className="bg-card border border-border rounded-2xl p-6">
             <p className="text-text font-medium mb-2">Check your email</p>
@@ -97,7 +97,7 @@ export default function SignupPage() {
         className="w-full max-w-sm"
       >
         <Link href="/" className="block text-center mb-6">
-          <h1 className="font-serif text-3xl text-text">Metam</h1>
+          <h1 className="font-serif text-3xl text-text">Telos</h1>
         </Link>
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <div>

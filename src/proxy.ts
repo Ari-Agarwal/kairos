@@ -36,6 +36,24 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (path.startsWith("/counselor")) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+    const { data: counselor } = await supabase
+      .from("counselors")
+      .select("counselor_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!counselor) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }
 

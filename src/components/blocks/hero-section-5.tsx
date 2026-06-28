@@ -104,7 +104,7 @@ const HeroHeader = () => {
           >
             <div className="flex w-full items-center justify-between gap-12 lg:w-auto">
               <Link href="/" aria-label="home" className="flex items-center space-x-2">
-                <span className="font-serif text-lg text-primary">Metam</span>
+                <span className="font-serif text-lg text-primary">Telos</span>
               </Link>
 
               <button

@@ -27,7 +27,7 @@ const TABS = [
   { href: "/upgrade", label: "Upgrade", icon: Crown },
 ];
 
-const SIDEBAR_COLLAPSED_KEY = "metam_sidebar_collapsed";
+const SIDEBAR_COLLAPSED_KEY = "telos_sidebar_collapsed";
 
 export default function NavShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -174,7 +174,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="md:hidden relative z-[60] flex items-center justify-between px-4 py-3 border-b border-border">
           <Link href="/dashboard" className="text-text font-bold text-sm">
-            Metam
+            Telos
           </Link>
           <button
             onClick={() => setDropdownOpen((v) => !v)}

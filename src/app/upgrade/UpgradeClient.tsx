@@ -49,14 +49,14 @@ export default function UpgradeClient({ isPremium }: { isPremium: boolean }) {
     >
       <h1 className="font-serif text-2xl text-text mb-3">Free vs Premium</h1>
       <p className="text-text-gray text-sm leading-relaxed mb-8">
-        Metam&apos;s free tier is built to be genuinely useful on its own, profile, timeline, and a
+        Telos&apos;s free tier is built to be genuinely useful on its own, profile, timeline, and a
         real school list, because access shouldn&apos;t depend on what you can afford. Premium adds
         deeper, more personal guidance for students who want to go further.
       </p>
 
       {isPremium ? (
         <div className="bg-premium-tint border border-border rounded-2xl p-6 text-center">
-          <p className="text-premium font-medium">You&apos;re on Premium. Thanks for supporting Metam.</p>
+          <p className="text-premium font-medium">You&apos;re on Premium. Thanks for supporting Telos.</p>
         </div>
       ) : (
         <>

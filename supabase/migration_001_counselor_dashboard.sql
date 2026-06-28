@@ -1,4 +1,8 @@
-create table schools (
+-- Week 1: counselor dashboard tables, columns, and RLS policies.
+-- Safe to run against the existing live schema (profiles, school_matches,
+-- timeline_items, regeneration_log already exist and are NOT recreated here).
+
+create table if not exists schools (
   school_id uuid primary key default gen_random_uuid(),
   name text not null,
   district text,
@@ -7,7 +11,7 @@ create table schools (
   created_at timestamptz default now()
 );
 
-create table counselors (
+create table if not exists counselors (
   counselor_id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users not null,
   school_id uuid references schools(school_id) not null,
@@ -16,58 +20,7 @@ create table counselors (
   created_at timestamptz default now()
 );
 
-create table profiles (
-  user_id uuid references auth.users primary key,
-  grade_level text check (grade_level in ('Freshman','Sophomore','Junior','Senior')) not null,
-  gpa decimal not null,
-  intended_major text,
-  extracurriculars text[],
-  location_preference text,
-  college_goals text,
-  test_scores jsonb,
-  subscription_tier text check (subscription_tier in ('free','premium')) default 'free' not null,
-  stripe_customer_id text unique,
-  school_id uuid references schools(school_id),
-  counselor_id uuid references counselors(counselor_id),
-  last_login_at timestamptz,
-  created_at timestamptz default now()
-);
-
-create table school_matches (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users not null,
-  school_name text not null,
-  category text check (category in ('reach','target','safety')) not null,
-  percentage int not null,
-  why_text text not null,
-  factors jsonb not null,
-  is_active boolean default true,
-  created_at timestamptz default now()
-);
-
-create table timeline_items (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users not null,
-  title text not null,
-  due_date date,
-  school_tags text[],
-  tier text check (tier in ('free','premium')) not null,
-  is_strategic boolean default false not null,
-  completed boolean default false not null,
-  profile_sync_field text,
-  why_text text not null,
-  what_to_do jsonb not null,
-  created_at timestamptz default now()
-);
-
-create table regeneration_log (
-  user_id uuid references auth.users not null,
-  week_start_date date not null,
-  count int default 0 not null,
-  primary key (user_id, week_start_date)
-);
-
-create table counselor_notes (
+create table if not exists counselor_notes (
   id uuid primary key default gen_random_uuid(),
   counselor_id uuid references counselors(counselor_id) not null,
   student_user_id uuid references auth.users not null,
@@ -76,7 +29,7 @@ create table counselor_notes (
   unique (counselor_id, student_user_id)
 );
 
-create table reminder_log (
+create table if not exists reminder_log (
   id uuid primary key default gen_random_uuid(),
   counselor_id uuid references counselors(counselor_id) not null,
   student_user_id uuid references auth.users not null,
@@ -84,26 +37,24 @@ create table reminder_log (
   sent_at timestamptz default now()
 );
 
+alter table profiles add column if not exists school_id uuid references schools(school_id);
+alter table profiles add column if not exists counselor_id uuid references counselors(counselor_id);
+alter table profiles add column if not exists last_login_at timestamptz;
+
 alter table schools enable row level security;
 alter table counselors enable row level security;
-alter table profiles enable row level security;
-alter table school_matches enable row level security;
-alter table timeline_items enable row level security;
-alter table regeneration_log enable row level security;
 alter table counselor_notes enable row level security;
 alter table reminder_log enable row level security;
 
-create policy "own profile" on profiles for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "own matches" on school_matches for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "own timeline" on timeline_items for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "own regen log" on regeneration_log for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-
+drop policy if exists "own counselor row" on counselors;
 create policy "own counselor row" on counselors for select using (auth.uid() = user_id);
 
+drop policy if exists "counselor reads own school" on schools;
 create policy "counselor reads own school" on schools for select using (
   exists (select 1 from counselors c where c.school_id = schools.school_id and c.user_id = auth.uid())
 );
 
+drop policy if exists "counselor reads assigned students" on profiles;
 create policy "counselor reads assigned students" on profiles for select using (
   exists (
     select 1 from counselors c
@@ -111,6 +62,7 @@ create policy "counselor reads assigned students" on profiles for select using (
   )
 );
 
+drop policy if exists "counselor reads assigned student matches" on school_matches;
 create policy "counselor reads assigned student matches" on school_matches for select using (
   exists (
     select 1 from counselors c
@@ -119,6 +71,7 @@ create policy "counselor reads assigned student matches" on school_matches for s
   )
 );
 
+drop policy if exists "counselor reads assigned student timeline" on timeline_items;
 create policy "counselor reads assigned student timeline" on timeline_items for select using (
   exists (
     select 1 from counselors c
@@ -127,25 +80,16 @@ create policy "counselor reads assigned student timeline" on timeline_items for 
   )
 );
 
+drop policy if exists "counselor manages own notes" on counselor_notes;
 create policy "counselor manages own notes" on counselor_notes for all using (
   exists (select 1 from counselors c where c.counselor_id = counselor_notes.counselor_id and c.user_id = auth.uid())
 ) with check (
   exists (select 1 from counselors c where c.counselor_id = counselor_notes.counselor_id and c.user_id = auth.uid())
 );
 
+drop policy if exists "counselor manages own reminders" on reminder_log;
 create policy "counselor manages own reminders" on reminder_log for all using (
   exists (select 1 from counselors c where c.counselor_id = reminder_log.counselor_id and c.user_id = auth.uid())
 ) with check (
   exists (select 1 from counselors c where c.counselor_id = reminder_log.counselor_id and c.user_id = auth.uid())
 );
-
-create function public.get_student_count()
-returns bigint
-language sql
-security definer
-set search_path = public, auth
-as $$
-  select count(*) from auth.users;
-$$;
-
-grant execute on function public.get_student_count() to anon, authenticated;
