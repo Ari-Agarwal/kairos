@@ -10,6 +10,7 @@ import {
   CalendarClock,
   PenLine,
   Crown,
+  Info,
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
@@ -25,6 +26,7 @@ const TABS = [
   { href: "/timeline", label: "Timeline", icon: CalendarClock },
   { href: "/essay-feedback", label: "Essay", icon: PenLine },
   { href: "/upgrade", label: "Upgrade", icon: Crown },
+  { href: "/about", label: "About", icon: Info },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = "telos_sidebar_collapsed";
