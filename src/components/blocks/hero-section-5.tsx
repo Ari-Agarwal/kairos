@@ -6,72 +6,87 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Menu, X, ChevronRight } from "lucide-react";
 import { useScroll, motion } from "framer-motion";
+import { AboutContent } from "@/components/AboutContent";
 
 const Hero3D = dynamic(() => import("./hero-3d").then((m) => m.Hero3D), { ssr: false });
 
 export function HeroSection({ studentCount }: { studentCount: number }) {
+  const [view, setView] = React.useState<"home" | "about">("home");
+
   return (
     <>
-      <HeroHeader />
+      <HeroHeader view={view} onNavigate={setView} />
       <main className="overflow-x-hidden">
-        <section className="relative min-h-screen overflow-hidden bg-bg">
-          <div className="absolute inset-0 z-0">
-            <Hero3D />
-          </div>
-          <div className="absolute inset-0 z-[1] bg-gradient-to-b from-bg/10 via-bg/40 to-bg pointer-events-none" />
-          <div className="absolute inset-0 z-[1] bg-gradient-to-r from-bg via-bg/30 to-transparent pointer-events-none" />
+        {view === "about" ? (
+          <section className="relative min-h-screen bg-bg pt-32">
+            <AboutContent studentCount={studentCount} showLogo={false} />
+          </section>
+        ) : (
+          <section className="relative min-h-screen overflow-hidden bg-bg">
+            <div className="absolute inset-0 z-0">
+              <Hero3D />
+            </div>
+            <div className="absolute inset-0 z-[1] bg-gradient-to-b from-bg/10 via-bg/40 to-bg pointer-events-none" />
+            <div className="absolute inset-0 z-[1] bg-gradient-to-r from-bg via-bg/30 to-transparent pointer-events-none" />
 
-          <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col justify-center px-6 lg:px-12">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="mx-auto max-w-lg text-center lg:mx-0 lg:max-w-xl lg:text-left"
-            >
-              <h1 className="font-serif text-balance text-5xl text-text md:text-6xl xl:text-7xl">
-                Your future, mapped out clearly.
-              </h1>
-              <p className="mt-8 max-w-xl text-balance text-lg text-text-gray">
-                Real school matches, a real timeline, and honest feedback. The guidance
-                every student deserves.
-              </p>
-
-              <div className="mt-12 flex flex-col items-center justify-center gap-2 sm:flex-row lg:justify-start">
-                <Button asChild size="lg" className="h-12 rounded-full pl-5 pr-3 text-base">
-                  <Link href="/signup">
-                    <span className="text-nowrap">Get Started</span>
-                    <ChevronRight className="ml-1" />
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="ghost"
-                  className="h-12 rounded-full px-5 text-base"
-                >
-                  <Link href="/login">
-                    <span className="text-nowrap">Log in</span>
-                  </Link>
-                </Button>
-              </div>
-
-              <div className="mt-10 inline-block rounded-2xl bg-card/80 backdrop-blur-sm border border-border px-6 py-4">
-                <p className="font-serif text-xl text-primary mb-0.5">
-                  {studentCount.toLocaleString()} students helped so far
+            <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col justify-center px-6 lg:px-12">
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                className="mx-auto max-w-lg text-center lg:mx-0 lg:max-w-xl lg:text-left"
+              >
+                <h1 className="font-serif text-balance text-5xl text-text md:text-6xl xl:text-7xl">
+                  Your future, mapped out clearly.
+                </h1>
+                <p className="mt-8 max-w-xl text-balance text-lg text-text-gray">
+                  Real school matches, a real timeline, and honest feedback. The guidance
+                  every student deserves.
                 </p>
-                <p className="text-text-gray text-sm">Real profiles, real plans, growing every week.</p>
-              </div>
-            </motion.div>
-          </div>
-        </section>
+
+                <div className="mt-12 flex flex-col items-center justify-center gap-2 sm:flex-row lg:justify-start">
+                  <Button asChild size="lg" className="h-12 rounded-full pl-5 pr-3 text-base">
+                    <Link href="/signup">
+                      <span className="text-nowrap">Get Started</span>
+                      <ChevronRight className="ml-1" />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="ghost"
+                    className="h-12 rounded-full px-5 text-base"
+                  >
+                    <Link href="/login">
+                      <span className="text-nowrap">Log in</span>
+                    </Link>
+                  </Button>
+                </div>
+
+                <div className="mt-10 inline-block rounded-2xl bg-card/80 backdrop-blur-sm border border-border px-6 py-4">
+                  <p className="font-serif text-xl text-primary mb-0.5">
+                    {studentCount.toLocaleString()} students helped so far
+                  </p>
+                  <p className="text-text-gray text-sm">Real profiles, real plans, growing every week.</p>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+        )}
       </main>
     </>
   );
 }
 
-const menuItems: { name: string; href: string }[] = [{ name: "About", href: "/about" }];
+const menuItems: { name: string; view: "about" }[] = [{ name: "About", view: "about" }];
 
-const HeroHeader = () => {
+const HeroHeader = ({
+  view,
+  onNavigate,
+}: {
+  view: "home" | "about";
+  onNavigate: (view: "home" | "about") => void;
+}) => {
   const [menuState, setMenuState] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
   const { scrollYProgress } = useScroll();
@@ -99,9 +114,14 @@ const HeroHeader = () => {
             )}
           >
             <div className="flex w-full items-center justify-between gap-12 lg:w-auto">
-              <Link href="/" aria-label="home" className="flex items-center space-x-2">
+              <button
+                type="button"
+                aria-label="home"
+                onClick={() => onNavigate("home")}
+                className="flex items-center space-x-2"
+              >
                 <span className="font-serif text-lg text-primary">Telos</span>
-              </Link>
+              </button>
 
               <button
                 onClick={() => setMenuState(!menuState)}
@@ -116,9 +136,16 @@ const HeroHeader = () => {
                 <ul className="flex gap-8 text-sm">
                   {menuItems.map((item, index) => (
                     <li key={index}>
-                      <Link href={item.href} className="text-text-gray hover:text-text block duration-150">
+                      <button
+                        type="button"
+                        onClick={() => onNavigate(item.view)}
+                        className={cn(
+                          "text-text-gray hover:text-text block duration-150",
+                          view === item.view && "text-text"
+                        )}
+                      >
                         <span>{item.name}</span>
-                      </Link>
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -130,9 +157,19 @@ const HeroHeader = () => {
                 <ul className="space-y-6 text-base">
                   {menuItems.map((item, index) => (
                     <li key={index}>
-                      <Link href={item.href} className="text-text-gray hover:text-text block duration-150">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onNavigate(item.view);
+                          setMenuState(false);
+                        }}
+                        className={cn(
+                          "text-text-gray hover:text-text block duration-150",
+                          view === item.view && "text-text"
+                        )}
+                      >
                         <span>{item.name}</span>
-                      </Link>
+                      </button>
                     </li>
                   ))}
                 </ul>

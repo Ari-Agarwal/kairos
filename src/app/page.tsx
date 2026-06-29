@@ -24,8 +24,6 @@ export default async function IntroPage() {
     <>
       <HeroSection studentCount={studentCount} />
       <footer className="text-center py-6 text-text-gray text-xs">
-        <Link href="/about" className="hover:text-text">About</Link>
-        {" · "}
         <Link href="/terms" className="hover:text-text">Terms</Link>
         {" · "}
         <Link href="/privacy" className="hover:text-text">Privacy</Link>
