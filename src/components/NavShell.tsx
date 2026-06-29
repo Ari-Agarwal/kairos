@@ -71,6 +71,9 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
           <div className={`flex items-center ${collapsed ? "flex-col gap-2" : "justify-between gap-2"}`}>
             <button
               onClick={() => setDropdownOpen((v) => !v)}
+              aria-label="Account menu"
+              aria-haspopup="menu"
+              aria-expanded={dropdownOpen}
               className="flex items-center gap-2 text-left rounded-xl px-1.5 py-1.5 hover:bg-white/5 transition-colors min-w-0"
             >
               <div className="w-7 h-7 rounded-full bg-primary text-bg flex items-center justify-center shrink-0">
@@ -178,6 +181,9 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
           </Link>
           <button
             onClick={() => setDropdownOpen((v) => !v)}
+            aria-label="Account menu"
+            aria-haspopup="menu"
+            aria-expanded={dropdownOpen}
             className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 hover:bg-white/5 transition-colors"
           >
             <div className="w-6 h-6 rounded-full bg-primary text-bg flex items-center justify-center shrink-0">

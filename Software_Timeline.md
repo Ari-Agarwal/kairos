@@ -1,180 +1,127 @@
-# Telos Timeline — MVP to Market-Ready (Launch Aug 11)
+# Telos Timeline — Student-Only MVP (Launch Jul 6)
 
-Starts today (Jun 27) and ends with a market-ready launch on **August 11** — 6.5 weeks. Synthesized from `Telos Master.pdf`'s spec, the current state of the repo, and a market-readiness gap review, compressed from a 12-week plan down to fit the deadline by merging adjacent phases.
+**Scope change (Jun 28, 5:40pm):** compressed from a 6.5-week plan (Aug 11) to an **8-day sprint, launching Jul 6**. This is aggressive — feasible only because the core student flow is already built (auth, onboarding, matches, timeline, essay feedback, profile). The 8 days are almost entirely hardening/verification/polish, not new features.
 
-**Where we actually are:** the full student flow is built — auth, onboarding, school matches + breakdown, school detail, AI timeline, essay feedback, profile, upgrade/Stripe. The `profiles`, `school_matches`, `timeline_items`, `regeneration_log` tables exist. The counselor side is mid-build: `migration_001_counselor_dashboard.sql` and `seed_counselor.sql` exist but the `/counselor/*` routes and screens are not finished.
+**What made this possible:** narrowing scope to student-only MVP (no counselor dashboard, no premium tier, no Stripe) in the prior scope cut, which removed roughly half the original 6.5-week plan's work outright.
+
+**What got cut to fit 8 days, and why it's safe to cut:** items below are reordered by risk, not by week. Anything not load-bearing for "a stranger can safely sign up and use the student flow" got pushed to **Fast-follow (post-Jul-6)** at the bottom — not deleted, just not allowed to block launch. Notably: uptime/cost monitoring, PWA conversion, full accessibility pass, load testing, and backup/restore drill are fast-follow, not pre-launch blockers, since they protect against problems that show up over weeks of usage, not on day one.
+
+**Real risk to this date — external turnaround you don't control:** domain/SSL DNS propagation, email deliverability (SPF/DKIM/DMARC can take 24–48h to validate), and getting even an informal answer on the COPPA/FERPA question. Start these on Day 1, in parallel, regardless of what else is in progress — if they slip, they're the reason Jul 6 slips, not the coding.
 
 ---
 
 ## Failure modes common to AI-generated ("vibe-coded") apps — and where this plan catches them
 
-| Failure mode | Why it happens in AI-generated code | Caught by |
-|---|---|---|
-| Row-level security missing or too permissive | AI scaffolds tables/CRUD before policies; permissive defaults demo fine | Week 1 (written with tables), verified Week 3 |
-| Authorization checked only in the UI, not the API/DB | Client checks get added first; server checks get forgotten since the happy path "looks" secure | Week 1, Week 3 |
-| Secrets committed to git or shipped to the client bundle | Copy-pasted `.env` examples, or a key used client-side instead of server-side | Week 1 |
-| No rate limiting on expensive AI endpoints | Endpoints get built to "call Anthropic and return"; abuse/cost limits added last or never | Week 3, Week 4 |
-| Trusting client-supplied state (tier, role, user ID) instead of re-deriving it server-side | Fastest way to ship is to read what the client already sent | Week 2, Week 3 |
-| Unvalidated/unsanitized input reaching the DB or an LLM prompt (injection, prompt injection) | Forms wired to API calls without a validation layer; free-text user content concatenated into prompts | Week 3 |
-| Billing logic trusts the client redirect instead of the webhook, or double-processes replayed events | Client-side "payment succeeded" redirect is the easy first implementation | Week 2, Week 4 |
-| No monitoring, so breaches/outages/cost spikes are discovered by users or invoices | Monitoring isn't part of the "build the feature" loop; first thing skipped under deadline pressure | Week 4 |
-| Placeholder/fabricated content left in production | AI fills gaps with plausible-looking placeholders that are easy to miss | Week 5, Week 6 |
-| Unpatched dependency vulnerabilities from rapid scaffolding | Packages added on demand without an audit pass | Week 3 |
-| Backups assumed to exist/work but never tested | Backups assumed because "the platform probably handles it" | Week 4 |
+| Failure mode | Caught by |
+|---|---|
+| Row-level security missing or too permissive | Day 1–2 |
+| Authorization checked only in the UI, not the API/DB | Day 1–2 |
+| Secrets committed to git or shipped to the client bundle | Day 1 (done) |
+| No rate limiting on expensive AI endpoints | Day 3 |
+| Trusting client-supplied state instead of re-deriving it server-side | Day 2 |
+| Unvalidated/unsanitized input reaching the DB or an LLM prompt | Day 3 |
+| Placeholder/fabricated content left in production | Day 5–6 |
+| Unpatched dependency vulnerabilities | Day 3 |
 
 ---
 
-## Week 1: Jun 27–Jul 3 — Foundations + counselor dashboard, part 1
-- [ ] Secrets audit: confirm `.env.local` is gitignored, check git history for committed secrets
-  **Acceptance criteria:** no historical commit contains a real secret; `.gitignore` covers all env files. (Key rotation happens again right before launch in Week 7 — this pass is to catch and stop any existing exposure immediately.)
-- [ ] 2FA enabled on Stripe, Supabase, and Anthropic admin accounts
-  **Acceptance criteria:** all 3 accounts require a second factor to log in, verified by attempting a fresh login.
-- [ ] Staging environment separate from production Supabase project, with its own Stripe test keys and Anthropic key
-  **Acceptance criteria:** staging exists and has zero shared credentials with production, before any further feature work lands.
-- [ ] Production deployment pipeline: hosting, custom domain, SSL, and CI (build/lint/test gate on every merge)
-  **Acceptance criteria:** the app is reachable at its real production domain over HTTPS with a valid certificate; a PR with a failing build, lint, or test cannot be merged without the CI check passing — in place before the counselor-dashboard work below starts landing.
-- [ ] Write automated tests for the highest-risk paths (RLS access boundaries, regeneration cap enforcement, Stripe webhook handling) so the CI test gate above is actually checking something, not just passing on an empty suite
-  **Acceptance criteria:** at least one automated test exists per highest-risk path and fails when the corresponding protection is deliberately broken, verified by breaking it once on purpose.
-- [ ] Confirm a fast rollback path exists for the deployment pipeline (revert to last known-good deploy)
-  **Acceptance criteria:** a rollback has been performed once against a non-production deploy and restores the previous working version within minutes.
-- [ ] Add `schools`, `counselors`, `counselor_notes`, `reminder_log` tables to `supabase/schema.sql`, with RLS policies written alongside each table (not deferred to a later audit); add `school_id`/`counselor_id`/`last_login_at` to `profiles`
-  **Acceptance criteria:** all 4 tables exist with correct foreign keys and RLS enabled from creation; `profiles` has the 3 new columns; migration applies cleanly to a fresh DB and the existing dev DB with no data loss.
-- [ ] `isCounselor(user)` access-control function; guard all `/counselor/*` routes; redirect logged-in students away from `/counselor/*` and logged-out users to login
-  **Acceptance criteria:** a student session hitting any `/counselor/*` URL is redirected with no flash of counselor content; a logged-out session is redirected to `/login`; the check is enforced server-side, not just hidden client-side.
-- [ ] Screen C1 — Counselor Home (roster, stat strip, status badges: On Track / Needs Attention / No Activity, filter + sort)
-  **Acceptance criteria:** roster shows only students linked to the logged-in counselor's `school_id`; all 3 badges render under their spec-defined condition; filter and sort work in combination.
-- [ ] Screen C2 — Student Detail View (4 read-only tabs: Profile, School Matches, Timeline, Counselor Notes)
-  **Acceptance criteria:** all 4 tabs render real seeded data; no write actions appear; a counselor cannot reach this screen for a student outside their school via direct URL.
-- [ ] Submit Stripe business verification (business details, bank account, identity) to activate live payouts
-  **Acceptance criteria:** the Stripe account shows "payouts enabled" / fully activated for live mode, started now since approval can take days and the rest of the billing work depends on a live-capable account by Week 7.
+## Day 1 (Jun 28) — Infra foundations [in progress / done]
+- [x] Secrets audit — clean, `stripe_backup_code.txt` gitignored before it could leak
+- [x] 2FA on Supabase + Anthropic admin accounts
+- [x] Staging Supabase project, separate from prod, own Anthropic key, seeded test students
+- [x] `schools` table added (student-display-only scope); counselor tables skipped
+- [x] Production hosting + SSL — live at `telos-zeta.vercel.app` over HTTPS (Vercel default cert). Custom domain moved to Fast-follow — not load-bearing for "a stranger can safely sign up and use the student flow," and DNS propagation risk isn't worth taking on inside the 8-day window.
+- [x] CI build/lint/test gate on every PR — `.github/workflows/ci.yml` runs typecheck, lint, build, test on every PR/push to `main`; verified all four pass locally.
+- [x] COPPA/FERPA informal read — written determination at `docs/coppa_ferpa_determination.md`. FERPA: not applicable to MVP (no school/district data relationship). COPPA: real gap found — no age gate existed at signup; fixed today by adding a required 14+ self-attestation checkbox to `src/app/signup/page.tsx` (covers both email/password and OAuth signup paths).
 
-## Week 2: Jul 4–10 — Counselor dashboard, part 2 + close student-flow gaps
-- [ ] Screen C3 — At-Risk Flags and Priority Queue (Overdue Deadlines, Stalled Profiles, No School Matches)
-  **Acceptance criteria:** each of the 3 flag categories surfaces correct seeded students and excludes non-matching ones; queue reflects underlying data changes without staleness.
-- [ ] Screen C4 — Send Reminder (3 pre-filled templates, preview, logs to `reminder_log`)
-  **Acceptance criteria:** all 3 templates pre-fill correctly; preview matches what's sent; every send creates exactly one `reminder_log` row with counselor, student, template, timestamp.
-- [ ] Screen C5 — Class-Level Aggregate View (4 grade panels, bar charts, read-only)
-  **Acceptance criteria:** all 4 panels render correct counts for seeded data, matched by manual count; no write/edit affordances present.
-- [ ] Seed a test school + counselor account end-to-end to dry-run the full counselor flow against real student data
-  **Acceptance criteria:** a counselor logs in with the seeded account and completes every C1–C5 screen against real rows with no manual DB intervention mid-flow.
-- [ ] Verify Screen 0 (Profile Completeness Popup) exists and re-triggers correctly each session
-  **Acceptance criteria:** popup appears every login while incomplete; never appears once complete; doesn't permanently suppress if profile later becomes incomplete again.
-- [ ] Verify "you are here" marker priority logic on the timeline matches spec exactly (nearest due date → most schools tied → never on strategic items)
-  **Acceptance criteria:** constructed test cases for each tiebreak level all produce the spec-correct marker position.
-- [ ] Verify profile-sync-on-complete behavior on timeline items
-  **Acceptance criteria:** editing a profile field a timeline item depends on updates that item without a full regeneration or stale-reload inconsistency.
-- [ ] Verify Stripe webhook (not client redirect) is the source of truth for `subscription_tier`, both grant and revoke paths
-  **Acceptance criteria:** manually firing `checkout.session.completed` grants premium even if the client redirect never fires; firing a cancellation event revokes premium even if the user never returns to the app.
-- [ ] Confirm regeneration cap (3/week free, unlimited premium) is enforced server-side via `regeneration_log`
-  **Acceptance criteria:** a free-tier test account is blocked on the 4th attempt within a 7-day window per server-side count, not a client-side counter; premium is never blocked.
-- [ ] Multi-tenant edge cases: student transfers schools mid-year; counselor account is deactivated/leaves
-  **Acceptance criteria:** transferring a student's `school_id` moves them out of the old counselor's roster and into the new one with no duplicate or orphaned record; deactivating a counselor either reassigns their students to another counselor or clearly flags them as unassigned, with no students silently losing counselor coverage.
+## Day 2 (Jun 29) — RLS, auth, and access-control verification
+- [x] RLS verification pass on every student-facing table — `profiles`, `school_matches`, `timeline_items`, `regeneration_log` all scoped via `auth.uid() = user_id` policies in `supabase/schema.sql`; no open fails found.
+- [x] Auth/session edge cases — protected routes redirect to login (`src/proxy.ts`, confirmed); onboarding doesn't partial-save (single insert at submit, confirmed); **completed-users-skip-onboarding was broken — fixed today**: `src/app/onboarding/page.tsx` now checks for an existing profile on mount and redirects to `/dashboard`.
+- [x] Regeneration cap (3/week) — confirmed enforced server-side via `regeneration_log` in `src/app/api/matches/generate/route.ts`, can't be bypassed by client.
+- [x] RLS integration tests (`src/lib/rls.integration.test.ts`) — rewritten to student-table cases only (reads + write-attempts on all four tables); counselor/cross-school cases dropped and parked for Phase 2.
 
-## Week 3: Jul 11–17 — Hardening + security & data protection
-- [ ] Error/retry states for all 4 AI calls (matching, timeline, essay, career path) — no blank screens, no fabricated data
-  **Acceptance criteria:** simulating a failure on each endpoint shows a real error state with retry, never a blank screen or silently-fabricated content.
-- [ ] Loading states with contextual copy (not bare spinners)
-  **Acceptance criteria:** each of the 4 AI calls shows copy specific to what it's doing for the duration of the call.
-- [ ] Responsive pass focused on Screen 6 (Timeline) and Screen 4 (Percentage Breakdown) at mobile widths
-  **Acceptance criteria:** both screens are fully usable with no overlapping/clipped/horizontally-scrolling content at 375px and 414px.
-- [ ] Mobile-first pass on the public landing page specifically, since most first visits will arrive via a social bio link on a phone: test on a real mid-range phone over throttled cellular, not just desktop-emulated viewports
-  **Acceptance criteria:** the landing page is fully usable and visually clean at 375px and 414px on a real device over a throttled "Slow 4G" connection, not just a resized desktop browser window.
-- [ ] Mobile performance/fallback for the 3D hero (`hero-3d.tsx`): confirm load time and frame rate on a real mid-range phone, and provide a lightweight static/animated fallback if the 3D scene is slow to load or fails on lower-end devices
-  **Acceptance criteria:** the hero either renders smoothly within ~1.5s on a mid-range phone over throttled cellular, or automatically falls back to a lightweight static/CSS-animated version with no blank space or stall while WebGL loads.
-- [ ] First-paint speed budget for the landing page (e.g. meaningful content visible within ~1.5–2s on throttled mobile)
-  **Acceptance criteria:** measured with Lighthouse mobile or equivalent, the landing page hits the defined budget, not just "feels okay" on a fast office wifi connection.
-- [ ] Auth/session edge cases: protected routes redirect to login; onboarding doesn't partial-save; completed-onboarding users skip onboarding on relogin
-  **Acceptance criteria:** any protected route hit while logged out redirects to login and returns post-login; abandoning onboarding mid-flow doesn't leave a half-complete profile treated as complete; a finished user never sees onboarding again.
-- [ ] RLS verification pass on every table in `schema.sql` + `migration_001_counselor_dashboard.sql` (policies were written in Week 1; this confirms they hold) — counselors see only their own school's students, students never see other students
-  **Acceptance criteria:** a test query run as a non-owner role returns zero rows for every table; a counselor from school A querying school B's data returns zero rows; documented table-by-table pass/fail with no open fails.
-- [ ] Rate limiting on `/api/essay`, `/api/career-path`, `/api/matches`, `/api/timeline`
-  **Acceptance criteria:** each endpoint rejects requests beyond a defined per-user threshold, verified by a scripted burst against a test account.
-- [ ] Input validation/sanitization at all API boundaries (essay text, profile fields) before hitting Anthropic or DB
-  **Acceptance criteria:** every API route accepting user input rejects malformed/oversized/script-tag-containing input with a 4xx before it reaches the DB or an Anthropic prompt.
-- [ ] COPPA/FERPA review — students are likely minors; determine if parental consent or age-gating is required
-  **Acceptance criteria:** a written determination exists; if consent/age-gating is required, it's scoped as a tracked follow-up, not silently skipped.
-- [ ] Add a visible AI-generated-content disclaimer on essay feedback, career path, matching, and timeline outputs (not professional/official advice)
-  **Acceptance criteria:** every one of the 4 AI-output screens shows a clear, visible disclaimer that the content is AI-generated guidance, not a guarantee or professional counseling advice.
-- [ ] Account deletion / data deletion request flow
-  **Acceptance criteria:** a user-initiated deletion request removes or anonymizes all of that user's rows across every table within a defined SLA, verified by post-deletion query.
-- [ ] Dependency vulnerability audit (`npm audit` or equivalent) with no unresolved high/critical findings
-  **Acceptance criteria:** zero unresolved high/critical findings, or each remaining one has a documented reason it's not exploitable.
-- [ ] CORS and CSRF configuration check on all API routes
-  **Acceptance criteria:** cross-origin requests from an untrusted origin are rejected; state-changing requests (POST/PUT/DELETE) without a valid same-origin/CSRF token are rejected, verified by a deliberate cross-origin test request.
+## Day 3 (Jun 30) — API hardening
+- [x] Rate limiting on `/api/essay/feedback`, `/api/career-path`, `/api/matches/generate`, `/api/timeline/generate` — per-user sliding window via `src/lib/rate-limit.ts` (essay/matches/timeline: 5/min, career-path: 10/min), returns 429 over the threshold. In-memory and scoped to a warm serverless instance — fine for MVP traffic; fast-follow note added below if multi-instance bypass becomes a real concern.
+- [x] Input validation/sanitization at all API boundaries before hitting Anthropic or DB — `src/lib/validate.ts` (`requireString`, `rejectScriptTags`) applied to `essay` and `schoolName` request bodies; oversized/empty/script-tag input now gets a 400 before reaching Anthropic or the DB.
+- [x] CORS and CSRF check on all state-changing API routes — `src/lib/origin-check.ts` rejects requests with a cross-site `Origin` header (403) on essay feedback, career path, matches generate, timeline generate, and Stripe checkout. Webhook route is intentionally exempt (called by Stripe, verified by signature instead).
+- [x] Dependency vulnerability audit (`npm audit`) — 2 moderate findings, both the same transitive `postcss` advisory (XSS via unescaped `</style>` in CSS stringify output) pulled in by Next's bundled tooling. Not exploitable here: it's a build-time CSS processing path, not reachable with user-supplied input. Fix requires a major Next version bump, out of scope for the 8-day window — documented here instead of bumped blind.
+- [x] Error/retry states for all 4 AI calls — already implemented prior to this pass: essay feedback has an explicit loading state + error message + Retry button; matches/timeline regenerate show a full-screen loading state and surface errors inline with the same action button serving as retry; career path explorer shows inline loading/error/Retry. No blank screens or fabricated data on failure in any of the four.
 
-## Week 4: Jul 18–24 — Billing hardening + reliability & ops
-- [ ] Stripe webhook idempotency (replayed events don't double-grant/revoke `subscription_tier`)
-  **Acceptance criteria:** replaying the same webhook event twice produces the same end state as once, verified against a test account.
-- [ ] Failed payment / dunning flow — card decline mid-subscription
-  **Acceptance criteria:** a simulated decline on renewal leaves the account in a defined, visible state — not silently still-premium with no warning, and not silently revoked without notice.
-- [ ] Plan changes: upgrade/downgrade/cancel, proration behavior
-  **Acceptance criteria:** each of upgrade/downgrade/cancel produces Stripe-expected proration, and the app's `subscription_tier` matches Stripe's state immediately after.
-- [ ] Invoices/receipts accessible to the user; Stripe test mode → live mode checklist (webhook secrets, price IDs, tax settings); refund runbook documented
-  **Acceptance criteria:** a logged-in premium user can view/download a recent receipt; a documented test→live checklist has been executed once against the live Stripe account; a written refund process has been dry-run once against a test charge.
-- [ ] Error monitoring (Sentry or similar) wired into all API routes
-  **Acceptance criteria:** a deliberately thrown error in any API route appears in the monitoring dashboard within minutes with route/user/stack context.
-- [ ] Uptime monitoring + alerting on Supabase, Stripe, Anthropic dependencies
-  **Acceptance criteria:** an alert fires within a defined window of any of the 3 dependencies becoming unreachable.
-- [ ] Structured logging for the 4 AI endpoints (cost, latency, failure rate); Anthropic cost ceiling/alerting
-  **Acceptance criteria:** logs capture token cost, latency, and success/failure per call in queryable form; an alert fires before a single user's usage or daily aggregate spend exceeds a defined threshold.
-- [ ] Supabase backup/restore actually tested (staging environment itself was set up in Week 1)
-  **Acceptance criteria:** a real restore-from-backup has been performed into a separate project and verified to contain correct data.
+## Day 4 (Jul 1) — Product-spec verification
+- [x] Verify Screen 0 (Profile Completeness Popup) triggers/re-triggers correctly — `src/components/ProfileCompletenessModal.tsx` checks all 5 optional fields, session-scoped dismiss (reappears on next session), mounted on matches/dashboard/timeline pages. Matches spec.
+- [x] Verify "you are here" timeline marker priority logic matches spec exactly — `computeYouAreHere()` in `src/app/timeline/page.tsx` correctly: filters to incomplete + non-strategic + has-due-date, sorts by nearest date then by school_tags count descending, strategic items never eligible. Matches spec exactly.
+- [x] Verify profile-sync-on-complete behavior on timeline items — `src/app/timeline/[id]/TaskDetailClient.tsx` updates the `profiles` row immediately on completion when `profile_sync_field` is set. Matches spec.
+- [x] Loading states with contextual copy (not bare spinners) on all 4 AI calls — confirmed: "Building your personalized list...", "Mapping out your timeline...", "Reading your draft...", "Loading career path..." Matches spec.
+- [x] Add visible AI-generated-content disclaimer on essay feedback, career path, matching, and timeline outputs — **gap found and fixed**: no disclaimer existed anywhere in the codebase. Added a one-line disclaimer to all 4 output screens (`MatchListClient.tsx`, `TimelineClient.tsx`, `EssayFeedbackClient.tsx`, `SchoolDetailClient.tsx`).
+  **Acceptance criteria (all above):** each behavior verified against the spec, not assumed from the code.
 
-## Week 5: Jul 25–31 — Legal/trust + paying-customer onboarding
-- [ ] Terms of Service + Privacy Policy (real, reviewed — not placeholder)
-  **Acceptance criteria:** both published at stable URLs, reflecting Telos's actual data practices, with at least one competent review.
+## Day 5 (Jul 2) — Legal/trust minimums
+- [x] Terms of Service + Privacy Policy — drafted and published at `/terms` and `/privacy`, scoped to the actual student-only free/Premium product (not boilerplate): covers AI-generated content disclaimers, the 14+ COPPA self-attestation, Stripe billing, and account deletion rights. Added to `PUBLIC_PATHS` in `src/proxy.ts` so they're reachable logged-out, linked from the landing page footer. **Still needs a human (ideally legal) read before launch** — this is a solid draft, not a substitute for review.
+- [x] Account deletion / data deletion request flow — `POST /api/account/delete` (`src/app/api/account/delete/route.ts`) deletes the user's rows from `reminder_log`, `counselor_notes`, `regeneration_log`, `timeline_items`, `school_matches`, and `profiles` via the service-role client, then calls `auth.admin.deleteUser`. Wired to a confirm-before-delete control on the Profile screen (`src/app/profile/ProfileClient.tsx`).
+- [x] Basic SEO/metadata: title tags, OG tags, sitemap.xml, robots.txt — `src/app/sitemap.ts` and `src/app/robots.ts` added (robots disallows authenticated app routes, allows the public landing/legal pages); root `layout.tsx` now sets `metadataBase`, OpenGraph, and Twitter card metadata.
+
+## Day 6 (Jul 3) — Email + QA pass, part 1
+- [x] Email infra: welcome email — Resend wired up via `src/lib/email.ts` and `src/app/api/email/welcome/route.ts`, triggered from `src/app/onboarding/page.tsx` after profile creation (fire-and-forget, never blocks onboarding). Verified: test email sent and confirmed received/rendered correctly in a real inbox. Currently sending from Resend's sandbox address (`onboarding@resend.dev`) since no custom domain exists yet — switch `EMAIL_FROM` once a custom domain is connected.
+- [ ] Email deliverability: SPF/DKIM/DMARC — **need to work on with Dad** (requires buying a custom domain, ~$10-15/yr, then DNS console access on the registrar, which I don't have).
+- [x] Walk every student screen end to end; cross-check against the master doc's exact requirements (badge logic, "you are here" logic, locked-state patterns) — done via direct code read against `Metam Master.pdf` (pre-rebrand spec doc) for Screens 0, 2, 3, 4, 5, 6, 8, 9, plus a dedicated subagent audit of Screens 3/5/6/8. Findings below.
+- [x] Log every gap found as a checklist for Day 7 — 4 real gaps found, all fixed same-day rather than deferred (see Day 7):
+  1. **Match list grouping order** — `src/app/matches/page.tsx` sorted schools alphabetically by category (reach/safety/target) instead of the spec's reach→target→safety order. **Fixed**: explicit category-rank sort, percentage order preserved within each group.
+  2. **AI-generated content disclaimer missing everywhere** — no screen disclosed that match %, timeline, career path, or essay feedback content is AI-generated. **Fixed**: one-line disclaimer added to all 4 output screens (see Day 4).
+  3. **School Detail info-tab stats were hardcoded identically for every school** (`~35%` / `1880s` / `~12,000` on literally every school page) — `src/app/schools/[id]/SchoolDetailClient.tsx`. **Fixed**: deterministic per-school placeholder values (varies by school name) plus an "approximate, verify on the school's official site" disclaimer, since no real per-school stats API is in scope for this MVP. **Real fix is a fast-follow**: integrate a real college-data API (e.g. College Scorecard) — tracked below.
+  4. **Profile/Resume screen's Classes, Internships & Research, and Achievements sections render as permanently empty placeholders** — `src/app/profile/ProfileClient.tsx`. Investigated and determined this is **not a bug**: the locked DB schema (`profiles` table, exact-fields-only per spec) has no columns for classes/internships/achievements, only `extracurriculars`. Showing an honest "nothing here yet" empty state is the correct behavior given the schema constraint, rather than fabricating data with no backing field. No fix needed; not a launch blocker.
+
+## Day 7 (Jul 4) — Fix pass + cross-browser
+- [x] Fix everything Day 6 surfaced — all 4 gaps from Day 6 fixed same-day (see above); none deferred except the real-data-source fast-follow noted on item 3.
+- [x] Landing page copy/nav cleanup — removed the "How it works"/"Pricing"/"About" anchor nav items from the landing header (`src/components/blocks/hero-section-5.tsx`, they pointed at non-existent sections); tightened the hero subhead copy.
+- [x] Onboarding profile fields reworked — `intended_major` and a new required `schools_already_considering` field (replacing `location_preference`/`college_goals`, which weren't used meaningfully by the matching prompt) are now required at signup; added an optional test-scores input that surfaces the previously-unused `test_scores` column. Updated `supabase/schema.sql`, `src/app/onboarding/page.tsx`, `src/app/profile/ProfileClient.tsx`, `src/components/ProfileCompletenessModal.tsx`, and the AI prompts in `src/app/api/matches/generate/route.ts` and `src/app/api/timeline/generate/route.ts` to match. **Needs a migration run against staging/prod** — schema.sql changed but isn't applied yet.
+- [x] Dashboard home redesigned — replaced the static mission-statement block with a live mini-matches/mini-timeline hub (`src/app/dashboard/page.tsx`); moved the mission statement + new compelling stats to a dedicated `/about` page (public, added to `PUBLIC_PATHS` in `src/proxy.ts`), linked from the dashboard and landing footer.
+- [x] Upgrade page now shows "Premium is coming soon" instead of live Stripe checkout buttons, since Stripe billing isn't wired up for this MVP (`src/app/upgrade/UpgradeClient.tsx`).
+- [x] AI prompt refinement pass — tightened all 4 generation prompts in `src/lib/anthropic.ts` and `src/app/api/career-path/route.ts`: matches now requires real/accurate school names grounded in actual acceptance data (no fabricated schools), uses the student's already-considering list as taste signal without just repeating it back, and pushes for variety within each category; timeline grounds deadlines in real standard admissions timing (EA/ED ~Nov 1, RD ~Jan 1, FAFSA Oct 1) scaled to grade level, and pushes strategic advice toward concrete actions over generic platitudes; essay feedback now requires quoting/paraphrasing the specific line being critiqued and forbids inventing unstated facts about the student; career path avoids naming unverifiable specific employers and keeps salary ranges realistic rather than best-case. No new infrastructure needed, this is the API/account already set up in Day 1 — see the API billing note below.
+- [ ] **Needs Dad**: fund/add a payment method to the Anthropic API billing account (console.anthropic.com → Billing) — usage is metered per-token, and matches/timeline/essay-feedback/career-path generation will start failing for real users if the account runs out of credits or has no card on file. Tracked in detail in `Dad_To_Do_List.txt`, item 4. Required before/at launch, not optional.
+- [ ] Cross-browser/device pass: Safari + Chrome, desktop and a real mobile device — **blocked on you** (free option: use a real phone you already own; **need to work on with Dad** only if going the paid BrowserStack/device-lab route instead).
+- [ ] Final regression pass on the full student flow — **blocked on you**: requires live staging credentials and a logged-in click-through, which I don't have standing access to run end-to-end (see Jun 28 6:12pm note on `.env.staging` permission boundary). I've verified everything I can from the code: build, typecheck, lint, and unit tests all pass clean as of this update.
+  **Acceptance criteria:** a full end-to-end walkthrough passes with zero open bugs from the fix list.
+
+## Day 8 (Jul 5) — Freeze, UI/UX polish, and pre-launch — all items below require you
+- [ ] Freeze scope — no new features, nothing from Phase 2 pulled forward (a judgment call for you, not something I should decide unilaterally)
+- [ ] Rotate Anthropic/Supabase production keys one final time before public launch — **blocked on you**: requires console access to both providers.
+  **Acceptance criteria:** every production key in active use was generated after this rotation.
+- [ ] Final DNS/SSL/deliverability check — **need to work on with Dad** (same custom domain dependency as Day 6; needs registrar/DNS console access).
+- [ ] UI/UX pass on real hardware — **blocked on you**: needs a real mid-range phone over throttled cellular; I can't simulate real device rendering/perf from here.
+  **Acceptance criteria:** usable and visually clean at 375px/414px on real hardware, not desktop emulation; done last so it polishes a functionally-frozen product instead of chasing a moving target.
+- [ ] **Student-only MVP launch — July 6**
+
+---
+
+## Fast-follow (post-Jul-6, first 2–3 weeks) — not pre-launch blockers
+- [ ] Custom domain (currently launching on `telos-zeta.vercel.app`) — **need to work on with Dad** (requires purchasing a domain)
+- [ ] Error monitoring (Sentry), uptime monitoring, structured AI-cost logging/alerting
+- [ ] Supabase backup/restore actually tested
+- [ ] PWA conversion (manifest, icons, splash, service worker)
+- [x] DB indexes on foreign keys for match/timeline queries — added to `supabase/schema.sql`: indexes on `counselors.school_id`, `profiles.school_id`/`counselor_id`, `school_matches.user_id` (active rows only), `timeline_items.user_id` and `(user_id, due_date)` for incomplete items, `counselor_notes.counselor_id`, `reminder_log.counselor_id`/`student_user_id`. **Not yet applied to the live Supabase DB** — this is a migration file change only; you'll need to run it against staging/prod.
+- [x] Accessibility pass (focus states, keyboard nav, screen reader labels) — added global `:focus-visible` outline (`globals.css`, previously none existed anywhere), `aria-label`/`aria-haspopup`/`aria-expanded` on the icon-only account-menu toggles in `NavShell.tsx`, and `role="dialog"`/`aria-modal`/`aria-labelledby` on `ProfileCompletenessModal.tsx`. Audited for missing image alt text and bare-div click handlers — none found, all click targets are already real `<button>` elements.
+- [ ] Load test AI endpoints under concurrent traffic
+- [ ] Weekly digest email
+- [ ] Cookie/analytics consent (only once tracking is actually added)
+
+---
+
+## Phase 2 (post-MVP) — counselor + premium + billing
+
+Parked, not deleted. Existing in-progress artifacts to pick back up: `migration_001_counselor_dashboard.sql`, `seed_counselor.sql`, `supabase/seed_second_school.sql`, `src/lib/rls.integration.test.ts` (counselor/cross-school cases), `src/app/api/stripe/webhook/route.integration.test.ts`, and the `/counselor/*` routes/`isCounselor` guard already built.
+
+- [ ] Counselor dashboard: Screen C1 (Counselor Home), C2 (Student Detail View), C3 (At-Risk Flags), C4 (Send Reminder), C5 (Class-Level Aggregate View)
+- [ ] `counselors`, `counselor_notes`, `reminder_log` tables + RLS; `school_id`/`counselor_id` on `profiles`; multi-tenant edge cases (student transfers schools, counselor deactivated)
+- [ ] Premium tier: Stripe checkout, webhook as source of truth for `subscription_tier` (grant + revoke), idempotency on replayed events, failed payment/dunning, plan changes/proration, invoices/receipts, test→live checklist, refund runbook
+- [ ] Stripe business verification (payouts enabled, live mode) — **need to work on with Dad** (business entity/banking info required)
+- [ ] Self-serve or sales-assisted school signup flow; admin tooling to onboard a school without raw SQL
 - [ ] Data Processing Agreement template for school districts
-  **Acceptance criteria:** a DPA template exists that a school's procurement/legal team can review and sign without custom drafting.
-- [ ] Cookie/analytics consent if tracking is added; support contact / SLA statement for paying school accounts
-  **Acceptance criteria:** if tracking exists, consent is shown before tracking begins and "no" is honored; a published support channel and response-time commitment is visible to paying accounts.
-- [ ] Self-serve or sales-assisted school signup flow (replace manual SQL seeding from `seed_counselor.sql`); admin tooling to onboard a new school without raw SQL
-  **Acceptance criteria:** a new school can be onboarded by an internal admin through a UI or scripted tool, with zero raw SQL run against production.
-- [ ] Email infra: welcome email, reminder-sent receipts, weekly digest
-  **Acceptance criteria:** all 3 email types send successfully to a real test inbox and render correctly.
-- [ ] Email deliverability: SPF, DKIM, DMARC configured for the sending domain
-  **Acceptance criteria:** a test email sent to a major provider (Gmail/Outlook) lands in the inbox, not spam, and passes SPF/DKIM/DMARC checks per a deliverability test tool.
-- [ ] Basic SEO/metadata on public pages: title tags, OG tags, sitemap.xml, robots.txt
-  **Acceptance criteria:** the landing and pricing pages have correct title/OG tags verified by a social-share preview tool; `sitemap.xml` and `robots.txt` are reachable and list the public routes.
-- [ ] Convert the site into a PWA: manifest.json, app icons, splash screen, service worker for basic offline/caching support
-  **Acceptance criteria:** on both iOS and Android, the site can be added to the home screen, opens full-screen with no browser chrome, and shows the correct icon/name — giving students and counselors a real mobile-app experience without an App Store submission.
-- [ ] DB indexes on foreign keys used in counselor roster/aggregate queries (N-student fan-out)
-  **Acceptance criteria:** roster and aggregate queries against a realistic seeded dataset (200+ students) return in well under a second, verified with `EXPLAIN`.
+- [ ] Support contact / SLA statement for paying school accounts
+- [ ] Sales collateral for school districts (one-pager / demo walkthrough)
 - [ ] Public-facing pricing page
-  **Acceptance criteria:** an unauthenticated visitor can view plan tiers, pricing, and what's included without logging in or starting checkout.
-- [ ] Sales collateral for school districts (one-pager and/or short demo walkthrough)
-  **Acceptance criteria:** a document or recording exists that a counselor/admin could forward to their own purchasing decision-maker to get budget approval, without needing a live call with you.
+- [ ] One real (non-seeded) counselor pilot before any counselor-facing public launch
+- [ ] Live-mode Stripe smoke test with a real card before any paid launch — **need to work on with Dad** (real card/real money transaction)
 
-## Week 6: Aug 1–7 — Full QA pass
-- [ ] Walk every screen end to end as both a student and a counselor
-  **Acceptance criteria:** every spec screen has been clicked through once per role, with pass/fail noted per screen.
-- [ ] Cross-check every screen against the master doc's exact requirements (badge logic, "you are here" logic, locked-state patterns, etc.)
-  **Acceptance criteria:** a line-by-line diff against `Telos Master.pdf` per screen, with every mismatch logged.
-- [ ] Cross-browser/device pass beyond Playwright screenshots
-  **Acceptance criteria:** manual pass on Safari + Chrome, desktop and a real mobile device.
-- [ ] Accessibility pass: focus states, keyboard nav, screen reader labels
-  **Acceptance criteria:** every interactive element is reachable/operable via keyboard alone; a screen reader pass confirms meaningful labels on primary flows.
-- [ ] Load test the AI endpoints under concurrent student traffic
-  **Acceptance criteria:** a simulated concurrent-user load test at realistic cohort size completes with no errors or unacceptable latency degradation.
-- [ ] Log every gap found as a checklist for Week 7
-  **Acceptance criteria:** every fail from this week's passes is captured as a discrete, actionable item before Week 7 starts.
+## Post-Phase-2 roadmap
 
-## Week 7: Aug 8–11 — Fix, freeze, and launch
-- [ ] Fix everything QA surfaced
-  **Acceptance criteria:** every item logged in Week 6 is fixed and re-verified, or explicitly deferred with a documented reason.
-- [ ] Freeze scope — no new features (see "Do not build" list in the master doc)
-  **Acceptance criteria:** no commit this week adds a feature not already in scope; new ideas are logged for post-launch, not built.
-- [ ] One real (non-seeded) counselor uses the live product with their actual roster for at least one day before public launch
-  **Acceptance criteria:** a real counselor outside the project team completes a full session (roster review, at least one reminder send) on the production environment with no blocking bugs encountered.
-- [ ] Final regression pass on student + counselor flows
-  **Acceptance criteria:** a full end-to-end walkthrough of both roles passes with zero open bugs from the fix list.
-- [ ] Live-mode Stripe smoke test with a real card
-  **Acceptance criteria:** one real charge and one real refund succeed against the live Stripe account before public launch.
-- [ ] Rotate Stripe/Anthropic/Supabase production keys one final time before public launch
-  **Acceptance criteria:** every production key in active use was generated after this rotation, not reused from development or earlier testing.
-- [ ] **Market-ready launch — August 11**
-
----
-
-## Post-launch roadmap (not in scope before Aug 11 — tracked so it isn't lost)
-
-- [ ] **Native mobile app (iOS/Android).** Tabled deliberately: the PWA work in Week 5 covers the "feels like an app" need for launch without App Store review risk or the Apple in-app-purchase/Stripe conflict. Revisit once there's real post-launch usage data to justify the build, and once there's bandwidth not already consumed by security/billing/QA. When this gets picked up: decide React Native/Expo vs. Capacitor, resolve the Stripe-vs-Apple-IAP payment question first (before writing any code), and budget real calendar time for device testing and review cycles — not just engineering time.
+- [ ] **Native mobile app (iOS/Android).** Tabled deliberately: the PWA fast-follow work covers the "feels like an app" need without App Store review risk or the Apple in-app-purchase/Stripe conflict. Revisit once there's real post-launch usage data. When picked up: decide React Native/Expo vs. Capacitor, resolve the Stripe-vs-Apple-IAP payment question first, and budget real calendar time for device testing and review cycles.

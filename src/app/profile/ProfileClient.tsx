@@ -12,8 +12,7 @@ interface Profile {
   gpa: number;
   intended_major: string | null;
   extracurriculars: string[] | null;
-  location_preference: string | null;
-  college_goals: string | null;
+  schools_already_considering: string | null;
   subscription_tier: string;
 }
 
@@ -38,10 +37,25 @@ export default function ProfileClient({
     gpa: String(profile.gpa),
     intended_major: profile.intended_major ?? "",
     extracurriculars: profile.extracurriculars?.join(", ") ?? "",
-    location_preference: profile.location_preference ?? "",
-    college_goals: profile.college_goals ?? "",
+    schools_already_considering: profile.schools_already_considering ?? "",
   });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    setDeleteError(null);
+    const res = await fetch("/api/account/delete", { method: "POST" });
+    if (!res.ok) {
+      setDeleteError("Failed to delete account. Please try again.");
+      setDeleting(false);
+      return;
+    }
+    await supabase.auth.signOut();
+    router.push("/");
+  }
 
   const ecCount = profile.extracurriculars?.length ?? 0;
   const displayName = fullName || email || "Student";
@@ -56,12 +70,11 @@ export default function ProfileClient({
       .update({
         grade_level: form.grade_level,
         gpa: parseFloat(form.gpa),
-        intended_major: form.intended_major || null,
+        intended_major: form.intended_major,
         extracurriculars: form.extracurriculars
           ? form.extracurriculars.split(",").map((s) => s.trim()).filter(Boolean)
           : null,
-        location_preference: form.location_preference || null,
-        college_goals: form.college_goals || null,
+        schools_already_considering: form.schools_already_considering,
       })
       .eq("user_id", user.id);
     setSaving(false);
@@ -131,20 +144,11 @@ export default function ProfileClient({
             />
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Location Preference</label>
-            <input
-              type="text"
-              value={form.location_preference}
-              onChange={(e) => setForm({ ...form, location_preference: e.target.value })}
-              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-text-gray mb-1">College Goals</label>
+            <label className="block text-sm text-text-gray mb-1">Schools you&apos;re already considering</label>
             <textarea
               rows={3}
-              value={form.college_goals}
-              onChange={(e) => setForm({ ...form, college_goals: e.target.value })}
+              value={form.schools_already_considering}
+              onChange={(e) => setForm({ ...form, schools_already_considering: e.target.value })}
               className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary resize-none"
             />
           </div>
@@ -248,6 +252,40 @@ export default function ProfileClient({
       <p className="text-text-gray text-xs text-center mt-8">
         This profile updates automatically as you check off items on your timeline.
       </p>
+
+      <div className="mt-10 pt-6 border-t border-border">
+        {!confirmingDelete ? (
+          <button
+            onClick={() => setConfirmingDelete(true)}
+            className="text-red text-sm hover:opacity-80"
+          >
+            Delete my account
+          </button>
+        ) : (
+          <div className="bg-red-tint border border-border rounded-2xl p-4">
+            <p className="text-text text-sm mb-3">
+              This permanently deletes your profile, school matches, and timeline. This cannot be undone.
+            </p>
+            {deleteError && <p className="text-red text-sm mb-3">{deleteError}</p>}
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                className="rounded-xl bg-red text-bg font-medium px-4 py-2 text-sm disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Yes, delete everything"}
+              </button>
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                disabled={deleting}
+                className="rounded-xl border border-border text-text-gray hover:text-text px-4 py-2 text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }

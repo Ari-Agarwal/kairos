@@ -20,10 +20,9 @@ create table profiles (
   user_id uuid references auth.users primary key,
   grade_level text check (grade_level in ('Freshman','Sophomore','Junior','Senior')) not null,
   gpa decimal not null,
-  intended_major text,
+  intended_major text not null,
   extracurriculars text[],
-  location_preference text,
-  college_goals text,
+  schools_already_considering text not null,
   test_scores jsonb,
   subscription_tier text check (subscription_tier in ('free','premium')) default 'free' not null,
   stripe_customer_id text unique,
@@ -149,3 +148,13 @@ as $$
 $$;
 
 grant execute on function public.get_student_count() to anon, authenticated;
+
+create index idx_counselors_school_id on counselors(school_id);
+create index idx_profiles_school_id on profiles(school_id);
+create index idx_profiles_counselor_id on profiles(counselor_id);
+create index idx_school_matches_user_id on school_matches(user_id) where is_active;
+create index idx_timeline_items_user_id on timeline_items(user_id);
+create index idx_timeline_items_user_due on timeline_items(user_id, due_date) where not completed;
+create index idx_counselor_notes_counselor_id on counselor_notes(counselor_id);
+create index idx_reminder_log_counselor_id on reminder_log(counselor_id);
+create index idx_reminder_log_student_user_id on reminder_log(student_user_id);

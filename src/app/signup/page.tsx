@@ -17,6 +17,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<"google" | "azure" | null>(null);
   const [confirmationSent, setConfirmationSent] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
 
   function showError(message: string) {
     setError(message);
@@ -46,6 +47,10 @@ export default function SignupPage() {
   }
 
   async function handleOAuth(provider: "google" | "azure") {
+    if (!ageConfirmed) {
+      showError("Please confirm you are 14 years of age or older.");
+      return;
+    }
     setError(null);
     setOauthLoading(provider);
     const { error } = await supabase.auth.signInWithOAuth({
@@ -131,6 +136,16 @@ export default function SignupPage() {
               className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary transition-colors"
             />
           </div>
+          <label className="flex items-start gap-2 text-sm text-text-gray">
+            <input
+              type="checkbox"
+              required
+              checked={ageConfirmed}
+              onChange={(e) => setAgeConfirmed(e.target.checked)}
+              className="mt-0.5 accent-primary"
+            />
+            I confirm I am 14 years of age or older.
+          </label>
           {error && (
             <p key={errorKey} role="alert" className="text-red text-sm animate-auth-error">
               {error}
@@ -138,7 +153,7 @@ export default function SignupPage() {
           )}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !ageConfirmed}
             className="w-full rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium py-2.5 disabled:opacity-50"
           >
             {loading ? "Creating account..." : "Sign Up"}

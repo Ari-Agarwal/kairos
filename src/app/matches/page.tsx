@@ -21,13 +21,17 @@ export default async function MatchesPage() {
   const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
   if (!profile) redirect("/onboarding");
 
-  const { data: matches } = await supabase
+  const { data: matchRows } = await supabase
     .from("school_matches")
     .select("*")
     .eq("user_id", user.id)
     .eq("is_active", true)
-    .order("category", { ascending: false })
     .order("percentage", { ascending: false });
+
+  const CATEGORY_ORDER: Record<string, number> = { reach: 0, target: 1, safety: 2 };
+  const matches = matchRows
+    ? [...matchRows].sort((a, b) => CATEGORY_ORDER[a.category] - CATEGORY_ORDER[b.category])
+    : matchRows;
 
   const { data: regenRow } = await supabase
     .from("regeneration_log")

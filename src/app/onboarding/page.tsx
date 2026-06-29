@@ -19,8 +19,8 @@ export default function OnboardingPage() {
   const [gpa, setGpa] = useState("");
   const [intendedMajor, setIntendedMajor] = useState("");
   const [extracurriculars, setExtracurriculars] = useState("");
-  const [locationPreference, setLocationPreference] = useState("");
-  const [collegeGoals, setCollegeGoals] = useState("");
+  const [schoolsAlreadyConsidering, setSchoolsAlreadyConsidering] = useState("");
+  const [testScores, setTestScores] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorKey, setErrorKey] = useState(0);
@@ -31,11 +31,22 @@ export default function OnboardingPage() {
   }
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      const existing = user?.user_metadata?.full_name as string | undefined;
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+      const existing = user.user_metadata?.full_name as string | undefined;
       if (existing) setFullName(existing);
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (profile) router.push("/dashboard");
     });
-  }, [supabase]);
+  }, [supabase, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -59,10 +70,10 @@ export default function OnboardingPage() {
       user_id: user.id,
       grade_level: gradeLevel,
       gpa: parseFloat(gpa),
-      intended_major: intendedMajor || null,
+      intended_major: intendedMajor,
       extracurriculars: ecArray.length > 0 ? ecArray : null,
-      location_preference: locationPreference || null,
-      college_goals: collegeGoals || null,
+      schools_already_considering: schoolsAlreadyConsidering,
+      test_scores: testScores ? { summary: testScores } : null,
     });
 
     if (error) {
@@ -70,6 +81,8 @@ export default function OnboardingPage() {
       setLoading(false);
       return;
     }
+
+    fetch("/api/email/welcome", { method: "POST" }).catch(() => {});
 
     const matchRes = await fetch("/api/matches/generate", { method: "POST" });
     router.push(matchRes.ok ? "/dashboard" : "/dashboard?matchError=true");
@@ -145,9 +158,10 @@ export default function OnboardingPage() {
       fields: (
         <>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Intended Major / Interests</label>
+            <label className="block text-sm text-text-gray mb-1">Intended Major / Interests *</label>
             <input
               type="text"
+              required
               value={intendedMajor}
               onChange={(e) => setIntendedMajor(e.target.value)}
               className={inputClass}
@@ -163,11 +177,12 @@ export default function OnboardingPage() {
             />
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Location Preference</label>
+            <label className="block text-sm text-text-gray mb-1">Test Scores (SAT/ACT, optional)</label>
             <input
               type="text"
-              value={locationPreference}
-              onChange={(e) => setLocationPreference(e.target.value)}
+              placeholder="e.g. SAT 1380"
+              value={testScores}
+              onChange={(e) => setTestScores(e.target.value)}
               className={inputClass}
             />
           </div>
@@ -178,10 +193,14 @@ export default function OnboardingPage() {
       title: "Goals",
       fields: (
         <div>
-          <label className="block text-sm text-text-gray mb-1">College Goals</label>
+          <label className="block text-sm text-text-gray mb-1">
+            Schools you&apos;re already considering *
+          </label>
           <textarea
-            value={collegeGoals}
-            onChange={(e) => setCollegeGoals(e.target.value)}
+            required
+            placeholder="List any schools already on your mind, or write &quot;None&quot;"
+            value={schoolsAlreadyConsidering}
+            onChange={(e) => setSchoolsAlreadyConsidering(e.target.value)}
             rows={3}
             className={`${inputClass} resize-none`}
           />

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAnthropic, MODEL, TIMELINE_PROMPT, extractJson } from "@/lib/anthropic";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { isTrustedOrigin } from "@/lib/origin-check";
 
 interface TimelineEntry {
   title: string;
@@ -10,10 +12,16 @@ interface TimelineEntry {
   what_to_do: string[];
 }
 
-export async function POST() {
+export async function POST(req: Request) {
+  if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!checkRateLimit(`timeline:${user.id}`, 5, 60_000).ok) {
+    return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
+  }
 
   const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
@@ -32,7 +40,7 @@ export async function POST() {
 Grade level: ${profile.grade_level}
 GPA: ${profile.gpa}
 Intended major: ${profile.intended_major ?? "not specified"}
-College goals: ${profile.college_goals ?? "not specified"}
+Schools already considering: ${profile.schools_already_considering ?? "not specified"}
 
 Matched schools:
 ${matches.map((m) => `- ${m.school_name} (${m.category})`).join("\n")}`;

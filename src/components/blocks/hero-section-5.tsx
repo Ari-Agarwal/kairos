@@ -32,8 +32,8 @@ export function HeroSection({ studentCount }: { studentCount: number }) {
                 Your future, mapped out clearly.
               </h1>
               <p className="mt-8 max-w-xl text-balance text-lg text-text-gray">
-                Real school matches, a real timeline, and honest feedback, the guidance
-                every student deserves, regardless of what their family can afford.
+                Real school matches, a real timeline, and honest feedback. The guidance
+                every student deserves.
               </p>
 
               <div className="mt-12 flex flex-col items-center justify-center gap-2 sm:flex-row lg:justify-start">
@@ -69,11 +69,7 @@ export function HeroSection({ studentCount }: { studentCount: number }) {
   );
 }
 
-const menuItems = [
-  { name: "How it works", href: "#how-it-works" },
-  { name: "Pricing", href: "/upgrade" },
-  { name: "About", href: "#about" },
-];
+const menuItems: { name: string; href: string }[] = [];
 
 const HeroHeader = () => {
   const [menuState, setMenuState] = React.useState(false);
