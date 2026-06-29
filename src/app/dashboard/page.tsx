@@ -53,12 +53,9 @@ export default async function DashboardPage({
       <ProfileCompletenessModal profile={profile} />
       <div className="px-5 md:px-8 py-10 max-w-2xl mx-auto w-full">
         <h1 className="font-serif text-3xl text-text mb-2">Welcome, {name}.</h1>
-        <p className="text-text-gray text-sm mb-1">
+        <p className="text-text-gray text-sm mb-8">
           {profile.grade_level} · GPA {profile.gpa} · {profile.intended_major || "Major undecided"}
         </p>
-        <Link href="/about" className="text-text-gray text-xs hover:text-text underline mb-8 inline-block">
-          About Telos
-        </Link>
 
         {matchError === "true" && (
           <div className="bg-red-tint border border-border rounded-2xl px-5 py-4 mb-6">

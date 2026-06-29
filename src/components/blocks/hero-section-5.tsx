@@ -69,7 +69,7 @@ export function HeroSection({ studentCount }: { studentCount: number }) {
   );
 }
 
-const menuItems: { name: string; href: string }[] = [];
+const menuItems: { name: string; href: string }[] = [{ name: "About", href: "/about" }];
 
 const HeroHeader = () => {
   const [menuState, setMenuState] = React.useState(false);

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import NavShell from "@/components/NavShell";
 
 export const metadata = { title: "About — Telos" };
 
@@ -10,18 +11,17 @@ const STATS = [
   { value: "$0", label: "cost to start with Telos" },
 ];
 
-export default async function AboutPage() {
-  const supabase = await createClient();
-  const { data: studentCount } = await supabase.rpc("get_student_count");
-
+function AboutContent({ studentCount, showLogo }: { studentCount: number; showLogo: boolean }) {
   return (
     <div className="px-5 md:px-8 py-12 max-w-2xl mx-auto w-full">
-      <Link href="/" className="font-serif text-lg text-primary">
-        Telos
-      </Link>
-      <h1 className="font-serif text-3xl text-text mt-6 mb-2">Our mission</h1>
+      {showLogo && (
+        <Link href="/" className="font-serif text-lg text-primary">
+          Telos
+        </Link>
+      )}
+      <h1 className={`font-serif text-3xl text-text mb-2 ${showLogo ? "mt-6" : ""}`}>Our mission</h1>
       <p className="font-serif text-xl text-primary mb-8">
-        {(studentCount ?? 0).toLocaleString()} students helped so far
+        {studentCount.toLocaleString()} students helped so far
       </p>
 
       <div className="grid grid-cols-2 gap-4 mb-10">
@@ -61,10 +61,28 @@ export default async function AboutPage() {
         </p>
       </div>
 
-      <div className="mt-10 flex gap-4 text-xs text-text-gray">
-        <Link href="/terms" className="hover:text-text">Terms</Link>
-        <Link href="/privacy" className="hover:text-text">Privacy</Link>
-      </div>
+      {showLogo && (
+        <div className="mt-10 flex gap-4 text-xs text-text-gray">
+          <Link href="/terms" className="hover:text-text">Terms</Link>
+          <Link href="/privacy" className="hover:text-text">Privacy</Link>
+        </div>
+      )}
     </div>
   );
+}
+
+export default async function AboutPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: studentCount } = await supabase.rpc("get_student_count");
+
+  if (user) {
+    return (
+      <NavShell>
+        <AboutContent studentCount={studentCount ?? 0} showLogo={false} />
+      </NavShell>
+    );
+  }
+
+  return <AboutContent studentCount={studentCount ?? 0} showLogo={true} />;
 }

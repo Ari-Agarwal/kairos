@@ -1,5 +1,7 @@
 # Telos Timeline — Student-Only MVP (Launch Jul 6)
 
+**Scope change (Jun 29, night):** all remaining engineering/backend work is targeted to finish tomorrow, Jun 30. Dad's items (`Dad_To_Do_List.txt`) get done Jun 30 night, since several of them (DNS, email deliverability) need 24-48h to propagate regardless of when they're started — starting them Jun 30 night is the latest point that still protects the Jul 6 date. After the backend is done, the order is: **website content rewrite → UI/UX polish → production deploy**, in that order, so the rewrite informs what the polish pass is actually polishing, and deploy happens last once everything else is settled.
+
 **Scope change (Jun 28, 5:40pm):** compressed from a 6.5-week plan (Aug 11) to an **8-day sprint, launching Jul 6**. This is aggressive — feasible only because the core student flow is already built (auth, onboarding, matches, timeline, essay feedback, profile). The 8 days are almost entirely hardening/verification/polish, not new features.
 
 **What made this possible:** narrowing scope to student-only MVP (no counselor dashboard, no premium tier, no Stripe) in the prior scope cut, which removed roughly half the original 6.5-week plan's work outright.
@@ -62,7 +64,7 @@
 
 ## Day 6 (Jul 3) — Email + QA pass, part 1
 - [x] Email infra: welcome email — Resend wired up via `src/lib/email.ts` and `src/app/api/email/welcome/route.ts`, triggered from `src/app/onboarding/page.tsx` after profile creation (fire-and-forget, never blocks onboarding). Verified: test email sent and confirmed received/rendered correctly in a real inbox. Currently sending from Resend's sandbox address (`onboarding@resend.dev`) since no custom domain exists yet — switch `EMAIL_FROM` once a custom domain is connected.
-- [ ] Email deliverability: SPF/DKIM/DMARC — **need to work on with Dad** (requires buying a custom domain, ~$10-15/yr, then DNS console access on the registrar, which I don't have).
+- [ ] Email deliverability: SPF/DKIM/DMARC — **need to work on with Dad, scheduled Jun 30 night** (requires buying a custom domain, ~$10-15/yr, then DNS console access on the registrar, which I don't have; see `Dad_To_Do_List.txt` items 1-3).
 - [x] Walk every student screen end to end; cross-check against the master doc's exact requirements (badge logic, "you are here" logic, locked-state patterns) — done via direct code read against `Metam Master.pdf` (pre-rebrand spec doc) for Screens 0, 2, 3, 4, 5, 6, 8, 9, plus a dedicated subagent audit of Screens 3/5/6/8. Findings below.
 - [x] Log every gap found as a checklist for Day 7 — 4 real gaps found, all fixed same-day rather than deferred (see Day 7):
   1. **Match list grouping order** — `src/app/matches/page.tsx` sorted schools alphabetically by category (reach/safety/target) instead of the spec's reach→target→safety order. **Fixed**: explicit category-rank sort, percentage order preserved within each group.
@@ -77,18 +79,30 @@
 - [x] Dashboard home redesigned — replaced the static mission-statement block with a live mini-matches/mini-timeline hub (`src/app/dashboard/page.tsx`); moved the mission statement + new compelling stats to a dedicated `/about` page (public, added to `PUBLIC_PATHS` in `src/proxy.ts`), linked from the dashboard and landing footer.
 - [x] Upgrade page now shows "Premium is coming soon" instead of live Stripe checkout buttons, since Stripe billing isn't wired up for this MVP (`src/app/upgrade/UpgradeClient.tsx`).
 - [x] AI prompt refinement pass — tightened all 4 generation prompts in `src/lib/anthropic.ts` and `src/app/api/career-path/route.ts`: matches now requires real/accurate school names grounded in actual acceptance data (no fabricated schools), uses the student's already-considering list as taste signal without just repeating it back, and pushes for variety within each category; timeline grounds deadlines in real standard admissions timing (EA/ED ~Nov 1, RD ~Jan 1, FAFSA Oct 1) scaled to grade level, and pushes strategic advice toward concrete actions over generic platitudes; essay feedback now requires quoting/paraphrasing the specific line being critiqued and forbids inventing unstated facts about the student; career path avoids naming unverifiable specific employers and keeps salary ranges realistic rather than best-case. No new infrastructure needed, this is the API/account already set up in Day 1 — see the API billing note below.
-- [ ] **Needs Dad**: fund/add a payment method to the Anthropic API billing account (console.anthropic.com → Billing) — usage is metered per-token, and matches/timeline/essay-feedback/career-path generation will start failing for real users if the account runs out of credits or has no card on file. Tracked in detail in `Dad_To_Do_List.txt`, item 4. Required before/at launch, not optional.
+- [ ] **Needs Dad** (tomorrow night, Jun 30): fund/add a payment method to the Anthropic API billing account (console.anthropic.com → Billing) — usage is metered per-token, and matches/timeline/essay-feedback/career-path generation will start failing for real users if the account runs out of credits or has no card on file. Tracked in detail in `Dad_To_Do_List.txt`, item 4. Required before/at launch, not optional.
 - [ ] Cross-browser/device pass: Safari + Chrome, desktop and a real mobile device — **blocked on you** (free option: use a real phone you already own; **need to work on with Dad** only if going the paid BrowserStack/device-lab route instead).
 - [ ] Final regression pass on the full student flow — **blocked on you**: requires live staging credentials and a logged-in click-through, which I don't have standing access to run end-to-end (see Jun 28 6:12pm note on `.env.staging` permission boundary). I've verified everything I can from the code: build, typecheck, lint, and unit tests all pass clean as of this update.
   **Acceptance criteria:** a full end-to-end walkthrough passes with zero open bugs from the fix list.
+- [ ] **Target: all of the above done by end of day Jun 30.** This closes out backend/hardening work entirely.
 
-## Day 8 (Jul 5) — Freeze, UI/UX polish, and pre-launch — all items below require you
+## Day 8 (Jun 30, night) — Dad's to-do list
+- [ ] **Needs Dad**, run through `Dad_To_Do_List.txt` items 1-4 in order (domain → Vercel DNS → email DNS → Anthropic billing). Started the night of Jun 30 specifically because items 2-3 take 10 min-48h to propagate — starting them as early as possible (rather than waiting until Jul 5) is what protects the Jul 6 date. Items 5-7 (BrowserStack, Stripe) are optional/Phase 2, can wait.
+
+## Day 9 (Jul 1) — Website content rewrite
+- [ ] Pass over all on-page copy (landing, dashboard, onboarding, about, upgrade, profile, matches, timeline, essay feedback) for tone, clarity, and accuracy now that the Day 7 field/page changes have settled. This happens *before* the UI/UX pass on purpose — no point polishing the visual presentation of copy that's about to be rewritten.
+- [ ] Specific areas to revisit: landing hero/subhead, `/about` mission paragraph and stats, onboarding field labels/placeholders, dashboard empty-state copy ("no matches yet", "nothing upcoming"), upgrade page's coming-soon messaging.
+  **Acceptance criteria:** every screen's copy has been deliberately reviewed and rewritten where needed, not just inherited from the original build.
+
+## Day 10 (Jul 2-3) — UI/UX polish — all items below require you
 - [ ] Freeze scope — no new features, nothing from Phase 2 pulled forward (a judgment call for you, not something I should decide unilaterally)
+- [ ] UI/UX pass on real hardware — **blocked on you**: needs a real mid-range phone over throttled cellular; I can't simulate real device rendering/perf from here.
+  **Acceptance criteria:** usable and visually clean at 375px/414px on real hardware, not desktop emulation; done after the content rewrite so it polishes a functionally- and copy-frozen product instead of chasing a moving target.
+
+## Day 11 (Jul 4-5) — Deploy and pre-launch
+- [ ] Deploy the finished, rewritten, polished app to production (last code-side step before launch).
 - [ ] Rotate Anthropic/Supabase production keys one final time before public launch — **blocked on you**: requires console access to both providers.
   **Acceptance criteria:** every production key in active use was generated after this rotation.
-- [ ] Final DNS/SSL/deliverability check — **need to work on with Dad** (same custom domain dependency as Day 6; needs registrar/DNS console access).
-- [ ] UI/UX pass on real hardware — **blocked on you**: needs a real mid-range phone over throttled cellular; I can't simulate real device rendering/perf from here.
-  **Acceptance criteria:** usable and visually clean at 375px/414px on real hardware, not desktop emulation; done last so it polishes a functionally-frozen product instead of chasing a moving target.
+- [ ] Final DNS/SSL/deliverability check — **need to work on with Dad** (confirms the Jun 30 domain/DNS work actually propagated).
 - [ ] **Student-only MVP launch — July 6**
 
 ---

@@ -28,22 +28,27 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: fullName } },
-    });
-    setLoading(false);
-    if (error) {
-      showError(error.message);
-      return;
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } },
+      });
+      if (error) {
+        showError(error.message);
+        return;
+      }
+      if (!data.session) {
+        setConfirmationSent(true);
+        return;
+      }
+      router.push("/onboarding");
+    } catch (err) {
+      console.error("Signup failed:", err);
+      showError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    if (!data.session) {
-      setConfirmationSent(true);
-      return;
-    }
-    router.push("/onboarding");
-    router.refresh();
   }
 
   async function handleOAuth(provider: "google" | "azure") {
