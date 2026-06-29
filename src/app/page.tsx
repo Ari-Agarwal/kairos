@@ -1,6 +1,7 @@
 // SCREEN 1 COMPLETE
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 import { HeroSection } from "@/components/blocks/hero-section-5";
 
 export default async function IntroPage() {
@@ -19,5 +20,16 @@ export default async function IntroPage() {
   const { data: studentCountData } = await supabase.rpc("get_student_count");
   const studentCount = studentCountData ?? 0;
 
-  return <HeroSection studentCount={studentCount} />;
+  return (
+    <>
+      <HeroSection studentCount={studentCount} />
+      <footer className="text-center py-6 text-text-gray text-xs">
+        <Link href="/about" className="hover:text-text">About</Link>
+        {" · "}
+        <Link href="/terms" className="hover:text-text">Terms</Link>
+        {" · "}
+        <Link href="/privacy" className="hover:text-text">Privacy</Link>
+      </footer>
+    </>
+  );
 }

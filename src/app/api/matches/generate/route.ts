@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAnthropic, MODEL, SCHOOL_MATCHING_PROMPT, extractJson } from "@/lib/anthropic";
 import { canRegenerate, weekStart } from "@/lib/access";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { isTrustedOrigin } from "@/lib/origin-check";
 
 interface SchoolResult {
   name: string;
@@ -19,8 +21,7 @@ interface SchoolResult {
 interface Profile {
   intended_major: string | null;
   extracurriculars: string[] | null;
-  location_preference: string | null;
-  college_goals: string | null;
+  schools_already_considering: string | null;
   test_scores: unknown;
 }
 
@@ -28,16 +29,20 @@ function missingFields(profile: Profile): string[] {
   const missing: string[] = [];
   if (!profile.intended_major) missing.push("intended major");
   if (!profile.extracurriculars || profile.extracurriculars.length === 0) missing.push("extracurriculars");
-  if (!profile.location_preference) missing.push("location preference");
-  if (!profile.college_goals) missing.push("college goals");
   if (!profile.test_scores) missing.push("test scores");
   return missing;
 }
 
-export async function POST() {
+export async function POST(req: Request) {
+  if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!checkRateLimit(`matches:${user.id}`, 5, 60_000).ok) {
+    return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -70,8 +75,7 @@ Grade level: ${profile.grade_level}
 GPA: ${profile.gpa}
 Intended major: ${profile.intended_major ?? "missing"}
 Extracurriculars: ${profile.extracurriculars?.join(", ") ?? "missing"}
-Location preference: ${profile.location_preference ?? "missing"}
-College goals: ${profile.college_goals ?? "missing"}
+Schools already considering: ${profile.schools_already_considering ?? "missing"}
 Test scores: ${profile.test_scores ? JSON.stringify(profile.test_scores) : "missing"}
 ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
 

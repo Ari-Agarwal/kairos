@@ -72,6 +72,10 @@ export default function TimelineClient({
           Regenerate
         </button>
       </div>
+      <p className="text-text-gray text-xs mb-4">
+        AI-generated deadlines and advice based on your profile — always verify dates against
+        each school's official site.
+      </p>
       {error && <p className="text-red text-sm mb-4">{error}</p>}
 
       <div className="relative pl-8">

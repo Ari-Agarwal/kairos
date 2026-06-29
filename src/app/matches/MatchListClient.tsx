@@ -70,6 +70,10 @@ export default function MatchListClient({
       <p className="text-text-gray text-sm mb-1">
         Built from your profile. Not set in stone, this evolves as you grow.
       </p>
+      <p className="text-text-gray text-xs mb-3">
+        AI-generated estimates based on your profile and general acceptance data — not a
+        guarantee of admission.
+      </p>
 
       <div className="flex items-center justify-between mb-6 mt-3">
         <button

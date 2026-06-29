@@ -1,8 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import NavShell from "@/components/NavShell";
 import ProfileCompletenessModal from "@/components/ProfileCompletenessModal";
 import { Features } from "@/components/blocks/features-6";
+
+const CATEGORY_STYLES: Record<string, string> = {
+  reach: "bg-red-tint text-red",
+  target: "bg-amber-tint text-amber-text-on-tint",
+  safety: "bg-green-tint text-green",
+};
 
 export default async function DashboardPage({
   searchParams,
@@ -17,13 +24,27 @@ export default async function DashboardPage({
   const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
   if (!profile) redirect("/onboarding");
 
-  const { data: studentCount } = await supabase.rpc("get_student_count");
-
   const { count: activeMatchCount } = await supabase
     .from("school_matches")
     .select("id", { count: "exact", head: true })
     .eq("user_id", user.id)
     .eq("is_active", true);
+
+  const { data: topMatches } = await supabase
+    .from("school_matches")
+    .select("school_name, category, percentage")
+    .eq("user_id", user.id)
+    .eq("is_active", true)
+    .order("percentage", { ascending: false })
+    .limit(3);
+
+  const { data: upcomingTasks } = await supabase
+    .from("timeline_items")
+    .select("id, title, due_date")
+    .eq("user_id", user.id)
+    .eq("completed", false)
+    .order("due_date", { ascending: true, nullsFirst: false })
+    .limit(3);
 
   const name = (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] || "there";
 
@@ -32,9 +53,12 @@ export default async function DashboardPage({
       <ProfileCompletenessModal profile={profile} />
       <div className="px-5 md:px-8 py-10 max-w-2xl mx-auto w-full">
         <h1 className="font-serif text-3xl text-text mb-2">Welcome, {name}.</h1>
-        <p className="text-text-gray text-sm mb-8">
+        <p className="text-text-gray text-sm mb-1">
           {profile.grade_level} · GPA {profile.gpa} · {profile.intended_major || "Major undecided"}
         </p>
+        <Link href="/about" className="text-text-gray text-xs hover:text-text underline mb-8 inline-block">
+          About Telos
+        </Link>
 
         {matchError === "true" && (
           <div className="bg-red-tint border border-border rounded-2xl px-5 py-4 mb-6">
@@ -45,38 +69,56 @@ export default async function DashboardPage({
           </div>
         )}
 
-        <div className="bg-card border border-border rounded-2xl px-6 py-6 mb-8">
-          <p className="font-serif text-xl text-primary mb-4">
-            {(studentCount ?? 0).toLocaleString()} students helped so far
-          </p>
-          <div className="space-y-4 text-text-gray text-sm leading-relaxed">
-            <p>
-              Each year, an estimated 400,000 academically strong students from low-income
-              backgrounds fail to enroll in any college, while another 200,000 enroll in
-              institutions well below what their academic records would otherwise support.
-              Researchers refer to this as &quot;undermatching.&quot; It is not an isolated
-              anomaly but a structural pattern, one that recurs predictably among capable
-              students year after year.
-            </p>
-            <p>
-              The cause is straightforward. Matching a student to the right institution requires
-              genuine analysis: an evaluation of grades, coursework, and extracurricular record
-              against real admissions outcomes, followed by an honest account of where that
-              student actually stands. This analysis is neither rare nor unusual, but it is
-              expensive. Private admissions consultants typically charge between $4,000 and
-              $12,000 for a comprehensive package, with hourly consultations ranging from $300 to
-              $600, and in some cases reaching $1,000 per hour. In other words, the students who
-              need this guidance the most are the students who can afford it the least.
-            </p>
-            <p>
-              Telos was built to sever that connection between cost and access. It performs the
-              same quality of analysis, weighing a student&apos;s actual profile against real
-              admissions patterns, and returns a list of schools that reflects genuine potential
-              rather than guesswork. It is free to start, on the idea that clarity about
-              one&apos;s future should never be a privilege reserved for those who can pay for
-              it.
-            </p>
-          </div>
+        <div className="grid sm:grid-cols-2 gap-4 mb-8">
+          <Link
+            href="/matches"
+            className="block bg-card border border-border rounded-2xl px-5 py-5 hover:border-primary/40 transition-colors"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-text-gray text-xs">Your top matches</p>
+              <span className="text-text-gray text-xs">{activeMatchCount ?? 0} schools</span>
+            </div>
+            {topMatches && topMatches.length > 0 ? (
+              <div className="space-y-2">
+                {topMatches.map((m) => (
+                  <div key={m.school_name} className="flex items-center justify-between">
+                    <div>
+                      <span
+                        className={`inline-block text-[10px] font-medium px-2 py-0.5 rounded-full mb-1 capitalize ${CATEGORY_STYLES[m.category]}`}
+                      >
+                        {m.category}
+                      </span>
+                      <p className="font-serif text-sm text-text">{m.school_name}</p>
+                    </div>
+                    <span className="font-serif text-lg text-primary">{m.percentage}%</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-text-gray text-sm">No matches yet, head to Matches to generate your list.</p>
+            )}
+          </Link>
+
+          <Link
+            href="/timeline"
+            className="block bg-card border border-border rounded-2xl px-5 py-5 hover:border-primary/40 transition-colors"
+          >
+            <p className="text-text-gray text-xs mb-3">Coming up on your timeline</p>
+            {upcomingTasks && upcomingTasks.length > 0 ? (
+              <div className="space-y-2">
+                {upcomingTasks.map((t) => (
+                  <div key={t.id} className="flex items-center justify-between">
+                    <p className="text-sm text-text truncate pr-2">{t.title}</p>
+                    <span className="text-text-gray text-xs shrink-0">
+                      {t.due_date ? new Date(t.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "—"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-text-gray text-sm">Nothing upcoming, check your full timeline for details.</p>
+            )}
+          </Link>
         </div>
 
         <Features activeMatchCount={activeMatchCount ?? 0} />

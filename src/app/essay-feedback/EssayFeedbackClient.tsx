@@ -66,6 +66,9 @@ export default function EssayFeedbackClient() {
       <AnimatePresence>
         {feedback && (
           <div className="space-y-3">
+            <p className="text-text-gray text-xs">
+              AI-generated feedback — use it as a starting point, not a final verdict on your essay.
+            </p>
             {feedback.map((f, idx) => (
               <motion.div
                 key={idx}

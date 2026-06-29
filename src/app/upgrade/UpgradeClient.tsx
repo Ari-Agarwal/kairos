@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -20,26 +19,6 @@ function Cell({ value }: { value: boolean | string }) {
 }
 
 export default function UpgradeClient({ isPremium }: { isPremium: boolean }) {
-  const [loadingPlan, setLoadingPlan] = useState<"monthly" | "yearly" | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleCheckout(plan: "monthly" | "yearly") {
-    setLoadingPlan(plan);
-    setError(null);
-    const res = await fetch("/api/stripe/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan }),
-    });
-    if (!res.ok) {
-      setError("Couldn't start checkout. Please try again.");
-      setLoadingPlan(null);
-      return;
-    }
-    const { url } = await res.json();
-    window.location.href = url;
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -59,26 +38,12 @@ export default function UpgradeClient({ isPremium }: { isPremium: boolean }) {
           <p className="text-premium font-medium">You&apos;re on Premium. Thanks for supporting Telos.</p>
         </div>
       ) : (
-        <>
-          <div className="flex gap-3 mb-8">
-            <button
-              onClick={() => handleCheckout("monthly")}
-              disabled={loadingPlan !== null}
-              className="flex-1 rounded-xl bg-premium hover:opacity-90 transition-opacity text-bg font-medium py-3 disabled:opacity-50"
-            >
-              {loadingPlan === "monthly" ? "Redirecting..." : "$12/month"}
-            </button>
-            <button
-              onClick={() => handleCheckout("yearly")}
-              disabled={loadingPlan !== null}
-              className="flex-1 rounded-xl border border-premium text-premium hover:bg-premium-tint transition-colors font-medium py-3 disabled:opacity-50 relative"
-            >
-              {loadingPlan === "yearly" ? "Redirecting..." : "$120/year"}
-              <span className="block text-[10px]">Saves $24</span>
-            </button>
-          </div>
-          {error && <p className="text-red text-sm mb-6">{error}</p>}
-        </>
+        <div className="bg-card border border-border rounded-2xl p-6 text-center mb-8">
+          <p className="text-text font-medium">Premium is coming soon.</p>
+          <p className="text-text-gray text-sm mt-1">
+            We&apos;re still finishing billing setup, check back soon to upgrade.
+          </p>
+        </div>
       )}
 
       <div className="bg-card border border-border rounded-2xl overflow-hidden">

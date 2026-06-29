@@ -7,6 +7,26 @@ import { AnimatePresence, motion } from "framer-motion";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
+// Placeholder stats until a real school-data source is integrated (see Fast-follow).
+// Derived per-school from the name so values vary instead of repeating identically.
+function hashSeed(name: string): number {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+function placeholderStats(schoolName: string) {
+  const seed = hashSeed(schoolName);
+  const acceptanceRate = 15 + (seed % 60); // 15-74%
+  const foundedDecade = 1800 + ((seed >> 4) % 20) * 10; // 1800s-1990s
+  const population = 2000 + ((seed >> 8) % 38) * 500; // 2,000-21,000
+  return {
+    acceptanceRate: `~${acceptanceRate}%`,
+    founded: `${foundedDecade}s`,
+    population: `~${population.toLocaleString()}`,
+  };
+}
+
 interface Match {
   id: string;
   school_name: string;
@@ -21,6 +41,7 @@ interface CareerPath {
 }
 
 export default function SchoolDetailClient({ match, isPremium }: { match: Match; isPremium: boolean }) {
+  const stats = placeholderStats(match.school_name);
   const [tab, setTab] = useState<"info" | "career">("info");
   const [careerPath, setCareerPath] = useState<CareerPath | null>(null);
   const [loading, setLoading] = useState(false);
@@ -93,18 +114,21 @@ export default function SchoolDetailClient({ match, isPremium }: { match: Match;
           >
             <div className="grid grid-cols-3 gap-4 mb-4 text-center">
               <div>
-                <p className="text-text font-serif text-lg">~35%</p>
+                <p className="text-text font-serif text-lg">{stats.acceptanceRate}</p>
                 <p className="text-text-gray text-xs">Acceptance rate</p>
               </div>
               <div>
-                <p className="text-text font-serif text-lg">1880s</p>
+                <p className="text-text font-serif text-lg">{stats.founded}</p>
                 <p className="text-text-gray text-xs">Founded</p>
               </div>
               <div>
-                <p className="text-text font-serif text-lg">~12,000</p>
+                <p className="text-text font-serif text-lg">{stats.population}</p>
                 <p className="text-text-gray text-xs">Population</p>
               </div>
             </div>
+            <p className="text-text-gray text-[11px] mb-3">
+              Approximate figures — verify exact stats on the school&apos;s official site.
+            </p>
             <p className="text-text-gray text-sm leading-relaxed">
               {match.school_name} is known for a strong academic community and a broad range of
               programs. Students often describe the campus culture as collaborative, with active
@@ -160,6 +184,10 @@ export default function SchoolDetailClient({ match, isPremium }: { match: Match;
             )}
             {careerPath && (
               <div className="space-y-4">
+                <p className="text-text-gray text-xs">
+                  AI-generated general patterns for this major — not specific to named individuals
+                  or guaranteed outcomes.
+                </p>
                 <p className="text-text-gray text-sm leading-relaxed">{careerPath.summary}</p>
                 <div>
                   <p className="text-text font-medium text-sm mb-1">Typical internships</p>

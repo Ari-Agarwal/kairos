@@ -7,16 +7,14 @@ import { useRouter } from "next/navigation";
 const FIELD_LABELS: Record<string, string> = {
   intended_major: "Intended Major",
   extracurriculars: "Extracurriculars",
-  location_preference: "Location Preference",
-  college_goals: "College Goals",
+  schools_already_considering: "Schools You're Already Considering",
   test_scores: "Test Scores",
 };
 
 interface Profile {
   intended_major: string | null;
   extracurriculars: string[] | null;
-  location_preference: string | null;
-  college_goals: string | null;
+  schools_already_considering: string | null;
   test_scores: unknown;
 }
 
@@ -25,8 +23,7 @@ export function getMissingFields(profile: Profile | null | undefined): string[] 
   const missing: string[] = [];
   if (!profile.intended_major) missing.push("intended_major");
   if (!profile.extracurriculars || profile.extracurriculars.length === 0) missing.push("extracurriculars");
-  if (!profile.location_preference) missing.push("location_preference");
-  if (!profile.college_goals) missing.push("college_goals");
+  if (!profile.schools_already_considering) missing.push("schools_already_considering");
   if (!profile.test_scores) missing.push("test_scores");
   return missing;
 }
@@ -45,8 +42,13 @@ export default function ProfileCompletenessModal({ profile }: { profile: Profile
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
-      <div className="w-full max-w-lg bg-card border-t border-border rounded-t-2xl px-6 py-6 animate-in slide-in-from-bottom">
-        <h2 className="font-serif text-xl text-text mb-2">Your matches could be more accurate.</h2>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="profile-completeness-title"
+        className="w-full max-w-lg bg-card border-t border-border rounded-t-2xl px-6 py-6 animate-in slide-in-from-bottom"
+      >
+        <h2 id="profile-completeness-title" className="font-serif text-xl text-text mb-2">Your matches could be more accurate.</h2>
         <p className="text-text-gray text-sm mb-4 leading-relaxed">
           We use your full profile to estimate admission chances and build your timeline. The
           more we know, the more precise your guidance gets.
