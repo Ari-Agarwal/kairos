@@ -72,7 +72,7 @@ export default function EssayFeedbackClient() {
             {feedback.map((f, idx) => (
               <motion.div
                 key={idx}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 1, y: 0 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, ease: EASE, delay: idx * 0.08 }}
                 className="bg-card border border-border rounded-2xl p-4"

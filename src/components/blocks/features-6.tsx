@@ -66,7 +66,7 @@ export function Features({ activeMatchCount }: { activeMatchCount?: number }) {
               {PREVIEW_SCHOOLS.map((school, i) => (
                 <motion.div
                   key={school.name}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 1, y: 0 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, ease: EASE, delay: i * 0.08 }}
@@ -89,7 +89,7 @@ export function Features({ activeMatchCount }: { activeMatchCount?: number }) {
           {FEATURES.map(({ icon: Icon, title, description, href }, i) => (
             <motion.div
               key={title}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 1, y: 0 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, ease: EASE, delay: i * 0.06 }}

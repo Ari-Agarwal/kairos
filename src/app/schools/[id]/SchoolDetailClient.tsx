@@ -106,7 +106,7 @@ export default function SchoolDetailClient({ match, isPremium }: { match: Match;
         {tab === "info" && (
           <motion.div
             key="info"
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: EASE }}
@@ -140,7 +140,7 @@ export default function SchoolDetailClient({ match, isPremium }: { match: Match;
         {tab === "career" && !isPremium && (
           <motion.div
             key="career-locked"
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: EASE }}
@@ -167,7 +167,7 @@ export default function SchoolDetailClient({ match, isPremium }: { match: Match;
         {tab === "career" && isPremium && (
           <motion.div
             key="career-unlocked"
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: EASE }}

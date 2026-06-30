@@ -120,14 +120,59 @@ function getInitialReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+function NetworkFallback() {
+  return (
+    <div className="size-full flex items-center justify-center">
+      <svg viewBox="0 0 200 200" className="w-2/3 max-w-sm opacity-70" fill="none" stroke="#FFFFFF" strokeWidth="0.6">
+        <circle cx="60" cy="50" r="3" fill="#FFFFFF" stroke="none" />
+        <circle cx="130" cy="40" r="3" fill="#FFFFFF" stroke="none" />
+        <circle cx="160" cy="110" r="3" fill="#FFFFFF" stroke="none" />
+        <circle cx="100" cy="150" r="3" fill="#FFFFFF" stroke="none" />
+        <circle cx="40" cy="120" r="3" fill="#FFFFFF" stroke="none" />
+        <circle cx="100" cy="90" r="3" fill="#FFFFFF" stroke="none" />
+        <path d="M60 50 L100 90 L130 40 M100 90 L160 110 M100 90 L100 150 M100 90 L40 120" />
+      </svg>
+    </div>
+  );
+}
+
+class WebGLErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch() {
+    // Swallow WebGL/three.js runtime errors (unsupported GPU, lost context, etc.) — fall back to the static SVG below.
+  }
+  render() {
+    if (this.state.hasError) return <NetworkFallback />;
+    return this.props.children;
+  }
+}
+
+function isWebGLAvailable() {
+  if (typeof window === "undefined") return false;
+  try {
+    const canvas = document.createElement("canvas");
+    return !!(canvas.getContext("webgl") || canvas.getContext("experimental-webgl"));
+  } catch {
+    return false;
+  }
+}
+
 export function Hero3D() {
   const [reducedMotion, setReducedMotion] = React.useState(getInitialReducedMotion);
+  const [webglAvailable, setWebglAvailable] = React.useState(true);
   const pointer = React.useRef({ x: 0, y: 0 });
 
   React.useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
     mq.addEventListener("change", handler);
+    setWebglAvailable(isWebGLAvailable());
     return () => mq.removeEventListener("change", handler);
   }, []);
 
@@ -139,32 +184,22 @@ export function Hero3D() {
     };
   };
 
-  if (reducedMotion) {
-    return (
-      <div className="size-full flex items-center justify-center">
-        <svg viewBox="0 0 200 200" className="w-2/3 max-w-sm opacity-70" fill="none" stroke="#FFFFFF" strokeWidth="0.6">
-          <circle cx="60" cy="50" r="3" fill="#FFFFFF" stroke="none" />
-          <circle cx="130" cy="40" r="3" fill="#FFFFFF" stroke="none" />
-          <circle cx="160" cy="110" r="3" fill="#FFFFFF" stroke="none" />
-          <circle cx="100" cy="150" r="3" fill="#FFFFFF" stroke="none" />
-          <circle cx="40" cy="120" r="3" fill="#FFFFFF" stroke="none" />
-          <circle cx="100" cy="90" r="3" fill="#FFFFFF" stroke="none" />
-          <path d="M60 50 L100 90 L130 40 M100 90 L160 110 M100 90 L100 150 M100 90 L40 120" />
-        </svg>
-      </div>
-    );
+  if (reducedMotion || !webglAvailable) {
+    return <NetworkFallback />;
   }
 
   return (
     <div className="size-full" onPointerMove={handlePointerMove}>
-      <Canvas camera={{ position: [0, 0, 5.5], fov: 40 }} dpr={[1, 2]} gl={{ antialias: true }}>
-        <color attach="background" args={["#000000"]} />
-        <ambientLight intensity={0.2} />
-        <pointLight position={[5, 1, 2]} intensity={6} color="#FFFFFF" distance={14} />
-        <pointLight position={[-2, 3, 3]} intensity={3} color="#FFFFFF" distance={14} />
-        <Network pointer={pointer} />
-        <Rig pointer={pointer} />
-      </Canvas>
+      <WebGLErrorBoundary>
+        <Canvas camera={{ position: [0, 0, 5.5], fov: 40 }} dpr={[1, 2]} gl={{ antialias: true }}>
+          <color attach="background" args={["#000000"]} />
+          <ambientLight intensity={0.2} />
+          <pointLight position={[5, 1, 2]} intensity={6} color="#FFFFFF" distance={14} />
+          <pointLight position={[-2, 3, 3]} intensity={3} color="#FFFFFF" distance={14} />
+          <Network pointer={pointer} />
+          <Rig pointer={pointer} />
+        </Canvas>
+      </WebGLErrorBoundary>
     </div>
   );
 }

@@ -21,16 +21,16 @@ function Cell({ value }: { value: boolean | string }) {
 export default function UpgradeClient({ isPremium }: { isPremium: boolean }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 1, y: 0 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: EASE }}
       className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full"
     >
-      <h1 className="font-serif text-2xl text-text mb-3">Free vs Premium</h1>
+      <h1 className="font-serif text-2xl text-text mb-3">Plans</h1>
       <p className="text-text-gray text-sm leading-relaxed mb-8">
-        Telos&apos;s free tier is built to be genuinely useful on its own, profile, timeline, and a
-        real school list, because access shouldn&apos;t depend on what you can afford. Premium adds
-        deeper, more personal guidance for students who want to go further.
+        Telos Free is built to be genuinely useful on its own — a real school list, a real
+        timeline, and honest guidance — because access to this shouldn&apos;t depend on what you
+        can afford. Premium adds deeper, more personal support for students who want to go further.
       </p>
 
       {isPremium ? (
@@ -39,9 +39,10 @@ export default function UpgradeClient({ isPremium }: { isPremium: boolean }) {
         </div>
       ) : (
         <div className="bg-card border border-border rounded-2xl p-6 text-center mb-8">
-          <p className="text-text font-medium">Premium is coming soon.</p>
+          <p className="text-text font-medium">Premium is on the way.</p>
           <p className="text-text-gray text-sm mt-1">
-            We&apos;re still finishing billing setup, check back soon to upgrade.
+            We&apos;re putting the finishing touches on it. Everything in the free tier is
+            yours in the meantime.
           </p>
         </div>
       )}
@@ -55,7 +56,7 @@ export default function UpgradeClient({ isPremium }: { isPremium: boolean }) {
         {ROWS.map((row, i) => (
           <motion.div
             key={row.label}
-            initial={{ opacity: 0 }}
+            initial={{ opacity: 1 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.25, ease: EASE, delay: 0.1 + i * 0.04 }}
             className="grid grid-cols-3 px-5 py-3 border-b border-border last:border-b-0"
