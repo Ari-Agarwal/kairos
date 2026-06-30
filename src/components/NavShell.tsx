@@ -239,9 +239,9 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`flex flex-col items-center gap-0.5 px-3 py-1 ${active ? "text-text font-bold" : "text-text-gray"}`}
+                className={`flex flex-col items-center gap-1 px-4 py-2 min-h-[44px] justify-center ${active ? "text-text font-bold" : "text-text-gray"}`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-5 h-5" />
                 <span className="text-[10px]">{tab.label}</span>
               </Link>
             );
