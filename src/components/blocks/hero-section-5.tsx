@@ -115,7 +115,7 @@ const HeroHeader = ({
                 onClick={() => onNavigate("home")}
                 className="flex items-center space-x-2"
               >
-                <span className="font-serif text-lg text-primary">Telos</span>
+                <span className="font-serif text-lg text-primary">Kairos</span>
               </button>
 
               <button

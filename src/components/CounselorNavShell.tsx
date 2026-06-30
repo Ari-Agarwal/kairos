@@ -25,7 +25,7 @@ export default function CounselorNavShell({
       <header className="flex items-center justify-between px-5 md:px-8 py-4 border-b border-border">
         <div>
           <Link href="/counselor" className="font-serif text-lg text-text">
-            Telos Counselor
+            Kairos Counselor
           </Link>
           <p className="text-text-gray text-xs">{schoolName}</p>
         </div>

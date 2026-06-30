@@ -252,6 +252,11 @@ export default function OnboardingPage() {
           </p>
         )}
 
+        <p className="text-text-gray text-xs leading-relaxed">
+          We use this to build your school matches and timeline. We never sell it.{" "}
+          <a href="/privacy" className="text-text underline underline-offset-2">Privacy Policy</a>
+        </p>
+
         <button
           type="submit"
           className="w-full rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium py-3"

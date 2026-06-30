@@ -9,7 +9,7 @@ export function getAnthropic(): Anthropic {
   return anthropicInstance;
 }
 
-export const MODEL = "claude-sonnet-4-5";
+export const MODEL = "claude-sonnet-4-6";
 
 export const SCHOOL_MATCHING_PROMPT = `You are generating a college match list for a high school student. You will be given their GPA, grade level, intended major, extracurriculars, the schools they're already considering, and test scores. Some of these fields may be missing; if so, you will be told explicitly which ones are missing.
 

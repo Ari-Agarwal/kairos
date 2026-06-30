@@ -8,11 +8,11 @@ Landing page (`/`) is treated as a brand surface within this otherwise product-r
 
 ## Users
 
-High school students (and to a lesser extent their parents) navigating college admissions: building a profile, getting AI-matched school lists, generating application timelines, and getting essay feedback. They are anxious about getting into the "right" school, often comparing Telos mentally against expensive human private counselors. Sessions happen in short, task-focused bursts (check matches, check a deadline, get feedback on a draft) rather than long browsing sessions.
+High school students (and to a lesser extent their parents) navigating college admissions: building a profile, getting AI-matched school lists, generating application timelines, and getting essay feedback. They are anxious about getting into the "right" school, often comparing Kairos mentally against expensive human private counselors. Sessions happen in short, task-focused bursts (check matches, check a deadline, get feedback on a draft) rather than long browsing sessions.
 
 ## Product Purpose
 
-Telos replaces the function of an expensive private college counselor with AI: a matched school list grounded in real acceptance-rate data, a generated application timeline, and essay feedback — at a fraction of private-counselor cost. Success looks like a student trusting the match percentages and the timeline enough to act on them as their primary planning tool.
+Kairos replaces the function of an expensive private college counselor with AI: a matched school list grounded in real acceptance-rate data, a generated application timeline, and essay feedback — at a fraction of private-counselor cost. Success looks like a student trusting the match percentages and the timeline enough to act on them as their primary planning tool.
 
 ## Brand Personality
 

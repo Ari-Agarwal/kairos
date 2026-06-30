@@ -9,22 +9,22 @@ export function getResend(): Resend {
   return resendInstance;
 }
 
-export const EMAIL_FROM = process.env.EMAIL_FROM || "Telos <onboarding@resend.dev>";
+export const EMAIL_FROM = process.env.EMAIL_FROM || "Kairos <onboarding@resend.dev>";
 
 export async function sendWelcomeEmail(to: string, fullName: string) {
   await getResend().emails.send({
     from: EMAIL_FROM,
     to,
-    subject: "Welcome to Telos",
+    subject: "Welcome to Kairos",
     html: `
       <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto;">
-        <h1 style="font-size: 22px;">Welcome to Telos, ${fullName || "there"}.</h1>
+        <h1 style="font-size: 22px;">Welcome to Kairos, ${fullName || "there"}.</h1>
         <p style="font-family: Helvetica, Arial, sans-serif; color: #444; line-height: 1.6;">
           Your profile is set up and your personalized school list and timeline are ready.
           Log in to see your matches and next steps.
         </p>
         <p style="font-family: Helvetica, Arial, sans-serif; color: #888; font-size: 13px; margin-top: 24px;">
-          You're receiving this because you just created a Telos account.
+          You're receiving this because you just created a Kairos account.
         </p>
       </div>
     `,

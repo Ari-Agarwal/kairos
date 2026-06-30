@@ -1,22 +1,22 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://telos-zeta.vercel.app";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kairosadmissions.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Telos — College guidance for every student",
+  title: "Kairos — College guidance for every student",
   description: "Personalized college admissions guidance, regardless of what you can afford.",
   openGraph: {
-    title: "Telos — College guidance for every student",
+    title: "Kairos — College guidance for every student",
     description: "Personalized college admissions guidance, regardless of what you can afford.",
     url: siteUrl,
-    siteName: "Telos",
+    siteName: "Kairos",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Telos — College guidance for every student",
+    title: "Kairos — College guidance for every student",
     description: "Personalized college admissions guidance, regardless of what you can afford.",
   },
 };

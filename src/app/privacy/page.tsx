@@ -1,42 +1,92 @@
-export const metadata = { title: "Privacy Policy — Telos" };
+export const metadata = { title: "Privacy Policy — Kairos" };
 
 export default function PrivacyPage() {
   return (
     <div className="px-5 md:px-8 py-12 max-w-2xl mx-auto w-full">
       <h1 className="font-serif text-3xl text-text mb-2">Privacy Policy</h1>
-      <p className="text-text-gray text-sm mb-8">Last updated June 28, 2026</p>
+      <p className="text-text-gray text-sm mb-8">Last updated June 30, 2026</p>
 
       <div className="space-y-6 text-text-gray text-sm leading-relaxed">
         <section>
-          <h2 className="text-text font-medium mb-2">1. What we collect</h2>
-          <p>
-            Account info (email, name) via Supabase Auth; profile info you provide (grade level,
-            GPA, intended major, extracurriculars, location preference, college goals, test
-            scores); content you submit for AI features (essay drafts); and usage data needed to
-            run the product (login timestamps, regeneration counts).
+          <h2 className="text-text font-medium mb-2">1. What we collect and why</h2>
+          <p className="mb-3">
+            Here is exactly what we collect and the specific reason for each. We only collect what
+            we need for these purposes, and we don&apos;t reuse your data for anything else without
+            telling you first.
           </p>
+          <ul className="space-y-2">
+            <li>
+              <span className="text-text">Email and login identity</span> (email/password or
+              Google sign-in) — to create and secure your account and log you in.
+            </li>
+            <li>
+              <span className="text-text">Age confirmation (14+)</span> — to confirm you&apos;re
+              old enough to use Kairos (see Children&apos;s privacy below).
+            </li>
+            <li>
+              <span className="text-text">Profile details</span> (grade level, intended major, and
+              the schools you&apos;re already considering; optionally test scores and
+              extracurriculars) — to generate your school-match list and application timeline and to
+              personalize your guidance. Optional fields only improve accuracy; you can skip them.
+            </li>
+            <li>
+              <span className="text-text">Essay drafts you submit</span> — to generate AI feedback
+              on that specific draft. Sent only when you use Essay Feedback.
+            </li>
+            <li>
+              <span className="text-text">Your saved matches and timeline</span> — to store your
+              plan so it&apos;s there when you come back.
+            </li>
+            <li>
+              <span className="text-text">Error and diagnostic data</span> — to detect and fix
+              crashes and keep the product working.
+            </li>
+          </ul>
         </section>
         <section>
-          <h2 className="text-text font-medium mb-2">2. How we use it</h2>
-          <p>
-            To generate your school matches, timeline, career path information, and essay
-            feedback; to enforce free-tier limits; to process Premium payments via Stripe; and to
-            operate and improve the product. Profile and essay content is sent to Anthropic&apos;s
-            API to generate AI features, governed by Anthropic&apos;s own data-handling terms for API
-            usage.
+          <h2 className="text-text font-medium mb-2">2. AI processing and our service providers</h2>
+          <p className="mb-3">
+            <span className="text-text">We do not sell your data, and we do not use it for targeted
+            advertising.</span> To run Kairos we share the minimum necessary data with a few service
+            providers (&quot;subprocessors&quot;):
           </p>
+          <ul className="space-y-2">
+            <li>
+              <span className="text-text">Anthropic</span> — receives your essay text and profile
+              details to generate matches, timelines, career-path information, and essay feedback.
+              Under Anthropic&apos;s API terms, your inputs are not used to train their models.
+            </li>
+            <li>
+              <span className="text-text">Supabase</span> — stores your account and profile data,
+              with row-level security limiting every record to you.
+            </li>
+            <li>
+              <span className="text-text">Stripe</span> — if you upgrade to Premium, processes the
+              payment; we never see or store your card number.
+            </li>
+            <li>
+              <span className="text-text">Resend</span> — sends your welcome email.
+            </li>
+            <li>
+              <span className="text-text">Vercel</span> — hosts the application.
+            </li>
+            <li>
+              <span className="text-text">Sentry</span> — receives error/diagnostic data so we can
+              fix bugs.
+            </li>
+          </ul>
         </section>
         <section>
           <h2 className="text-text font-medium mb-2">3. Who can see your data</h2>
           <p>
             Only you. This MVP does not currently connect students to a school or counselor
-            account — no one else at your school has access to your Telos data.
+            account — no one else at your school has access to your Kairos data.
           </p>
         </section>
         <section>
           <h2 className="text-text font-medium mb-2">4. Children&apos;s privacy (COPPA)</h2>
           <p>
-            Telos requires users to self-attest they are 14 or older at signup and is not directed
+            Kairos requires users to self-attest they are 14 or older at signup and is not directed
             at children under 13. We do not knowingly collect personal information from
             children under 13. If we learn an account belongs to a user under 13, we will delete
             it.

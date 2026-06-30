@@ -24,10 +24,10 @@ FERPA governs **educational records held by schools/districts** that receive fed
 
 **Determination:** FERPA does not apply to this MVP. Reasoning:
 - No school or district account, integration, or data-sharing agreement exists in this phase (explicitly deferred to Phase 2).
-- Telos is a **direct-to-consumer** product in the MVP — students/parents, not schools, are the data subject's relationship-holder.
+- Kairos is a **direct-to-consumer** product in the MVP — students/parents, not schools, are the data subject's relationship-holder.
 - GPA/grades entered by the student themselves (self-reported) are not "education records" under FERPA's definition, which covers records *maintained by an educational institution*. Self-reported data the student typed into a third-party app is not a FERPA record.
 
-**Will become relevant:** The moment Phase 2's counselor dashboard or school-level integration ships and schools begin supplying or receiving student data through Telos, FERPA analysis must be redone — likely requiring a written agreement (often structured as a "school official" exception) with each district. Flagged in [Software_Timeline.md](../Software_Timeline.md) Phase 2 section as the Data Processing Agreement item.
+**Will become relevant:** The moment Phase 2's counselor dashboard or school-level integration ships and schools begin supplying or receiving student data through Kairos, FERPA analysis must be redone — likely requiring a written agreement (often structured as a "school official" exception) with each district. Flagged in [Software_Timeline.md](../Software_Timeline.md) Phase 2 section as the Data Processing Agreement item.
 
 ## Action items
 - [ ] Add age self-attestation to signup, block under-13 (blocks Jul 6 launch — see Day 1/Day 2 checklist)
