@@ -85,7 +85,7 @@ export default function ProfileClient({
   if (editing) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 1, y: 0 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: EASE }}
         className="px-5 md:px-8 py-8 max-w-xl mx-auto w-full"
@@ -201,7 +201,7 @@ export default function ProfileClient({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 1, y: 0 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: EASE }}
       className="px-5 md:px-8 py-8 max-w-xl mx-auto w-full"
@@ -225,7 +225,7 @@ export default function ProfileClient({
         {stats.map((stat, i) => (
           <motion.div
             key={stat.label}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: EASE, delay: i * 0.06 }}
             className="bg-card border border-border rounded-2xl p-4 text-center"
@@ -240,7 +240,7 @@ export default function ProfileClient({
         {sections.map((section, i) => (
           <motion.div
             key={section.title}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: EASE, delay: 0.18 + i * 0.06 }}
           >

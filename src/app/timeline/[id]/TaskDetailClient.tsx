@@ -46,7 +46,7 @@ export default function TaskDetailClient({ item }: { item: TimelineItem }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 1, y: 0 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: EASE }}
       className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full"
@@ -83,7 +83,7 @@ export default function TaskDetailClient({ item }: { item: TimelineItem }) {
           {completed ? (
             <motion.span
               key="completed"
-              initial={{ opacity: 0, scale: 0.8 }}
+              initial={{ opacity: 1, scale: 1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, ease: EASE }}
               className="flex items-center justify-center gap-2"

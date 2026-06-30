@@ -20,7 +20,7 @@ export default function FactorCard({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 1, y: 0 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: EASE, delay: index * 0.08 }}
       className="bg-card border border-border rounded-2xl p-5"

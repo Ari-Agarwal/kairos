@@ -212,23 +212,23 @@ export default function OnboardingPage() {
   return (
     <div className="flex-1 px-6 py-10 md:py-16 max-w-xl mx-auto w-full">
       <motion.h1
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 1, y: 0 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: EASE }}
         className="font-serif text-3xl text-text mb-6"
       >
-        Tell us about yourself
+        Build your profile
       </motion.h1>
 
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 1, y: 0 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: EASE, delay: 0.05 }}
         className="bg-secondary-tint border border-border rounded-2xl px-5 py-4 mb-6"
       >
         <p className="text-secondary text-sm leading-relaxed">
-          This builds your profile, which we&apos;ll use to generate your personalized school
-          list and timeline next.
+          Answer a few questions and we&apos;ll generate your school match list and a
+          personalized application timeline — instantly, on the other side.
         </p>
       </motion.div>
 
@@ -236,7 +236,7 @@ export default function OnboardingPage() {
         {sections.map((section, i) => (
           <motion.div
             key={section.title}
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: EASE, delay: 0.1 + i * 0.08 }}
             className="bg-card border border-border rounded-2xl p-6 space-y-4"

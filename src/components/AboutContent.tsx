@@ -23,7 +23,7 @@ export function AboutContent({
       )}
       <h1 className={`font-serif text-3xl text-text mb-2 ${showLogo ? "mt-6" : ""}`}>Our mission</h1>
       <p className="font-serif text-xl text-primary mb-8">
-        {studentCount.toLocaleString()} students helped so far
+        {studentCount.toLocaleString()} students matched so far
       </p>
 
       <div className="grid grid-cols-2 gap-4 mb-10">

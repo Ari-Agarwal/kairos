@@ -92,7 +92,7 @@ export default async function DashboardPage({
                 ))}
               </div>
             ) : (
-              <p className="text-text-gray text-sm">No matches yet, head to Matches to generate your list.</p>
+              <p className="text-text-gray text-sm">No matches yet — tap Matches below to generate your personalized school list.</p>
             )}
           </Link>
 
@@ -113,7 +113,7 @@ export default async function DashboardPage({
                 ))}
               </div>
             ) : (
-              <p className="text-text-gray text-sm">Nothing upcoming, check your full timeline for details.</p>
+              <p className="text-text-gray text-sm">Nothing upcoming yet — tap Timeline below to see your full plan.</p>
             )}
           </Link>
         </div>
