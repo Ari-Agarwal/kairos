@@ -165,14 +165,15 @@ function isWebGLAvailable() {
 
 export function Hero3D() {
   const [reducedMotion, setReducedMotion] = React.useState(getInitialReducedMotion);
-  const [webglAvailable, setWebglAvailable] = React.useState(true);
+  const [webglAvailable] = React.useState(() =>
+    typeof window !== "undefined" ? isWebGLAvailable() : true
+  );
   const pointer = React.useRef({ x: 0, y: 0 });
 
   React.useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
     mq.addEventListener("change", handler);
-    setWebglAvailable(isWebGLAvailable());
     return () => mq.removeEventListener("change", handler);
   }, []);
 

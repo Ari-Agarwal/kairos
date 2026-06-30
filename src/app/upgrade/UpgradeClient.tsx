@@ -28,14 +28,14 @@ export default function UpgradeClient({ isPremium }: { isPremium: boolean }) {
     >
       <h1 className="font-serif text-2xl text-text mb-3">Plans</h1>
       <p className="text-text-gray text-sm leading-relaxed mb-8">
-        Telos Free is built to be genuinely useful on its own — a real school list, a real
+        Kairos Free is built to be genuinely useful on its own — a real school list, a real
         timeline, and honest guidance — because access to this shouldn&apos;t depend on what you
         can afford. Premium adds deeper, more personal support for students who want to go further.
       </p>
 
       {isPremium ? (
         <div className="bg-premium-tint border border-border rounded-2xl p-6 text-center">
-          <p className="text-premium font-medium">You&apos;re on Premium. Thanks for supporting Telos.</p>
+          <p className="text-premium font-medium">You&apos;re on Premium. Thanks for supporting Kairos.</p>
         </div>
       ) : (
         <div className="bg-card border border-border rounded-2xl p-6 text-center mb-8">

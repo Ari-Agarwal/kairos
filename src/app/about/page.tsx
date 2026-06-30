@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import NavShell from "@/components/NavShell";
 import { AboutContent } from "@/components/AboutContent";
 
-export const metadata = { title: "About — Telos" };
+export const metadata = { title: "About — Kairos" };
 
 export default async function AboutPage() {
   const supabase = await createClient();

@@ -12,16 +12,19 @@ schools with strong college-prep expectations from parents but a small counselin
 to class size. Primary buyer is the lead counselor or counseling department head; budget likely
 needs district or site-admin sign-off for anything beyond a single-counselor pilot.
 
-## Trademark check (informal, Jun 27 2026)
+## Trademark check (informal — Jun 27 working title, updated Jun 30)
 
-No active product called "Telos" found in education/software via web search. Closest near-miss:
-"META Teletherapy" (mental health app for colleges) — different name, different category, low
-collision risk. This is informal only — run a full USPTO TESS search (uspto.gov/trademarks/search)
-or get a ~$50 attorney clearance check before going wide publicly (Week 5+).
+The Jun 27 check was on the working title "Telos" (no active education/software product found).
+On Jun 30 the name was changed to **Kairos**; a fresh check found the bare word "Kairos" is heavily
+used — kairos.com is an identity-verification company, there are multiple live KAIROS software
+trademarks, and **Kairos Educational Services** is a direct competitor (HS college-admissions
+counseling). Resolved by using the distinct mark and domain **kairosadmissions.com** (confirmed
+unregistered/base-price). Run a full USPTO TESS search (uspto.gov/trademarks/search) or a ~$50
+attorney clearance check before going wide publicly.
 
 ## LinkedIn update guidance
 
-- Headline: lead with "Founder, Telos," not school/grade.
-- About section: 2-3 sentences — what Telos does, who it's for, why now.
+- Headline: lead with "Founder, Kairos," not school/grade.
+- About section: 2-3 sentences — what Kairos does, who it's for, why now.
 - Pin the Week 2 founder-led content post once published.
 - Make sure profile photo is current/professional.

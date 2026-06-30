@@ -44,8 +44,11 @@ export default function EssayFeedbackClient() {
         onChange={(e) => setEssay(e.target.value)}
         rows={10}
         placeholder="Paste your essay draft here..."
-        className="w-full rounded-2xl bg-card border border-border px-4 py-3 text-text text-sm outline-none focus:border-primary resize-none mb-4"
+        className="w-full rounded-2xl bg-card border border-border px-4 py-3 text-text text-sm outline-none focus:border-primary resize-none mb-3"
       />
+      <p className="text-text-gray text-xs mb-4">
+        Your draft is sent to our AI provider (Anthropic) to generate feedback.
+      </p>
       <button
         onClick={handleSubmit}
         disabled={loading || !essay.trim()}

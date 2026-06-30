@@ -4,7 +4,7 @@ const STATS = [
   { value: "400,000+", label: "academically strong students who fail to enroll in any college each year" },
   { value: "200,000+", label: "more who enroll in schools well below what their record supports" },
   { value: "$4,000–$12,000", label: "typical cost of a private admissions consultant package" },
-  { value: "$0", label: "cost to start with Telos" },
+  { value: "$0", label: "cost to start with Kairos" },
 ];
 
 export function AboutContent({
@@ -18,7 +18,7 @@ export function AboutContent({
     <div className="px-5 md:px-8 py-12 max-w-2xl mx-auto w-full">
       {showLogo && (
         <Link href="/" className="font-serif text-lg text-primary">
-          Telos
+          Kairos
         </Link>
       )}
       <h1 className={`font-serif text-3xl text-text mb-2 ${showLogo ? "mt-6" : ""}`}>Our mission</h1>
@@ -55,7 +55,7 @@ export function AboutContent({
           need this guidance the most are the students who can afford it the least.
         </p>
         <p>
-          Telos was built to sever that connection between cost and access. It performs the
+          Kairos was built to sever that connection between cost and access. It performs the
           same quality of analysis, weighing a student&apos;s actual profile against real
           admissions patterns, and returns a list of schools that reflects genuine potential
           rather than guesswork. It is free to start, on the idea that clarity about

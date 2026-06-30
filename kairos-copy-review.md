@@ -1,4 +1,4 @@
-# Telos Copy Review — Onboarding & Essay Feedback
+# Kairos Copy Review — Onboarding & Essay Feedback
 
 ## 1. Voice violations found
 

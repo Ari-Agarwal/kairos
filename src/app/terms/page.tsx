@@ -1,4 +1,4 @@
-export const metadata = { title: "Terms of Service — Telos" };
+export const metadata = { title: "Terms of Service — Kairos" };
 
 export default function TermsPage() {
   return (
@@ -8,11 +8,11 @@ export default function TermsPage() {
 
       <div className="space-y-6 text-text-gray text-sm leading-relaxed">
         <section>
-          <h2 className="text-text font-medium mb-2">1. What Telos is</h2>
+          <h2 className="text-text font-medium mb-2">1. What Kairos is</h2>
           <p>
-            Telos is a free web platform that gives high school students AI-generated college
+            Kairos is a free web platform that gives high school students AI-generated college
             admissions guidance: school match estimates, an application timeline, and (for
-            Premium subscribers) essay feedback and career path information. Telos is a
+            Premium subscribers) essay feedback and career path information. Kairos is a
             planning aid, not a substitute for a licensed counselor, and does not guarantee
             admission to any school.
           </p>
@@ -58,8 +58,8 @@ export default function TermsPage() {
         <section>
           <h2 className="text-text font-medium mb-2">7. Disclaimer and limitation of liability</h2>
           <p>
-            Telos is provided &quot;as is&quot; without warranties of any kind. We are not liable for
-            admissions outcomes, missed deadlines, or decisions made based on Telos&apos;s
+            Kairos is provided &quot;as is&quot; without warranties of any kind. We are not liable for
+            admissions outcomes, missed deadlines, or decisions made based on Kairos&apos;s
             AI-generated guidance.
           </p>
         </section>

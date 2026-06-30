@@ -179,7 +179,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="md:hidden relative z-[60] flex items-center justify-between px-4 py-3 border-b border-border">
           <Link href="/dashboard" className="text-text font-bold text-sm">
-            Telos
+            Kairos
           </Link>
           <button
             onClick={() => setDropdownOpen((v) => !v)}

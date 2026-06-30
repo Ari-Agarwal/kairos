@@ -17,6 +17,17 @@ export async function POST(req: Request) {
 
   const supabase = createServiceClient();
 
+  // Idempotency: skip events we've already handled. Stripe can deliver the same
+  // event more than once (retries on timeout/non-2xx). The handlers below are
+  // idempotent on their own, but this avoids redundant work and is required for
+  // any future non-idempotent handler.
+  const { data: alreadyProcessed } = await supabase
+    .from("processed_stripe_events")
+    .select("event_id")
+    .eq("event_id", event.id)
+    .maybeSingle();
+  if (alreadyProcessed) return NextResponse.json({ received: true, duplicate: true });
+
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -53,6 +64,12 @@ export async function POST(req: Request) {
       break;
     }
   }
+
+  // Mark handled. ignoreDuplicates so a concurrent redelivery that raced past
+  // the check above can't error here; the unique PK still guarantees one record.
+  await supabase
+    .from("processed_stripe_events")
+    .upsert({ event_id: event.id, type: event.type }, { onConflict: "event_id", ignoreDuplicates: true });
 
   return NextResponse.json({ received: true });
 }

@@ -1,4 +1,4 @@
-# Telos Launch Timeline — Go-to-Market (Jun 27–Aug 11)
+# Kairos Launch Timeline — Go-to-Market (Jun 27–Aug 11)
 
 Runs in parallel with [Software_Timeline.md](Software_Timeline.md), same 7 weeks, same Aug 11 end date.
 
@@ -20,7 +20,7 @@ The reasoning for the new approach: a free, direct-to-student product doesn't ne
 ---
 
 ## Week 1: Jun 27–Jul 3 — Foundations + first outreach
-- [ ] Register Telos as an LLC, get an EIN, open a business bank account, get a business credit/debit card
+- [ ] Register Kairos as an LLC, get an EIN, open a business bank account, get a business credit/debit card
   **Acceptance criteria:** the LLC is registered with the state, EIN is issued, and a business bank account + card are open in the company's name, not a personal account.
 - [ ] File the LLC operating agreement, and if there's more than one founder, document ownership splits in writing now
   **Acceptance criteria:** a signed operating agreement exists; if multiple founders, equity/ownership percentages are documented before any revenue or outside money is involved.
@@ -28,10 +28,10 @@ The reasoning for the new approach: a free, direct-to-student product doesn't ne
   **Acceptance criteria:** every business expense is recorded through the business bank account, not mixed with personal spending.
 - [ ] Get a quote on general liability + tech/professional liability (E&O) insurance, given you're handling minors' data
   **Acceptance criteria:** at minimum a quote and a documented decision (buy now vs. defer) exists — don't let this be silently skipped.
-- [x] Run a trademark/name conflict check on "Telos" before going wider publicly
-  **Status (Jun 27):** informal web check clean (closest near-miss: "META Teletherapy," different category). Full USPTO TESS search still recommended before Week 5+.
-- [ ] Set up a business email domain (e.g. you@telos.com) and route it through the same domain as the product
-  **Acceptance criteria:** outbound emails to the mentor and press come from a telos.com address, not a personal Gmail.
+- [x] Run a trademark/name conflict check on the product name before going wider publicly
+  **Status (Jun 30):** the Jun 27 check was on the working title "Telos" (clean). Name is now **Kairos**; a fresh check found the bare word is heavily used — kairos.com is an identity-verification company, there are multiple live KAIROS software trademarks, and **Kairos Educational Services** is a direct competitor (HS college-admissions counseling). Resolved by using the distinct mark + domain **kairosadmissions.com**. Full USPTO TESS search still recommended before going wide.
+- [ ] Set up a business email domain (e.g. you@kairosadmissions.com) and route it through the same domain as the product
+  **Acceptance criteria:** outbound emails to the mentor and press come from a kairosadmissions.com address, not a personal Gmail.
 - [ ] Call with Young Founders Lab mentor: present the product, the Aug 11 deadline, and ask specifically for help sequencing a student-direct launch
   **Acceptance criteria:** leave the call with a written list of 3+ concrete tactics to execute this timeline, not just general encouragement.
   **Status (Jun 27):** outreach message sent to CC Salzman; call not yet scheduled/held.
@@ -41,7 +41,7 @@ The reasoning for the new approach: a free, direct-to-student product doesn't ne
   **Acceptance criteria:** a visitor can leave their email without needing to sign up for the full product yet.
 - [x] Set up basic GTM metrics tracking (waitlist signups, follower growth per platform, link clicks from social bios) reviewed weekly alongside mentor check-ins
   **Acceptance criteria:** a simple tracker (spreadsheet is fine) exists with these numbers logged weekly starting this week.
-- [x] Update your personal LinkedIn profile (not just the company page) to clearly reflect founding Telos — headline, about section, pinned post
+- [x] Update your personal LinkedIn profile (not just the company page) to clearly reflect founding Kairos — headline, about section, pinned post
   **Status (Jun 27):** headline + About done; pinned post still pending the Week 2 founder-led content piece.
 - [ ] Reserve the Instagram handle now (username + bio link only, no posts, no follows yet) purely to prevent squatting; reserve LinkedIn company page and X account the same way
   **Status (Jun 27):** Instagram done. X signup stuck on a disabled Continue button on the "set up your account" screen — retry tomorrow with a fresh browser/mobile app; not an availability issue.
@@ -51,7 +51,7 @@ The reasoning for the new approach: a free, direct-to-student product doesn't ne
 ## Week 2: Jul 4–10 — Content engine + where students actually are
 - [ ] Identify the 3–5 places students/parents researching college applications actually congregate (college-admissions subreddits, Discord servers, parent Facebook groups, college-counseling-adjacent TikTok/YouTube creators)
   **Acceptance criteria:** a named list of communities exists, each with whatever's needed to post/engage there (membership, posting rules, relevant creators to reach).
-- [ ] Publish first piece of founder-led content (short video or post) about the problem Telos solves for students directly — written from genuine insight, not generic ed-tech marketing copy
+- [ ] Publish first piece of founder-led content (short video or post) about the problem Kairos solves for students directly — written from genuine insight, not generic ed-tech marketing copy
   **Acceptance criteria:** one piece is published and shared in at least one relevant community from this week's research.
 - [ ] Start a content cadence: short-form video (Instagram/TikTok) showing the actual product helping a student, one post per week through launch
   **Acceptance criteria:** a content calendar exists mapping each remaining week to at least one piece of content.
@@ -71,7 +71,7 @@ The reasoning for the new approach: a free, direct-to-student product doesn't ne
 ## Week 4: Jul 18–24 — Proof material + press kit
 - [ ] Reach back out to Luke Taylor (YFL managing director, gave earlier UX feedback) to show him the project's progress
   **Acceptance criteria:** Luke has seen a live walkthrough or demo of the current product and given a reaction/feedback, logged for reference.
-- [ ] Draft a one-pager: what Telos does, who it's for (students), why now
+- [ ] Draft a one-pager: what Kairos does, who it's for (students), why now
   **Acceptance criteria:** a one-pager exists that could be forwarded or used in a press pitch without you on the call.
 - [ ] If a student from Week 3's conversations is willing, gather a testimonial/quote for launch materials
   **Acceptance criteria:** either a quote/testimonial exists, or a clear reason is documented why it's too early.
@@ -97,7 +97,7 @@ The reasoning for the new approach: a free, direct-to-student product doesn't ne
   **Acceptance criteria:** pipeline tracker shows growth against a target set this week.
 - [ ] Activate Instagram/TikTok: by now the landing page's mobile-first pass (Software_Timeline Week 3) should be live, so the page is ready for traffic. Post the saved demo asset from Week 4 as the first real post, then start following/engaging with relevant student/parent accounts.
   **Acceptance criteria:** before the first follow goes out, the landing page has been checked on a real phone and looks finished, not work-in-progress.
-- [ ] Be deliberate about who Telos follows: parent, educator, and ed-tech accounts, and student accounts only where it's a genuine peer-style interaction (not following random minors out of context)
+- [ ] Be deliberate about who Kairos follows: parent, educator, and ed-tech accounts, and student accounts only where it's a genuine peer-style interaction (not following random minors out of context)
   **Acceptance criteria:** the "who to follow" list is reviewed before the first batch of follows goes out.
 - [ ] Fourth round of posts; consider asking the growth mentor to share/amplify if appropriate
   **Acceptance criteria:** posts published; explicitly ask the mentor whether sharing makes sense for their network.
@@ -123,12 +123,12 @@ The reasoning for the new approach: a free, direct-to-student product doesn't ne
   **Acceptance criteria:** every warm contact receives a personal message, not just the broadcast announcement.
 - [ ] Send the live link to every friend/family contact from Week 6 and explicitly ask each one to share it with students/parents they know, school parent group chats, or community Facebook groups
   **Acceptance criteria:** the launch link has been personally sent to every contact from Week 6's list with a direct ask to forward it onward.
-- [ ] Publish a distinct "founding" announcement (not just a product post) stating Telos is a real, registered company — framed around the founder story, not just the feature list
+- [ ] Publish a distinct "founding" announcement (not just a product post) stating Kairos is a real, registered company — framed around the founder story, not just the feature list
   **Acceptance criteria:** the post explicitly states the company is founded/incorporated, so it reads as a company announcement to anyone seeing it cold.
 - [ ] Set up a public company profile (Crunchbase, AngelList/Wellfound at minimum) listing the entity, founding date, and team
   **Acceptance criteria:** at least one such profile is live and accurately reflects the legal entity formed in Week 1.
 - [ ] Add a real "About/Company" page on the website itself (founder bio, mission, contact) distinct from the product marketing pages
-  **Acceptance criteria:** a visitor can find who's behind Telos and why it exists without needing to find you on social media.
+  **Acceptance criteria:** a visitor can find who's behind Kairos and why it exists without needing to find you on social media.
 - [ ] **Public student-only MVP launch — August 11**
 
 ---

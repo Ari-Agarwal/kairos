@@ -74,7 +74,7 @@ export default function TimelineClient({
       </div>
       <p className="text-text-gray text-xs mb-4">
         AI-generated deadlines and advice based on your profile — always verify dates against
-        each school's official site.
+        each school&apos;s official site.
       </p>
       {error && <p className="text-red text-sm mb-4">{error}</p>}
 

@@ -43,3 +43,8 @@ next-env.d.ts
 # claude-flow tooling artifacts
 .claude-flow/
 stripe_backup_code.txt
+
+# secrets / recovery material — never commit
+recovery-codes.txt
+*recovery-codes*
+*.key
