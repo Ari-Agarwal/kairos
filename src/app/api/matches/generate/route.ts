@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getAnthropic, MODEL, SCHOOL_MATCHING_PROMPT, extractJson } from "@/lib/anthropic";
+import { getAnthropic, MODEL, schoolMatchingPrompt, extractJson } from "@/lib/anthropic";
 import { canRegenerate, weekStart } from "@/lib/access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isTrustedOrigin } from "@/lib/origin-check";
@@ -79,17 +79,33 @@ Schools already considering: ${profile.schools_already_considering ?? "missing"}
 Test scores: ${profile.test_scores ? JSON.stringify(profile.test_scores) : "missing"}
 ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
 
-  let schools: SchoolResult[];
-  try {
+  const CATEGORIES = ["reach", "target", "safety"] as const;
+
+  async function generateCategory(category: (typeof CATEGORIES)[number]): Promise<SchoolResult[]> {
     const response = await getAnthropic().messages.create({
       model: MODEL,
-      max_tokens: 4096,
-      system: SCHOOL_MATCHING_PROMPT,
+      max_tokens: 3072,
+      thinking: { type: "disabled" },
+      system: schoolMatchingPrompt(category),
       messages: [{ role: "user", content: userMessage }],
     });
     const text = response.content.find((b) => b.type === "text")?.text ?? "";
     const parsed = extractJson<{ schools: SchoolResult[] }>(text);
-    schools = parsed.schools;
+    // Trust the category the call was scoped to, not the model's echo.
+    return parsed.schools.map((s) => ({ ...s, category }));
+  }
+
+  let schools: SchoolResult[];
+  try {
+    // Reach/target/safety run concurrently — ~1/3 the wall-clock of one 15-school call.
+    const byCategory = await Promise.all(CATEGORIES.map(generateCategory));
+    const seen = new Set<string>();
+    schools = byCategory.flat().filter((s) => {
+      const key = s.name.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   } catch {
     return NextResponse.json({ error: "Failed to generate matches. Please try again." }, { status: 502 });
   }

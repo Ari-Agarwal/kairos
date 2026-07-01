@@ -44,6 +44,7 @@ export async function POST(req: Request) {
     const response = await getAnthropic().messages.create({
       model: MODEL,
       max_tokens: 1024,
+      thinking: { type: "disabled" },
       system: CAREER_PATH_PROMPT,
       messages: [
         {

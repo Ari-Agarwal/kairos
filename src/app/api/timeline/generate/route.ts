@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getAnthropic, MODEL, TIMELINE_PROMPT, extractJson } from "@/lib/anthropic";
+import { getAnthropic, MODEL, LOGISTICS_PROMPT, STRATEGIC_PROMPT, extractJson } from "@/lib/anthropic";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isTrustedOrigin } from "@/lib/origin-check";
 
@@ -45,19 +45,29 @@ Schools already considering: ${profile.schools_already_considering ?? "not speci
 Matched schools:
 ${matches.map((m) => `- ${m.school_name} (${m.category})`).join("\n")}`;
 
-  let logistics: TimelineEntry[];
-  let strategic_advice: TimelineEntry[];
-  try {
+  async function generateSection<K extends "logistics" | "strategic_advice">(
+    system: string,
+    key: K
+  ): Promise<TimelineEntry[]> {
     const response = await getAnthropic().messages.create({
       model: MODEL,
-      max_tokens: 4096,
-      system: TIMELINE_PROMPT,
+      max_tokens: 3072,
+      thinking: { type: "disabled" },
+      system,
       messages: [{ role: "user", content: userMessage }],
     });
     const text = response.content.find((b) => b.type === "text")?.text ?? "";
-    const parsed = extractJson<{ logistics: TimelineEntry[]; strategic_advice: TimelineEntry[] }>(text);
-    logistics = parsed.logistics;
-    strategic_advice = parsed.strategic_advice;
+    return extractJson<Record<K, TimelineEntry[]>>(text)[key];
+  }
+
+  let logistics: TimelineEntry[];
+  let strategic_advice: TimelineEntry[];
+  try {
+    // Deadlines and strategic advice generate concurrently.
+    [logistics, strategic_advice] = await Promise.all([
+      generateSection(LOGISTICS_PROMPT, "logistics"),
+      generateSection(STRATEGIC_PROMPT, "strategic_advice"),
+    ]);
   } catch {
     return NextResponse.json({ error: "Failed to generate timeline. Please try again." }, { status: 502 });
   }
