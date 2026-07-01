@@ -36,6 +36,7 @@ export async function POST(req: Request) {
     const response = await getAnthropic().messages.create({
       model: MODEL,
       max_tokens: 2048,
+      thinking: { type: "disabled" },
       system: ESSAY_FEEDBACK_PROMPT,
       messages: [{ role: "user", content: essay }],
     });
