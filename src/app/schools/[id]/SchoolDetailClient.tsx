@@ -4,33 +4,46 @@ import { useState } from "react";
 import Link from "next/link";
 import { Lock } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import FactorCard from "./FactorCard";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-// Placeholder stats until a real school-data source is integrated (see Fast-follow).
-// Derived per-school from the name so values vary instead of repeating identically.
-function hashSeed(name: string): number {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-  return h;
+const FACTOR_LABELS: Record<string, string> = {
+  gpa_comparison: "GPA",
+  course_rigor: "Course Rigor",
+  ec_strength: "Extracurricular Strength",
+  major_fit: "Major Fit",
+  social_fit: "Social & Campus Fit",
+};
+
+// Same Small/Medium/Large buckets as the profile's own campus_size_pref field.
+function enrollmentSize(enrollment: number): "Small" | "Medium" | "Large" {
+  if (enrollment < 5000) return "Small";
+  if (enrollment <= 15000) return "Medium";
+  return "Large";
 }
 
-function placeholderStats(schoolName: string) {
-  const seed = hashSeed(schoolName);
-  const acceptanceRate = 15 + (seed % 60); // 15-74%
-  const foundedDecade = 1800 + ((seed >> 4) % 20) * 10; // 1800s-1990s
-  const population = 2000 + ((seed >> 8) % 38) * 500; // 2,000-21,000
-  return {
-    acceptanceRate: `~${acceptanceRate}%`,
-    founded: `${foundedDecade}s`,
-    population: `~${population.toLocaleString()}`,
-  };
+function barWidth(text: string): number {
+  const lower = text.toLowerCase();
+  if (lower.includes("unavailable") || lower.includes("missing")) return 0;
+  if (lower.includes("strong") || lower.includes("well above") || lower.includes("excellent")) return 90;
+  if (lower.includes("moderate") || lower.includes("typical") || lower.includes("within")) return 60;
+  if (lower.includes("limited") || lower.includes("below")) return 30;
+  return 50;
 }
 
 interface Match {
   id: string;
   school_name: string;
   category: string;
+  percentage: number;
+  factors: Record<string, string>;
+}
+
+interface CollegeStats {
+  acceptanceRate: number | null;
+  enrollment: number | null;
+  ownership: string | null;
 }
 
 interface CareerPath {
@@ -40,9 +53,16 @@ interface CareerPath {
   summary: string;
 }
 
-export default function SchoolDetailClient({ match, isPremium }: { match: Match; isPremium: boolean }) {
-  const stats = placeholderStats(match.school_name);
-  const [tab, setTab] = useState<"info" | "career">("info");
+export default function SchoolDetailClient({
+  match,
+  isPremium,
+  stats,
+}: {
+  match: Match;
+  isPremium: boolean;
+  stats: CollegeStats | null;
+}) {
+  const [tab, setTab] = useState<"info" | "breakdown" | "career">("info");
   const [careerPath, setCareerPath] = useState<CareerPath | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +99,7 @@ export default function SchoolDetailClient({ match, isPremium }: { match: Match;
       </div>
 
       <div className="relative flex gap-2 mb-6 bg-card border border-border rounded-xl p-1 w-fit">
-        {(["info", "career"] as const).map((t) => (
+        {(["info", "breakdown", "career"] as const).map((t) => (
           <button
             key={t}
             onClick={() => {
@@ -97,7 +117,9 @@ export default function SchoolDetailClient({ match, isPremium }: { match: Match;
                 className="absolute inset-0 bg-primary rounded-lg"
               />
             )}
-            <span className="relative z-10">{t === "info" ? "Info" : "Career Path"}</span>
+            <span className="relative z-10">
+              {t === "info" ? "Info" : t === "breakdown" ? "Breakdown" : "Career Path"}
+            </span>
           </button>
         ))}
       </div>
@@ -112,28 +134,93 @@ export default function SchoolDetailClient({ match, isPremium }: { match: Match;
             transition={{ duration: 0.2, ease: EASE }}
             className="bg-card border border-border rounded-2xl p-5"
           >
-            <div className="grid grid-cols-3 gap-4 mb-4 text-center">
-              <div>
-                <p className="text-text font-serif text-lg">{stats.acceptanceRate}</p>
-                <p className="text-text-gray text-xs">Acceptance rate</p>
-              </div>
-              <div>
-                <p className="text-text font-serif text-lg">{stats.founded}</p>
-                <p className="text-text-gray text-xs">Founded</p>
-              </div>
-              <div>
-                <p className="text-text font-serif text-lg">{stats.population}</p>
-                <p className="text-text-gray text-xs">Population</p>
-              </div>
+            {stats && (stats.acceptanceRate !== null || stats.enrollment !== null || stats.ownership !== null) ? (
+              <>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  {stats.acceptanceRate !== null && (
+                    <div className="bg-bg border border-border rounded-xl p-3">
+                      <p className="text-text-gray text-xs mb-1">Acceptance Rate</p>
+                      <p className="font-serif text-xl text-text">{(stats.acceptanceRate * 100).toFixed(1)}%</p>
+                    </div>
+                  )}
+                  {stats.enrollment !== null && (
+                    <div className="bg-bg border border-border rounded-xl p-3">
+                      <p className="text-text-gray text-xs mb-1">Size</p>
+                      <p className="font-serif text-xl text-text">{enrollmentSize(stats.enrollment)}</p>
+                    </div>
+                  )}
+                  {stats.ownership !== null && (
+                    <div className="bg-bg border border-border rounded-xl p-3 col-span-2">
+                      <p className="text-text-gray text-xs mb-1">Type</p>
+                      <p className="font-serif text-xl text-text">{stats.ownership}</p>
+                    </div>
+                  )}
+                </div>
+                <p className="text-text-gray text-xs mb-4">
+                  Source:{" "}
+                  <a
+                    href="https://collegescorecard.ed.gov"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline underline-offset-2 hover:text-primary"
+                  >
+                    College Scorecard
+                  </a>{" "}
+                  (U.S. Dept. of Education), most recent reporting year — may not reflect this
+                  year&apos;s admissions cycle.
+                </p>
+              </>
+            ) : (
+              <p className="text-text-gray text-sm leading-relaxed mb-4">
+                Kairos doesn&apos;t have verified stats (acceptance rate, enrollment) for{" "}
+                {match.school_name}{" "}
+                yet — either it&apos;s outside the U.S. (our data source only covers U.S.
+                institutions) or it&apos;s not in that dataset.{" "}
+                <a
+                  href={`https://www.google.com/search?q=${encodeURIComponent(
+                    `${match.school_name} acceptance rate enrollment`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-text underline underline-offset-2 hover:text-primary"
+                >
+                  Search for {match.school_name}&apos;s official figures
+                </a>
+                .
+              </p>
+            )}
+            <p className="text-text-gray text-sm">
+              Your personalized estimate for this school — grounded in your actual profile,
+              not a generic school-wide number — is on the{" "}
+              <button onClick={() => setTab("breakdown")} className="text-text underline underline-offset-2 hover:text-primary">
+                Breakdown tab
+              </button>
+              .
+            </p>
+          </motion.div>
+        )}
+
+        {tab === "breakdown" && (
+          <motion.div
+            key="breakdown"
+            initial={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: EASE }}
+          >
+            <p className="text-text-gray text-sm mb-4">
+              How we calculated <span className="text-text font-medium">{match.percentage}%</span>
+            </p>
+            <div className="space-y-6">
+              {Object.entries(FACTOR_LABELS).map(([key, label], i) => {
+                const text = match.factors?.[key] ?? "Not available";
+                const width = barWidth(text);
+                const missing = width === 0;
+                return (
+                  <FactorCard key={key} label={label} text={text} width={width} missing={missing} index={i} />
+                );
+              })}
             </div>
-            <p className="text-text-gray text-[11px] mb-3">
-              Approximate figures — verify exact stats on the school&apos;s official site.
-            </p>
-            <p className="text-text-gray text-sm leading-relaxed">
-              {match.school_name} is known for a strong academic community and a broad range of
-              programs. Students often describe the campus culture as collaborative, with active
-              student life and research opportunities across departments.
-            </p>
           </motion.div>
         )}
 

@@ -38,28 +38,22 @@ export function AboutContent({
       <div className="space-y-4 text-text-gray text-sm leading-relaxed">
         <p>
           Each year, an estimated 400,000 academically strong students from low-income
-          backgrounds fail to enroll in any college, while another 200,000 enroll in
-          institutions well below what their academic records would otherwise support.
-          Researchers refer to this as &quot;undermatching.&quot; It is not an isolated
-          anomaly but a structural pattern, one that recurs predictably among capable
-          students year after year.
+          backgrounds don&apos;t enroll in any college, and another 200,000 enroll in schools
+          well below what their academic record supports. Researchers call this
+          &quot;undermatching,&quot; and studies of admissions outcomes find it shows up
+          consistently, not as an isolated exception.
         </p>
         <p>
-          The cause is straightforward. Matching a student to the right institution requires
-          genuine analysis: an evaluation of grades, coursework, and extracurricular record
-          against real admissions outcomes, followed by an honest account of where that
-          student actually stands. This analysis is neither rare nor unusual, but it is
-          expensive. Private admissions consultants typically charge between $4,000 and
-          $12,000 for a comprehensive package, with hourly consultations ranging from $300 to
-          $600, and in some cases reaching $1,000 per hour. In other words, the students who
-          need this guidance the most are the students who can afford it the least.
+          Matching a student to the right school takes real analysis: grades, coursework,
+          and extracurriculars checked against actual admissions outcomes, then an honest
+          read on where that student stands relative to each school. Private admissions
+          consultants do this analysis for a living, usually for $4,000–$12,000 per package,
+          with hourly rates between $300 and $600 (sometimes up to $1,000/hour).
         </p>
         <p>
-          Kairos was built to sever that connection between cost and access. It performs the
-          same quality of analysis, weighing a student&apos;s actual profile against real
-          admissions patterns, and returns a list of schools that reflects genuine potential
-          rather than guesswork. It is free to start, on the idea that clarity about
-          one&apos;s future should never be a privilege reserved for those who can pay for it.
+          Kairos runs a similar analysis, using a student&apos;s actual profile and real
+          admissions data to generate a school list, a personalized timeline, and essay
+          feedback. It&apos;s free to start.
         </p>
       </div>
 

@@ -5,6 +5,11 @@ import { canRegenerate, weekStart } from "@/lib/access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isTrustedOrigin } from "@/lib/origin-check";
 
+// Extended thinking at "high" effort takes 20-30s per category call on real
+// requests -- Vercel's default function duration (10s on Hobby) isn't enough,
+// so this must be raised explicitly. 60s is the Hobby-plan ceiling.
+export const maxDuration = 60;
+
 interface SchoolResult {
   name: string;
   category: "reach" | "target" | "safety";
@@ -15,14 +20,18 @@ interface SchoolResult {
     course_rigor: string;
     ec_strength: string;
     major_fit: string;
+    social_fit: string;
   };
 }
 
 interface Profile {
   intended_major: string | null;
+  current_school: string | null;
   extracurriculars: string[] | null;
   schools_already_considering: string | null;
   test_scores: unknown;
+  campus_size_pref: string;
+  campus_setting_pref: string;
 }
 
 function missingFields(profile: Profile): string[] {
@@ -74,9 +83,12 @@ export async function POST(req: Request) {
 Grade level: ${profile.grade_level}
 GPA: ${profile.gpa}
 Intended major: ${profile.intended_major ?? "missing"}
-Extracurriculars: ${profile.extracurriculars?.join(", ") ?? "missing"}
+Current school: ${profile.current_school ?? "missing"}
+Extracurriculars: ${profile.extracurriculars?.join("; ") ?? "missing"}
 Schools already considering: ${profile.schools_already_considering ?? "missing"}
 Test scores: ${profile.test_scores ? JSON.stringify(profile.test_scores) : "missing"}
+Campus size preference: ${profile.campus_size_pref}
+Campus setting preference: ${profile.campus_setting_pref}
 ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
 
   const CATEGORIES = ["reach", "target", "safety"] as const;
@@ -84,8 +96,9 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
   async function generateCategory(category: (typeof CATEGORIES)[number]): Promise<SchoolResult[]> {
     const response = await getAnthropic().messages.create({
       model: MODEL,
-      max_tokens: 3072,
-      thinking: { type: "disabled" },
+      max_tokens: 6144,
+      thinking: { type: "adaptive" },
+      output_config: { effort: "high" },
       system: schoolMatchingPrompt(category),
       messages: [{ role: "user", content: userMessage }],
     });
@@ -106,7 +119,8 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
       seen.add(key);
       return true;
     });
-  } catch {
+  } catch (err) {
+    console.error("Match generation failed:", err);
     return NextResponse.json({ error: "Failed to generate matches. Please try again." }, { status: 502 });
   }
 

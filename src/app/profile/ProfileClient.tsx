@@ -6,14 +6,19 @@ import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
+const CAMPUS_SIZES = ["Small", "Medium", "Large", "No preference"];
+const CAMPUS_SETTINGS = ["Urban", "Suburban", "Rural", "No preference"];
 
 interface Profile {
   grade_level: string;
   gpa: number;
   intended_major: string | null;
+  current_school: string;
   extracurriculars: string[] | null;
   schools_already_considering: string | null;
   subscription_tier: string;
+  campus_size_pref: string;
+  campus_setting_pref: string;
 }
 
 export default function ProfileClient({
@@ -36,13 +41,31 @@ export default function ProfileClient({
     grade_level: profile.grade_level,
     gpa: String(profile.gpa),
     intended_major: profile.intended_major ?? "",
-    extracurriculars: profile.extracurriculars?.join(", ") ?? "",
+    current_school: profile.current_school ?? "",
     schools_already_considering: profile.schools_already_considering ?? "",
+    campus_size_pref: profile.campus_size_pref ?? "",
+    campus_setting_pref: profile.campus_setting_pref ?? "",
   });
+  const [activities, setActivities] = useState<string[]>(
+    profile.extracurriculars && profile.extracurriculars.length > 0 ? profile.extracurriculars : [""]
+  );
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  function updateActivity(idx: number, value: string) {
+    setActivities((prev) => prev.map((a, i) => (i === idx ? value : a)));
+  }
+
+  function addActivity() {
+    setActivities((prev) => [...prev, ""]);
+  }
+
+  function removeActivity(idx: number) {
+    setActivities((prev) => prev.filter((_, i) => i !== idx));
+  }
 
   async function handleDeleteAccount() {
     setDeleting(true);
@@ -61,9 +84,15 @@ export default function ProfileClient({
   const displayName = fullName || email || "Student";
 
   async function handleSave() {
+    setSaveError(null);
+    if (!form.campus_size_pref || !form.campus_setting_pref) {
+      setSaveError("Please select a campus size and setting preference (pick \"No preference\" if you're not sure).");
+      return;
+    }
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    const ecArray = activities.map((a) => a.trim()).filter(Boolean);
     await supabase.auth.updateUser({ data: { full_name: form.full_name || null } });
     await supabase
       .from("profiles")
@@ -71,10 +100,11 @@ export default function ProfileClient({
         grade_level: form.grade_level,
         gpa: parseFloat(form.gpa),
         intended_major: form.intended_major,
-        extracurriculars: form.extracurriculars
-          ? form.extracurriculars.split(",").map((s) => s.trim()).filter(Boolean)
-          : null,
+        current_school: form.current_school,
+        extracurriculars: ecArray.length > 0 ? ecArray : null,
         schools_already_considering: form.schools_already_considering,
+        campus_size_pref: form.campus_size_pref,
+        campus_setting_pref: form.campus_setting_pref,
       })
       .eq("user_id", user.id);
     setSaving(false);
@@ -135,13 +165,49 @@ export default function ProfileClient({
             />
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Extracurriculars (comma separated)</label>
+            <label className="block text-sm text-text-gray mb-1">Current School</label>
             <input
               type="text"
-              value={form.extracurriculars}
-              onChange={(e) => setForm({ ...form, extracurriculars: e.target.value })}
+              value={form.current_school}
+              onChange={(e) => setForm({ ...form, current_school: e.target.value })}
               className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
             />
+          </div>
+          <div>
+            <label className="block text-sm text-text-gray mb-1">Extracurriculars</label>
+            <p className="text-text-gray text-xs mb-2">
+              Be as specific as possible — e.g. &quot;Varsity basketball, team captain, 3 years&quot; instead of just &quot;Basketball.&quot;
+            </p>
+            <div className="space-y-2">
+              {activities.map((activity, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. Varsity basketball, team captain, 3 years"
+                    value={activity}
+                    onChange={(e) => updateActivity(idx, e.target.value)}
+                    className="flex-1 rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+                  />
+                  {activities.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeActivity(idx)}
+                      className="text-text-gray hover:text-text px-2"
+                      aria-label="Remove activity"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addActivity}
+                className="text-sm text-text-gray hover:text-text underline underline-offset-2"
+              >
+                + Add another activity
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-sm text-text-gray mb-1">Schools you&apos;re already considering</label>
@@ -152,6 +218,56 @@ export default function ProfileClient({
               className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary resize-none"
             />
           </div>
+          <div>
+            <label className="block text-sm text-text-gray mb-2">Campus size preference *</label>
+            <div className="flex flex-wrap gap-2">
+              {CAMPUS_SIZES.map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() =>
+                    setForm({ ...form, campus_size_pref: form.campus_size_pref === size ? "" : size })
+                  }
+                  className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                    form.campus_size_pref === size
+                      ? "bg-primary text-bg border-primary"
+                      : "border-border text-text-gray hover:text-text"
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm text-text-gray mb-2">Campus setting preference *</label>
+            <div className="flex flex-wrap gap-2">
+              {CAMPUS_SETTINGS.map((setting) => (
+                <button
+                  key={setting}
+                  type="button"
+                  onClick={() =>
+                    setForm({
+                      ...form,
+                      campus_setting_pref: form.campus_setting_pref === setting ? "" : setting,
+                    })
+                  }
+                  className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                    form.campus_setting_pref === setting
+                      ? "bg-primary text-bg border-primary"
+                      : "border-border text-text-gray hover:text-text"
+                  }`}
+                >
+                  {setting}
+                </button>
+              ))}
+            </div>
+          </div>
+          {saveError && (
+            <p role="alert" className="text-red text-sm">
+              {saveError}
+            </p>
+          )}
           <div className="flex gap-3">
             <button
               onClick={handleSave}
@@ -210,7 +326,7 @@ export default function ProfileClient({
         <div>
           <h1 className="font-serif text-2xl text-text">{displayName}</h1>
           <p className="text-text-gray text-sm">
-            {profile.grade_level} · GPA {profile.gpa} · {profile.intended_major || "Major undecided"}
+            {profile.grade_level} · {profile.current_school} · {profile.intended_major || "Major undecided"}
           </p>
         </div>
         <button

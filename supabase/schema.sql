@@ -21,9 +21,12 @@ create table profiles (
   grade_level text check (grade_level in ('Freshman','Sophomore','Junior','Senior')) not null,
   gpa decimal not null,
   intended_major text not null,
+  current_school text not null,
   extracurriculars text[],
   schools_already_considering text not null,
   test_scores jsonb,
+  campus_size_pref text check (campus_size_pref in ('Small','Medium','Large','No preference')) not null,
+  campus_setting_pref text check (campus_setting_pref in ('Urban','Suburban','Rural','No preference')) not null,
   subscription_tier text check (subscription_tier in ('free','premium')) default 'free' not null,
   stripe_customer_id text unique,
   school_id uuid references schools(school_id),
@@ -63,6 +66,7 @@ create table regeneration_log (
   user_id uuid references auth.users not null,
   week_start_date date not null,
   count int default 0 not null,
+  timeline_count int default 0 not null,
   primary key (user_id, week_start_date)
 );
 
@@ -83,6 +87,15 @@ create table reminder_log (
   sent_at timestamptz default now()
 );
 
+create table college_stats_cache (
+  school_name text primary key,
+  acceptance_rate numeric,
+  enrollment integer,
+  ownership text,
+  found boolean not null default true,
+  fetched_at timestamptz default now() not null
+);
+
 alter table schools enable row level security;
 alter table counselors enable row level security;
 alter table profiles enable row level security;
@@ -91,6 +104,10 @@ alter table timeline_items enable row level security;
 alter table regeneration_log enable row level security;
 alter table counselor_notes enable row level security;
 alter table reminder_log enable row level security;
+alter table college_stats_cache enable row level security;
+
+create policy "authenticated users can read college stats cache" on college_stats_cache
+  for select using (auth.role() = 'authenticated');
 
 create policy "own profile" on profiles for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "own matches" on school_matches for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

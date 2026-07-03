@@ -109,18 +109,18 @@ Added from Jun 30 research into legal/privacy failure modes for AI-for-minors pr
 - [ ] **Still open (deferred):** soften AI-washing marketing copy ("replaces a private counselor" → "counselor-style help, not a substitute") — fold into content rewrite (step 5); reach WCAG 2.1 AA before driving traffic (fast-follow, consider pulling forward); extend the COPPA/FERPA memo to cover SOPIPA + state student-privacy laws.
   **Acceptance criteria:** every data category has a stated purpose at the point of collection; all subprocessors disclosed; no "we sell your data" ambiguity. **Not a substitute for legal review before going wide.**
 
-### 4. System prompt tuning
-- [ ] Further tuning pass on the 4 AI system prompts in `src/lib/anthropic.ts` and `src/app/api/career-path/route.ts`, building on the Day 7 refinement. Now running on `claude-sonnet-4-6`. Settle the AI-generated output before copy and visuals are polished around it.
+### 4. UI/UX polish pass
+- [ ] Freeze scope — no new features, nothing from Phase 2 pulled forward.
+- [ ] UI/UX pass via dev-server preview at desktop/tablet/mobile viewport widths (375px/414px/768px/1280px) — spacing, alignment, contrast, rounded-corner/typography consistency against the design system in `src/app/globals.css`.
+  **Acceptance criteria:** every screen visually clean and internally consistent at all simulated viewport widths. Real-hardware confirmation still happens later, at Mobile Device QA (step 8) — this step catches what a simulator can.
 
-### 5. Website content rewrite
+### 5. System prompt tuning
+- [ ] Further tuning pass on the 4 AI system prompts in `src/lib/anthropic.ts` and `src/app/api/career-path/route.ts`, building on the Day 7 refinement. Now running on `claude-sonnet-4-6`. Settle the AI-generated output before the copy pass below.
+
+### 6. Website content rewrite
 - [ ] Pass over all on-page (static) copy — landing, dashboard, onboarding, about, upgrade, profile, matches, timeline, essay feedback — for tone, clarity, and accuracy. Separate from the prompt tuning above: this is the hardcoded text in the `.tsx` files, not AI-generated output.
 - [ ] Specific areas: landing hero/subhead, `/about` mission paragraph and stats, onboarding field labels/placeholders, dashboard empty-state copy ("no matches yet", "nothing upcoming"), upgrade page's coming-soon messaging.
   **Acceptance criteria:** every screen's copy deliberately reviewed and rewritten where needed.
-
-### 6. UI/UX polish pass — requires you
-- [ ] Freeze scope — no new features, nothing from Phase 2 pulled forward.
-- [ ] UI/UX pass on real hardware — **blocked on you**: needs a real mid-range phone; I can't simulate real device rendering/perf from here.
-  **Acceptance criteria:** usable and visually clean at 375px/414px on real hardware, done after the content rewrite so it polishes a copy-frozen product.
 
 ### 7. Thorough desktop/laptop testing — requires you
 - [ ] Full end-to-end walkthrough of the entire student flow in a desktop browser: sign up → onboarding → matches generate → regenerate → school detail → match breakdown → timeline generate → "you are here" marker → task detail/complete → essay feedback → profile edit/save → account deletion. Click every button, submit every form, trigger every AI call, and exercise error/retry paths (e.g. force a failed generation). Confirm no console errors, no broken states, no fabricated/placeholder data.
@@ -143,6 +143,7 @@ Added from Jun 30 research into legal/privacy failure modes for AI-for-minors pr
 ---
 
 ## Fast-follow (post-Jul-6, first 2–3 weeks) — not pre-launch blockers
+- [ ] Get a free personal `COLLEGE_SCORECARD_API_KEY` at api.data.gov/signup and set it in env. School Detail Info tab now pulls real acceptance rate/enrollment/ownership from the College Scorecard API (`src/lib/college-scorecard.ts`), cached 30 days per school in Supabase (`migration_007_college_stats_cache.sql`, already run against prod). Currently running on the shared public `DEMO_KEY` (30 req/hr, 50/day, shared across all api.data.gov users worldwide) — fine pre-scale since caching means each school only needs one live lookup ever, but a personal key removes exposure to other users' traffic before real usage ramps up.
 - [ ] Register **`kairosadmissions.com`** + connect via Vercel DNS (currently launching on the Vercel URL) — confirmed unregistered/base-price as of the Jun 30 name search; requires purchasing the domain. Deferred from pre-launch by decision Jun 29.
 - [ ] Uptime monitoring, structured AI-cost logging/alerting (basic error monitoring via Sentry pulled forward to pre-launch step 2 on Jun 29)
 - [ ] Supabase backup/restore drill (full restore actually exercised; pre-launch step 2 only confirms backups are *enabled*)
