@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import NavShell from "@/components/NavShell";
 import ProfileCompletenessModal from "@/components/ProfileCompletenessModal";
-import { Features } from "@/components/blocks/features-6";
+import GenerateTimelineCard from "./GenerateTimelineCard";
 
 const CATEGORY_STYLES: Record<string, string> = {
   reach: "bg-red-tint text-red",
@@ -30,13 +30,22 @@ export default async function DashboardPage({
     .eq("user_id", user.id)
     .eq("is_active", true);
 
-  const { data: topMatches } = await supabase
+  const { data: activeMatches } = await supabase
     .from("school_matches")
     .select("school_name, category, percentage")
     .eq("user_id", user.id)
     .eq("is_active", true)
-    .order("percentage", { ascending: false })
-    .limit(3);
+    .order("percentage", { ascending: false });
+
+  const CATEGORY_ORDER = ["reach", "target", "safety"] as const;
+  const topMatches = CATEGORY_ORDER
+    .map((category) => activeMatches?.find((m) => m.category === category))
+    .filter((m): m is NonNullable<typeof m> => Boolean(m));
+
+  const { count: timelineItemCount } = await supabase
+    .from("timeline_items")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
 
   const { data: upcomingTasks } = await supabase
     .from("timeline_items")
@@ -51,10 +60,10 @@ export default async function DashboardPage({
   return (
     <NavShell>
       <ProfileCompletenessModal profile={profile} />
-      <div className="px-5 md:px-8 py-10 max-w-2xl mx-auto w-full">
+      <div className="px-5 md:px-8 py-10 max-w-3xl mx-auto w-full">
         <h1 className="font-serif text-3xl text-text mb-2">Welcome, {name}.</h1>
         <p className="text-text-gray text-sm mb-8">
-          {profile.grade_level} · GPA {profile.gpa} · {profile.intended_major || "Major undecided"}
+          {profile.grade_level} · {profile.current_school} · {profile.intended_major || "Major undecided"}
         </p>
 
         {matchError === "true" && (
@@ -66,28 +75,28 @@ export default async function DashboardPage({
           </div>
         )}
 
-        <div className="grid sm:grid-cols-2 gap-4 mb-8">
+        <div className="grid sm:grid-cols-2 gap-5 mb-8">
           <Link
             href="/matches"
-            className="block bg-card border border-border rounded-2xl px-5 py-5 hover:border-primary/40 transition-colors"
+            className="block bg-card border border-border rounded-2xl px-6 py-7 min-h-[220px] hover:border-primary/40 transition-colors"
           >
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-text-gray text-xs">Your top matches</p>
-              <span className="text-text-gray text-xs">{activeMatchCount ?? 0} schools</span>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-text-gray text-sm">Your top matches</p>
+              <span className="text-text-gray text-sm">{activeMatchCount ?? 0} schools</span>
             </div>
             {topMatches && topMatches.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {topMatches.map((m) => (
                   <div key={m.school_name} className="flex items-center justify-between">
                     <div>
                       <span
-                        className={`inline-block text-[10px] font-medium px-2 py-0.5 rounded-full mb-1 capitalize ${CATEGORY_STYLES[m.category]}`}
+                        className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full mb-1.5 capitalize ${CATEGORY_STYLES[m.category]}`}
                       >
                         {m.category}
                       </span>
-                      <p className="font-serif text-sm text-text">{m.school_name}</p>
+                      <p className="font-serif text-base text-text">{m.school_name}</p>
                     </div>
-                    <span className="font-serif text-lg text-primary">{m.percentage}%</span>
+                    <span className="font-serif text-xl text-primary">{m.percentage}%</span>
                   </div>
                 ))}
               </div>
@@ -96,29 +105,31 @@ export default async function DashboardPage({
             )}
           </Link>
 
-          <Link
-            href="/timeline"
-            className="block bg-card border border-border rounded-2xl px-5 py-5 hover:border-primary/40 transition-colors"
-          >
-            <p className="text-text-gray text-xs mb-3">Coming up on your timeline</p>
-            {upcomingTasks && upcomingTasks.length > 0 ? (
-              <div className="space-y-2">
-                {upcomingTasks.map((t) => (
-                  <div key={t.id} className="flex items-center justify-between">
-                    <p className="text-sm text-text truncate pr-2">{t.title}</p>
-                    <span className="text-text-gray text-xs shrink-0">
-                      {t.due_date ? new Date(t.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "—"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-text-gray text-sm">Nothing upcoming yet — tap Timeline below to see your full plan.</p>
-            )}
-          </Link>
+          {!timelineItemCount ? (
+            <GenerateTimelineCard />
+          ) : (
+            <Link
+              href="/timeline"
+              className="block bg-card border border-border rounded-2xl px-6 py-7 min-h-[220px] hover:border-primary/40 transition-colors"
+            >
+              <p className="text-text-gray text-sm mb-4">Coming up on your timeline</p>
+              {upcomingTasks && upcomingTasks.length > 0 ? (
+                <div className="space-y-3">
+                  {upcomingTasks.map((t) => (
+                    <div key={t.id} className="flex items-center justify-between">
+                      <p className="text-base text-text truncate pr-2">{t.title}</p>
+                      <span className="text-text-gray text-sm shrink-0">
+                        {t.due_date ? new Date(t.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "—"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-text-gray text-sm">Nothing upcoming yet — tap Timeline below to see your full plan.</p>
+              )}
+            </Link>
+          )}
         </div>
-
-        <Features activeMatchCount={activeMatchCount ?? 0} />
       </div>
     </NavShell>
   );

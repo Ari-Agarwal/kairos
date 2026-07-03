@@ -5,10 +5,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import GenerationProgress from "@/components/GenerationProgress";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 const GRADE_LEVELS = ["Freshman", "Sophomore", "Junior", "Senior"];
+const CAMPUS_SIZES = ["Small", "Medium", "Large", "No preference"];
+const CAMPUS_SETTINGS = ["Urban", "Suburban", "Rural", "No preference"];
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -18,9 +21,12 @@ export default function OnboardingPage() {
   const [gradeLevel, setGradeLevel] = useState("");
   const [gpa, setGpa] = useState("");
   const [intendedMajor, setIntendedMajor] = useState("");
-  const [extracurriculars, setExtracurriculars] = useState("");
+  const [currentSchool, setCurrentSchool] = useState("");
+  const [activities, setActivities] = useState<string[]>([""]);
   const [schoolsAlreadyConsidering, setSchoolsAlreadyConsidering] = useState("");
   const [testScores, setTestScores] = useState("");
+  const [campusSizePref, setCampusSizePref] = useState("");
+  const [campusSettingPref, setCampusSettingPref] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorKey, setErrorKey] = useState(0);
@@ -29,6 +35,34 @@ export default function OnboardingPage() {
     setError(message);
     setErrorKey((k) => k + 1);
   }
+
+  function updateActivity(idx: number, value: string) {
+    setActivities((prev) => prev.map((a, i) => (i === idx ? value : a)));
+  }
+
+  function addActivity() {
+    setActivities((prev) => [...prev, ""]);
+  }
+
+  function removeActivity(idx: number) {
+    setActivities((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  const progressChecks = [
+    !!fullName,
+    !!gradeLevel,
+    !!gpa,
+    !!intendedMajor,
+    !!currentSchool,
+    activities.some((a) => a.trim()),
+    !!schoolsAlreadyConsidering,
+    !!testScores,
+    !!campusSizePref,
+    !!campusSettingPref,
+  ];
+  const progressPercent = Math.round(
+    (progressChecks.filter(Boolean).length / progressChecks.length) * 100
+  );
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -50,8 +84,14 @@ export default function OnboardingPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+
+    if (!campusSizePref || !campusSettingPref) {
+      showError("Please select a campus size and setting preference (pick \"No preference\" if you're not sure).");
+      return;
+    }
+
+    setLoading(true);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -61,19 +101,19 @@ export default function OnboardingPage() {
 
     await supabase.auth.updateUser({ data: { full_name: fullName } });
 
-    const ecArray = extracurriculars
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const ecArray = activities.map((a) => a.trim()).filter(Boolean);
 
     const { error } = await supabase.from("profiles").insert({
       user_id: user.id,
       grade_level: gradeLevel,
       gpa: parseFloat(gpa),
       intended_major: intendedMajor,
+      current_school: currentSchool,
       extracurriculars: ecArray.length > 0 ? ecArray : null,
       schools_already_considering: schoolsAlreadyConsidering,
       test_scores: testScores ? { summary: testScores } : null,
+      campus_size_pref: campusSizePref,
+      campus_setting_pref: campusSettingPref,
     });
 
     if (error) {
@@ -95,6 +135,7 @@ export default function OnboardingPage() {
           <p className="font-serif text-2xl text-text mb-2">Building your personalized list...</p>
           <p className="text-text-gray text-sm">This takes a moment, we&apos;re matching you against real schools.</p>
         </div>
+        <GenerationProgress />
       </div>
     );
   }
@@ -150,6 +191,17 @@ export default function OnboardingPage() {
               />
             </div>
           </div>
+          <div>
+            <label className="block text-sm text-text-gray mb-1">Current School *</label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Lincoln High School"
+              value={currentSchool}
+              onChange={(e) => setCurrentSchool(e.target.value)}
+              className={inputClass}
+            />
+          </div>
         </>
       ),
     },
@@ -168,13 +220,40 @@ export default function OnboardingPage() {
             />
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Extracurriculars (comma separated)</label>
-            <input
-              type="text"
-              value={extracurriculars}
-              onChange={(e) => setExtracurriculars(e.target.value)}
-              className={inputClass}
-            />
+            <label className="block text-sm text-text-gray mb-1">Extracurriculars</label>
+            <p className="text-text-gray text-xs mb-2">
+              Be as specific as possible — e.g. &quot;Varsity basketball, team captain, 3 years&quot; instead of just &quot;Basketball.&quot;
+            </p>
+            <div className="space-y-2">
+              {activities.map((activity, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. Varsity basketball, team captain, 3 years"
+                    value={activity}
+                    onChange={(e) => updateActivity(idx, e.target.value)}
+                    className={`${inputClass} flex-1`}
+                  />
+                  {activities.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeActivity(idx)}
+                      className="text-text-gray hover:text-text px-2"
+                      aria-label="Remove activity"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addActivity}
+                className="text-sm text-text-gray hover:text-text underline underline-offset-2"
+              >
+                + Add another activity
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-sm text-text-gray mb-1">Test Scores (SAT/ACT, optional)</label>
@@ -207,6 +286,51 @@ export default function OnboardingPage() {
         </div>
       ),
     },
+    {
+      title: "Preferences",
+      fields: (
+        <>
+          <div>
+            <label className="block text-sm text-text-gray mb-2">Campus size *</label>
+            <div className="flex flex-wrap gap-2">
+              {CAMPUS_SIZES.map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => setCampusSizePref(campusSizePref === size ? "" : size)}
+                  className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                    campusSizePref === size
+                      ? "bg-primary text-bg border-primary"
+                      : "border-border text-text-gray hover:text-text"
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm text-text-gray mb-2">Campus setting *</label>
+            <div className="flex flex-wrap gap-2">
+              {CAMPUS_SETTINGS.map((setting) => (
+                <button
+                  key={setting}
+                  type="button"
+                  onClick={() => setCampusSettingPref(campusSettingPref === setting ? "" : setting)}
+                  className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                    campusSettingPref === setting
+                      ? "bg-primary text-bg border-primary"
+                      : "border-border text-text-gray hover:text-text"
+                  }`}
+                >
+                  {setting}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      ),
+    },
   ];
 
   return (
@@ -231,6 +355,20 @@ export default function OnboardingPage() {
           personalized application timeline — instantly, on the other side.
         </p>
       </motion.div>
+
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="text-xs text-text-gray">Profile progress</p>
+          <p className="text-xs text-text-gray">{progressPercent}% complete</p>
+        </div>
+        <div className="h-1.5 rounded-full bg-secondary-tint overflow-hidden">
+          <motion.div
+            className="h-full rounded-full bg-primary"
+            animate={{ width: `${progressPercent}%` }}
+            transition={{ duration: 0.3, ease: EASE }}
+          />
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {sections.map((section, i) => (

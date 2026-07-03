@@ -3,6 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { getAnthropic, MODEL, LOGISTICS_PROMPT, STRATEGIC_PROMPT, extractJson } from "@/lib/anthropic";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isTrustedOrigin } from "@/lib/origin-check";
+import { canRegenerate, weekStart } from "@/lib/access";
+
+// Extended thinking at "high" effort takes 20-30s per section call on real
+// requests -- Vercel's default function duration (10s on Hobby) isn't enough,
+// so this must be raised explicitly. 60s is the Hobby-plan ceiling.
+export const maxDuration = 60;
 
 interface TimelineEntry {
   title: string;
@@ -26,6 +32,22 @@ export async function POST(req: Request) {
   const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
+  const week = weekStart(new Date());
+  const { data: regenRow } = await supabase
+    .from("regeneration_log")
+    .select("timeline_count")
+    .eq("user_id", user.id)
+    .eq("week_start_date", week)
+    .maybeSingle();
+
+  const currentCount = regenRow?.timeline_count ?? 0;
+  if (!canRegenerate(profile, currentCount)) {
+    return NextResponse.json(
+      { error: "Weekly timeline regeneration limit reached. Upgrade to Premium for unlimited regenerations." },
+      { status: 403 }
+    );
+  }
+
   const { data: matches } = await supabase
     .from("school_matches")
     .select("school_name, category")
@@ -36,10 +58,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Generate your school matches first." }, { status: 400 });
   }
 
-  const userMessage = `Student profile:
+  const userMessage = `Today's date: ${new Date().toISOString().slice(0, 10)}
+
+Student profile:
 Grade level: ${profile.grade_level}
 GPA: ${profile.gpa}
 Intended major: ${profile.intended_major ?? "not specified"}
+Extracurriculars: ${(profile.extracurriculars as string[] | null)?.join("; ") || "not specified"}
+Test scores: ${profile.test_scores ? JSON.stringify(profile.test_scores) : "not specified"}
 Schools already considering: ${profile.schools_already_considering ?? "not specified"}
 
 Matched schools:
@@ -51,8 +77,9 @@ ${matches.map((m) => `- ${m.school_name} (${m.category})`).join("\n")}`;
   ): Promise<TimelineEntry[]> {
     const response = await getAnthropic().messages.create({
       model: MODEL,
-      max_tokens: 3072,
-      thinking: { type: "disabled" },
+      max_tokens: 6144,
+      thinking: { type: "adaptive" },
+      output_config: { effort: "high" },
       system,
       messages: [{ role: "user", content: userMessage }],
     });
@@ -68,7 +95,8 @@ ${matches.map((m) => `- ${m.school_name} (${m.category})`).join("\n")}`;
       generateSection(LOGISTICS_PROMPT, "logistics"),
       generateSection(STRATEGIC_PROMPT, "strategic_advice"),
     ]);
-  } catch {
+  } catch (err) {
+    console.error("Timeline generation failed:", err);
     return NextResponse.json({ error: "Failed to generate timeline. Please try again." }, { status: 502 });
   }
 
@@ -99,6 +127,10 @@ ${matches.map((m) => `- ${m.school_name} (${m.category})`).join("\n")}`;
 
   const { error } = await supabase.from("timeline_items").insert(rows);
   if (error) return NextResponse.json({ error: "Failed to save timeline." }, { status: 500 });
+
+  await supabase
+    .from("regeneration_log")
+    .upsert({ user_id: user.id, week_start_date: week, timeline_count: currentCount + 1 });
 
   return NextResponse.json({ ok: true });
 }

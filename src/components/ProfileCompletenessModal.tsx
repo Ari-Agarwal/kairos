@@ -1,7 +1,7 @@
 // SCREEN 0 COMPLETE
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const FIELD_LABELS: Record<string, string> = {
@@ -32,13 +32,17 @@ const DISMISS_KEY = "telos_completeness_dismissed";
 
 export default function ProfileCompletenessModal({ profile }: { profile: Profile | null | undefined }) {
   const router = useRouter();
-  const [dismissed, setDismissed] = useState(
-    () => typeof window !== "undefined" && sessionStorage.getItem(DISMISS_KEY) === "true"
-  );
+  const [dismissed, setDismissed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setDismissed(sessionStorage.getItem(DISMISS_KEY) === "true");
+  }, []);
 
   const missing = getMissingFields(profile);
 
-  if (missing.length === 0 || dismissed) return null;
+  if (!mounted || missing.length === 0 || dismissed) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">

@@ -16,17 +16,38 @@ interface TimelineItem {
   why_text: string;
 }
 
+function weekStart(): string {
+  const d = new Date();
+  const day = d.getUTCDay();
+  const diff = (day + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - diff);
+  return d.toISOString().slice(0, 10);
+}
+
 function computeYouAreHere(items: TimelineItem[]): string | null {
   const eligible = items.filter((i) => !i.completed && !i.is_strategic && i.due_date);
   if (eligible.length === 0) return null;
 
-  eligible.sort((a, b) => {
-    const dateDiff = new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime();
-    if (dateDiff !== 0) return dateDiff;
-    return (b.school_tags?.length ?? 0) - (a.school_tags?.length ?? 0);
-  });
+  const sortByDate = (list: TimelineItem[]) =>
+    [...list].sort((a, b) => {
+      const dateDiff = new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime();
+      if (dateDiff !== 0) return dateDiff;
+      return (b.school_tags?.length ?? 0) - (a.school_tags?.length ?? 0);
+    });
 
-  return eligible[0].id;
+  // Recomputed fresh on every page load (this is a Server Component, not
+  // cached), so "today" is always current as of the latest visit — the
+  // marker needs to actually compare against it rather than just picking
+  // the chronologically-first incomplete item, or an unchecked task stays
+  // pinned as "You are here" forever after its due date passes.
+  const todayMs = new Date().setHours(0, 0, 0, 0);
+  const upcoming = sortByDate(eligible.filter((i) => new Date(i.due_date!).getTime() >= todayMs));
+  if (upcoming.length > 0) return upcoming[0].id;
+
+  // Everything is overdue — "here" is the most recently missed item, not
+  // the oldest one, since that's the one most relevant to catch up on now.
+  const overdue = sortByDate(eligible);
+  return overdue[overdue.length - 1].id;
 }
 
 export default async function TimelinePage() {
@@ -43,13 +64,26 @@ export default async function TimelinePage() {
     .eq("user_id", user.id)
     .order("due_date", { ascending: true, nullsFirst: false });
 
+  const { data: regenRow } = await supabase
+    .from("regeneration_log")
+    .select("timeline_count")
+    .eq("user_id", user.id)
+    .eq("week_start_date", weekStart())
+    .maybeSingle();
+
   const isPremium = profile.subscription_tier === "premium";
+  const remaining = isPremium ? null : Math.max(0, 3 - (regenRow?.timeline_count ?? 0));
   const youAreHereId = items ? computeYouAreHere(items as TimelineItem[]) : null;
 
   return (
     <NavShell>
       <ProfileCompletenessModal profile={profile} />
-      <TimelineClient items={items ?? []} isPremium={isPremium} youAreHereId={youAreHereId} />
+      <TimelineClient
+        items={items ?? []}
+        isPremium={isPremium}
+        youAreHereId={youAreHereId}
+        remaining={remaining}
+      />
     </NavShell>
   );
 }
