@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getAnthropic, MODEL, schoolMatchingPrompt, extractJson } from "@/lib/anthropic";
+import { getAnthropic, MODEL, schoolMatchingPrompt } from "@/lib/anthropic";
 import { canRegenerate, weekStart } from "@/lib/access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isTrustedOrigin } from "@/lib/origin-check";
 
-// Extended thinking at "high" effort takes 20-30s per category call on real
-// requests -- Vercel's default function duration (10s on Hobby) isn't enough,
-// so this must be raised explicitly. 60s is the Hobby-plan ceiling.
+// Extended thinking at "high" effort has been observed taking 20-50s per
+// category call on real requests -- Vercel's default function duration (10s
+// on Hobby) isn't enough, so this must be raised explicitly. 60s is the
+// Hobby-plan ceiling; a call landing near the high end of that range plus
+// network overhead can still brush up against it.
 export const maxDuration = 60;
 
 interface SchoolResult {
@@ -93,19 +95,80 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
 
   const CATEGORIES = ["reach", "target", "safety"] as const;
 
+  const SCHOOLS_TOOL = {
+    name: "submit_schools",
+    description: "Submit the generated school list for this category.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        schools: {
+          type: "array" as const,
+          items: {
+            type: "object" as const,
+            properties: {
+              name: { type: "string" as const },
+              percentage: { type: "number" as const },
+              why_text: { type: "string" as const },
+              factors: {
+                type: "object" as const,
+                properties: {
+                  gpa_comparison: { type: "string" as const },
+                  course_rigor: { type: "string" as const },
+                  ec_strength: { type: "string" as const },
+                  major_fit: { type: "string" as const },
+                  social_fit: { type: "string" as const },
+                },
+                required: ["gpa_comparison", "course_rigor", "ec_strength", "major_fit", "social_fit"],
+              },
+            },
+            required: ["name", "percentage", "why_text", "factors"],
+          },
+        },
+      },
+      required: ["schools"],
+    },
+  };
+
   async function generateCategory(category: (typeof CATEGORIES)[number]): Promise<SchoolResult[]> {
-    const response = await getAnthropic().messages.create({
-      model: MODEL,
-      max_tokens: 6144,
-      thinking: { type: "adaptive" },
-      output_config: { effort: "high" },
-      system: schoolMatchingPrompt(category),
-      messages: [{ role: "user", content: userMessage }],
-    });
-    const text = response.content.find((b) => b.type === "text")?.text ?? "";
-    const parsed = extractJson<{ schools: SchoolResult[] }>(text);
-    // Trust the category the call was scoped to, not the model's echo.
-    return parsed.schools.map((s) => ({ ...s, category }));
+    // Forcing tool-use makes the model target a fixed schema instead of free-text
+    // JSON, which cuts out most malformed-JSON failures — but tool-use isn't a hard
+    // schema lock at the token level, and a "guaranteed inclusion" case (many named
+    // schools + full factor writeups) can still run the output close to the token
+    // ceiling, so one bounded retry with headroom guards the rare truncated/malformed
+    // miss. Capped at 2 attempts, not more: a single attempt can take up to ~50s, and
+    // maxDuration is hard-capped at 60s on Vercel's Hobby plan — a 3rd attempt risks
+    // the platform killing the whole request mid-retry instead of us returning a
+    // clean 502.
+    let lastErr: unknown;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const response = await getAnthropic().messages.create({
+          model: MODEL,
+          max_tokens: 8192,
+          thinking: { type: "adaptive" },
+          output_config: { effort: "high" },
+          system: schoolMatchingPrompt(category),
+          messages: [{ role: "user", content: userMessage }],
+          tools: [SCHOOLS_TOOL],
+          tool_choice: { type: "tool", name: "submit_schools" },
+        });
+        if (response.stop_reason === "max_tokens") {
+          throw new Error(`Response truncated at max_tokens for category ${category}`);
+        }
+        const toolUse = response.content.find((b) => b.type === "tool_use");
+        if (!toolUse) throw new Error(`No tool_use block in response for category ${category}`);
+        const parsed = toolUse.input as { schools?: Omit<SchoolResult, "category">[] };
+        if (!Array.isArray(parsed.schools) || parsed.schools.length === 0) {
+          throw new Error(`tool_use input.schools was not a populated array for category ${category}`);
+        }
+        // Trust the category the call was scoped to, not the model's echo.
+        return parsed.schools.map((s) => ({ ...s, category }));
+      } catch (err) {
+        lastErr = err;
+        console.error(`generateCategory(${category}) attempt ${attempt + 1} failed:`, err);
+      }
+    }
+    throw lastErr;
   }
 
   let schools: SchoolResult[];

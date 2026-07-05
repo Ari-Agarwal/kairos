@@ -81,6 +81,12 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative flex min-h-screen">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-xl focus:bg-primary focus:px-4 focus:py-2 focus:text-bg focus:font-medium"
+      >
+        Skip to main content
+      </a>
       <motion.aside
         initial={{ width: collapsed ? 72 : 240 }}
         animate={{ width: collapsed ? 72 : 240 }}
@@ -171,6 +177,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={tab.href}
                 href={tab.href}
+                aria-current={active ? "page" : undefined}
                 className={`relative flex items-center gap-3 rounded-xl px-2.5 py-2 transition-colors ${
                   active ? "text-text font-bold" : "text-text-gray hover:text-text hover:bg-white/5"
                 }`}
@@ -254,7 +261,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
           </AnimatePresence>
         </header>
 
-        <main className="flex-1 pb-20 md:pb-0 min-w-0">{children}</main>
+        <main id="main-content" tabIndex={-1} className="flex-1 pb-20 md:pb-0 min-w-0 outline-none">{children}</main>
 
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-bg border-t border-border flex justify-around py-2 z-40">
           {TABS.map((tab) => {
@@ -264,6 +271,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={tab.href}
                 href={tab.href}
+                aria-current={active ? "page" : undefined}
                 className={`relative flex flex-col items-center gap-1 px-1.5 py-2 min-h-[44px] justify-center transition-colors ${active ? "text-text font-bold" : "text-text-gray"}`}
               >
                 {active && (

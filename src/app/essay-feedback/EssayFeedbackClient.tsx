@@ -57,7 +57,7 @@ export default function EssayFeedbackClient() {
         className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-6 py-2.5 disabled:opacity-50 mb-6"
       >
         {loading ? (
-          <span className="inline-flex items-center gap-2">
+          <span role="status" className="inline-flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-bg ambient-star" style={{ ["--twinkle-max" as string]: "1", ["--twinkle-duration" as string]: "1s" }} />
             Reading your draft...
           </span>
@@ -68,7 +68,7 @@ export default function EssayFeedbackClient() {
 
       {error && (
         <div className="mb-4">
-          <p className="text-red text-sm mb-2">{error}</p>
+          <p role="alert" className="text-red text-sm mb-2">{error}</p>
           <button onClick={handleSubmit} className="text-primary text-sm hover:text-primary-hover">
             Retry
           </button>

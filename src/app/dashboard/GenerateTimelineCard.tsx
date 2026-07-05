@@ -24,11 +24,11 @@ export default function GenerateTimelineCard() {
   }
 
   return (
-    <div className="bg-card border border-border rounded-2xl px-6 py-7 min-h-[220px]">
+    <div className="h-full bg-card border border-border rounded-2xl px-6 py-7 min-h-[220px]">
       <p className="text-text-gray text-sm mb-4">Coming up on your timeline</p>
       {generating ? (
         <div className="py-1">
-          <p className="text-text-gray text-sm animate-pulse">Mapping out your timeline...</p>
+          <p role="status" className="text-text-gray text-sm animate-pulse">Mapping out your timeline...</p>
           <GenerationProgress />
         </div>
       ) : (

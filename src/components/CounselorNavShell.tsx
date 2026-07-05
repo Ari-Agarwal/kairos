@@ -29,6 +29,12 @@ export default function CounselorNavShell({
 
   return (
     <div className="flex min-h-screen flex-col">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-xl focus:bg-primary focus:px-4 focus:py-2 focus:text-bg focus:font-medium"
+      >
+        Skip to main content
+      </a>
       <header className="px-5 md:px-8 py-4 border-b border-border">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -49,6 +55,7 @@ export default function CounselorNavShell({
             <Link
               key={link.href}
               href={link.href}
+              aria-current={pathname === link.href ? "page" : undefined}
               className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${
                 pathname === link.href ? "bg-primary text-bg" : "text-text-gray hover:text-text"
               }`}
@@ -58,7 +65,7 @@ export default function CounselorNavShell({
           ))}
         </nav>
       </header>
-      <main className="flex-1">{children}</main>
+      <main id="main-content" tabIndex={-1} className="flex-1 outline-none">{children}</main>
     </div>
   );
 }

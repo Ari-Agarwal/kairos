@@ -132,7 +132,7 @@ export default function OnboardingPage() {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-        <div className="animate-pulse">
+        <div className="animate-pulse" role="status">
           <p className="font-serif text-2xl text-text mb-2">Building your personalized list...</p>
           <p className="text-text-gray text-sm">This takes a moment, we&apos;re matching you against real schools.</p>
         </div>

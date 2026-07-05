@@ -43,6 +43,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Lets a cloudflared/ngrok tunnel hostname reach dev-only resources (HMR
+  // websocket, etc.) during on-device mobile QA. Dev-only setting — has no
+  // effect in production builds.
+  allowedDevOrigins: ["*.trycloudflare.com"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

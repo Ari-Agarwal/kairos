@@ -32,7 +32,13 @@ export default function SignupPage() {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: fullName } },
+        options: {
+          data: { full_name: fullName },
+          // Without this, Supabase falls back to the project's default Site
+          // URL for the confirmation email link — wrong host entirely when
+          // testing through a tunnel/reverse proxy instead of on localhost.
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
       if (error) {
         showError(error.message);
@@ -58,13 +64,19 @@ export default function SignupPage() {
     }
     setError(null);
     setOauthLoading(provider);
-    const { error } = await supabase.auth.signInWithOAuth({
+    // signInWithOAuth doesn't redirect the browser itself in this SDK/config —
+    // it just returns the authorize URL, so we have to navigate to it ourselves.
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
     if (error) {
       setOauthLoading(null);
       showError(error.message);
+      return;
+    }
+    if (data.url) {
+      window.location.href = data.url;
     }
   }
 
