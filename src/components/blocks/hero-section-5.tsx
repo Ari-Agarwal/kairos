@@ -8,7 +8,7 @@ import { Menu, X, ChevronRight } from "lucide-react";
 import { useScroll, motion } from "framer-motion";
 import { AboutContent } from "@/components/AboutContent";
 
-const Hero3D = dynamic(() => import("./hero-3d").then((m) => m.Hero3D), { ssr: false });
+const HeroPath = dynamic(() => import("./hero-path").then((m) => m.HeroPath), { ssr: false });
 
 export function HeroSection({ studentCount }: { studentCount: number }) {
   const [view, setView] = React.useState<"home" | "about">("home");
@@ -18,16 +18,16 @@ export function HeroSection({ studentCount }: { studentCount: number }) {
       <HeroHeader view={view} onNavigate={setView} />
       <main className="overflow-x-hidden">
         {view === "about" ? (
-          <section className="relative min-h-screen bg-bg pt-32">
+          <section className="relative min-h-screen bg-bg pt-20">
             <AboutContent studentCount={studentCount} showLogo={false} />
           </section>
         ) : (
           <section className="relative min-h-screen overflow-hidden bg-bg">
             <div className="absolute inset-0 z-0">
-              <Hero3D />
+              <HeroPath />
             </div>
-            <div className="absolute inset-0 z-[1] bg-gradient-to-b from-bg/10 via-bg/40 to-bg pointer-events-none" />
-            <div className="absolute inset-0 z-[1] bg-gradient-to-r from-bg via-bg/30 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 z-[1] bg-gradient-to-b from-bg/10 via-bg/30 to-bg pointer-events-none" />
+            <div className="absolute inset-0 z-[1] bg-gradient-to-r from-bg via-bg/25 to-transparent pointer-events-none" />
 
             <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col justify-center px-6 lg:px-12" style={{ transform: "translateZ(0)" }}>
               <div className="mx-auto max-w-lg text-center lg:mx-0 lg:max-w-xl lg:text-left">
@@ -35,7 +35,7 @@ export function HeroSection({ studentCount }: { studentCount: number }) {
                   Your future, mapped out clearly.
                 </h1>
                 <p className="mt-8 max-w-xl text-balance text-lg text-text-gray">
-                  Real school matches, a personalized timeline, and honest essay feedback —
+                  Real school matches, a personalized timeline, and honest essay feedback,
                   the kind of guidance that used to cost thousands. Free to start.
                 </p>
 
@@ -62,7 +62,6 @@ export function HeroSection({ studentCount }: { studentCount: number }) {
                   <p className="font-serif text-xl text-primary mb-0.5">
                     {studentCount.toLocaleString()} students matched so far
                   </p>
-                  <p className="text-text-gray text-sm">Real profiles, real school lists, growing every week.</p>
                 </div>
               </div>
             </div>

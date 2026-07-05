@@ -2,8 +2,9 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import CountUp from "@/components/CountUp";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const CAMPUS_SIZES = ["Small", "Medium", "Large", "No preference"];
@@ -34,6 +35,7 @@ export default function ProfileClient({
 }) {
   const router = useRouter();
   const supabase = createClient();
+  const reduceMotion = useReducedMotion();
   const searchParams = useSearchParams();
   const [editing, setEditing] = useState(searchParams.get("edit") === "true");
   const [form, setForm] = useState({
@@ -115,9 +117,9 @@ export default function ProfileClient({
   if (editing) {
     return (
       <motion.div
-        initial={{ opacity: 1, y: 0 }}
+        initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, ease: EASE }}
+        transition={{ duration: 0.35, ease: EASE }}
         className="px-5 md:px-8 py-8 max-w-xl mx-auto w-full"
       >
         <h1 className="font-serif text-2xl text-text mb-6">Edit Profile</h1>
@@ -176,7 +178,7 @@ export default function ProfileClient({
           <div>
             <label className="block text-sm text-text-gray mb-1">Extracurriculars</label>
             <p className="text-text-gray text-xs mb-2">
-              Be as specific as possible — e.g. &quot;Varsity basketball, team captain, 3 years&quot; instead of just &quot;Basketball.&quot;
+              Be as specific as possible, e.g. &quot;Varsity basketball, team captain, 3 years&quot; instead of just &quot;Basketball.&quot;
             </p>
             <div className="space-y-2">
               {activities.map((activity, idx) => (
@@ -288,10 +290,10 @@ export default function ProfileClient({
     );
   }
 
-  const stats = [
-    { label: "GPA", value: profile.gpa },
-    { label: "Active Schools", value: activeSchoolCount },
-    { label: "Extracurriculars", value: ecCount },
+  const stats: { label: string; value: number; isInteger: boolean }[] = [
+    { label: "GPA", value: profile.gpa, isInteger: false },
+    { label: "Active Schools", value: activeSchoolCount, isInteger: true },
+    { label: "Extracurriculars", value: ecCount, isInteger: true },
   ];
 
   const sections = [
@@ -317,9 +319,9 @@ export default function ProfileClient({
 
   return (
     <motion.div
-      initial={{ opacity: 1, y: 0 }}
+      initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: EASE }}
+      transition={{ duration: 0.35, ease: EASE }}
       className="px-5 md:px-8 py-8 max-w-xl mx-auto w-full"
     >
       <div className="flex items-start justify-between mb-6">
@@ -341,12 +343,16 @@ export default function ProfileClient({
         {stats.map((stat, i) => (
           <motion.div
             key={stat.label}
-            initial={{ opacity: 1, y: 0 }}
+            initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: EASE, delay: i * 0.06 }}
+            transition={{ duration: 0.35, ease: EASE, delay: reduceMotion ? 0 : 0.08 + i * 0.07 }}
             className="bg-card border border-border rounded-2xl p-4 text-center"
           >
-            <p className="font-serif text-xl text-primary">{stat.value}</p>
+            {stat.isInteger ? (
+              <CountUp value={stat.value} className="font-serif text-xl text-primary" />
+            ) : (
+              <p className="font-serif text-xl text-primary">{stat.value}</p>
+            )}
             <p className="text-text-gray text-xs">{stat.label}</p>
           </motion.div>
         ))}
@@ -356,9 +362,9 @@ export default function ProfileClient({
         {sections.map((section, i) => (
           <motion.div
             key={section.title}
-            initial={{ opacity: 1, y: 0 }}
+            initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: EASE, delay: 0.18 + i * 0.06 }}
+            transition={{ duration: 0.35, ease: EASE, delay: reduceMotion ? 0 : 0.28 + i * 0.06 }}
           >
             <Section title={section.title}>{section.content}</Section>
           </motion.div>

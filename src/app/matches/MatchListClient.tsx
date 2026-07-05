@@ -3,9 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import GenerationProgress from "@/components/GenerationProgress";
+import CountUp from "@/components/CountUp";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -28,7 +29,7 @@ const CATEGORY_STYLES: Record<string, string> = {
 const CATEGORY_ORDER: Record<Category, number> = { reach: 0, target: 1, safety: 2 };
 const CATEGORIES: Category[] = ["reach", "target", "safety"];
 
-const MANUAL_NOTE = "This school was added manually, so we don't have an AI assessment — unavailable.";
+const MANUAL_NOTE = "This school was added manually, so an AI assessment isn't available.";
 
 export default function MatchListClient({
   initialMatches,
@@ -41,6 +42,7 @@ export default function MatchListClient({
 }) {
   const router = useRouter();
   const supabase = createClient();
+  const reduceMotion = useReducedMotion();
   const [matches, setMatches] = useState(initialMatches);
   const [regenerating, setRegenerating] = useState(false);
 
@@ -192,11 +194,11 @@ export default function MatchListClient({
           {matches.map((m, i) => (
             <motion.div
               key={m.id}
-              initial={{ opacity: 1, y: 0 }}
+              initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.2, ease: EASE } }}
-              transition={{ duration: 0.35, ease: EASE, delay: i * 0.05 }}
-              className="bg-card border border-border rounded-2xl p-5 relative hover:border-text-gray/40 transition-colors"
+              transition={{ duration: 0.4, ease: EASE, delay: reduceMotion ? 0 : i * 0.06 }}
+              className="bg-card border border-border rounded-2xl p-5 relative hover:border-text-gray/40 hover:-translate-y-0.5 transition-all"
             >
               <Link href={`/schools/${m.id}`} className="absolute inset-0 rounded-2xl" aria-label={`View ${m.school_name} details`} />
 
@@ -220,7 +222,7 @@ export default function MatchListClient({
                     </span>
                     <p className="font-serif text-lg text-text">{m.school_name}</p>
                   </div>
-                  <span className="font-serif text-2xl text-primary shrink-0">{m.percentage}%</span>
+                  <CountUp value={m.percentage} suffix="%" className="font-serif text-2xl text-primary shrink-0" />
                 </div>
 
                 <p className="text-text-gray text-sm">{m.why_text}</p>
@@ -229,9 +231,10 @@ export default function MatchListClient({
           ))}
         </AnimatePresence>
         {matches.length === 0 && (
-          <p className="text-text-gray text-sm text-center py-12">
-            No active matches. Try regenerating your list.
-          </p>
+          <div className="flex flex-col items-center gap-3 py-12">
+            <span className="h-1.5 w-1.5 rounded-full bg-text-gray/70 ambient-star" style={{ ["--twinkle-max" as string]: "0.9" }} />
+            <p className="text-text-gray text-sm text-center">No active matches. Try regenerating your list.</p>
+          </div>
         )}
       </div>
 

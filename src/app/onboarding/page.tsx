@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import GenerationProgress from "@/components/GenerationProgress";
 
@@ -16,6 +16,7 @@ const CAMPUS_SETTINGS = ["Urban", "Suburban", "Rural", "No preference"];
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
+  const reduceMotion = useReducedMotion();
 
   const [fullName, setFullName] = useState("");
   const [gradeLevel, setGradeLevel] = useState("");
@@ -149,8 +150,9 @@ export default function OnboardingPage() {
       fields: (
         <>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Full Name *</label>
+            <label htmlFor="ob-full-name" className="block text-sm text-text-gray mb-1">Full Name *</label>
             <input
+              id="ob-full-name"
               type="text"
               required
               value={fullName}
@@ -160,8 +162,9 @@ export default function OnboardingPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-text-gray mb-1">Grade Level *</label>
+              <label htmlFor="ob-grade-level" className="block text-sm text-text-gray mb-1">Grade Level *</label>
               <select
+                id="ob-grade-level"
                 required
                 value={gradeLevel}
                 onChange={(e) => setGradeLevel(e.target.value)}
@@ -178,8 +181,9 @@ export default function OnboardingPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm text-text-gray mb-1">GPA *</label>
+              <label htmlFor="ob-gpa" className="block text-sm text-text-gray mb-1">GPA *</label>
               <input
+                id="ob-gpa"
                 type="number"
                 step="0.01"
                 min="0"
@@ -192,8 +196,9 @@ export default function OnboardingPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Current School *</label>
+            <label htmlFor="ob-current-school" className="block text-sm text-text-gray mb-1">Current School *</label>
             <input
+              id="ob-current-school"
               type="text"
               required
               placeholder="e.g. Lincoln High School"
@@ -210,8 +215,9 @@ export default function OnboardingPage() {
       fields: (
         <>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Intended Major / Interests *</label>
+            <label htmlFor="ob-intended-major" className="block text-sm text-text-gray mb-1">Intended Major / Interests *</label>
             <input
+              id="ob-intended-major"
               type="text"
               required
               value={intendedMajor}
@@ -220,15 +226,16 @@ export default function OnboardingPage() {
             />
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Extracurriculars</label>
+            <span id="ob-activities-label" className="block text-sm text-text-gray mb-1">Extracurriculars</span>
             <p className="text-text-gray text-xs mb-2">
-              Be as specific as possible — e.g. &quot;Varsity basketball, team captain, 3 years&quot; instead of just &quot;Basketball.&quot;
+              Be as specific as possible, e.g. &quot;Varsity basketball, team captain, 3 years&quot; instead of just &quot;Basketball.&quot;
             </p>
-            <div className="space-y-2">
+            <div className="space-y-2" role="group" aria-labelledby="ob-activities-label">
               {activities.map((activity, idx) => (
                 <div key={idx} className="flex gap-2">
                   <input
                     type="text"
+                    aria-label={`Extracurricular activity ${idx + 1}`}
                     placeholder="e.g. Varsity basketball, team captain, 3 years"
                     value={activity}
                     onChange={(e) => updateActivity(idx, e.target.value)}
@@ -256,8 +263,9 @@ export default function OnboardingPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Test Scores (SAT/ACT, optional)</label>
+            <label htmlFor="ob-test-scores" className="block text-sm text-text-gray mb-1">Test Scores (SAT/ACT, optional)</label>
             <input
+              id="ob-test-scores"
               type="text"
               placeholder="e.g. SAT 1380"
               value={testScores}
@@ -272,10 +280,11 @@ export default function OnboardingPage() {
       title: "Goals",
       fields: (
         <div>
-          <label className="block text-sm text-text-gray mb-1">
+          <label htmlFor="ob-schools-considering" className="block text-sm text-text-gray mb-1">
             Schools you&apos;re already considering *
           </label>
           <textarea
+            id="ob-schools-considering"
             required
             placeholder="List any schools already on your mind, or write &quot;None&quot;"
             value={schoolsAlreadyConsidering}
@@ -291,12 +300,13 @@ export default function OnboardingPage() {
       fields: (
         <>
           <div>
-            <label className="block text-sm text-text-gray mb-2">Campus size *</label>
-            <div className="flex flex-wrap gap-2">
+            <span id="ob-campus-size-label" className="block text-sm text-text-gray mb-2">Campus size *</span>
+            <div className="flex flex-wrap gap-2" role="group" aria-labelledby="ob-campus-size-label">
               {CAMPUS_SIZES.map((size) => (
                 <button
                   key={size}
                   type="button"
+                  aria-pressed={campusSizePref === size}
                   onClick={() => setCampusSizePref(campusSizePref === size ? "" : size)}
                   className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
                     campusSizePref === size
@@ -310,12 +320,13 @@ export default function OnboardingPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-2">Campus setting *</label>
-            <div className="flex flex-wrap gap-2">
+            <span id="ob-campus-setting-label" className="block text-sm text-text-gray mb-2">Campus setting *</span>
+            <div className="flex flex-wrap gap-2" role="group" aria-labelledby="ob-campus-setting-label">
               {CAMPUS_SETTINGS.map((setting) => (
                 <button
                   key={setting}
                   type="button"
+                  aria-pressed={campusSettingPref === setting}
                   onClick={() => setCampusSettingPref(campusSettingPref === setting ? "" : setting)}
                   className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
                     campusSettingPref === setting
@@ -336,23 +347,23 @@ export default function OnboardingPage() {
   return (
     <div className="flex-1 px-6 py-10 md:py-16 max-w-xl mx-auto w-full">
       <motion.h1
-        initial={{ opacity: 1, y: 0 }}
+        initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: EASE }}
+        transition={{ duration: 0.4, ease: EASE }}
         className="font-serif text-3xl text-text mb-6"
       >
         Build your profile
       </motion.h1>
 
       <motion.div
-        initial={{ opacity: 1, y: 0 }}
+        initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: EASE, delay: 0.05 }}
+        transition={{ duration: 0.4, ease: EASE, delay: reduceMotion ? 0 : 0.08 }}
         className="bg-secondary-tint border border-border rounded-2xl px-5 py-4 mb-6"
       >
         <p className="text-secondary text-sm leading-relaxed">
-          Answer a few questions and we&apos;ll generate your school match list and a
-          personalized application timeline — instantly, on the other side.
+          Answer a few questions and we&apos;ll instantly generate your school match list and
+          a personalized application timeline on the other side.
         </p>
       </motion.div>
 
@@ -374,9 +385,9 @@ export default function OnboardingPage() {
         {sections.map((section, i) => (
           <motion.div
             key={section.title}
-            initial={{ opacity: 1, y: 0 }}
+            initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: EASE, delay: 0.1 + i * 0.08 }}
+            transition={{ duration: 0.45, ease: EASE, delay: reduceMotion ? 0 : 0.14 + i * 0.08 }}
             className="bg-card border border-border rounded-2xl p-6 space-y-4"
           >
             <p className="text-xs font-medium text-text-gray uppercase tracking-wide">{section.title}</p>

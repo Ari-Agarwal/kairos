@@ -34,7 +34,7 @@ export default function GenerateTimelineCard() {
       ) : (
         <>
           <p className="text-text-gray text-sm mb-3">
-            No timeline yet — generate one from your matched schools.
+            No timeline yet, generate one from your matched schools.
           </p>
           {error && <p className="text-red text-xs mb-2">{error}</p>}
           <button

@@ -51,7 +51,7 @@ export function AboutContent({
           with hourly rates between $300 and $600 (sometimes up to $1,000/hour).
         </p>
         <p>
-          Kairos runs a similar analysis, using a student&apos;s actual profile and real
+          Kairos runs the same analysis, using a student&apos;s actual profile and real
           admissions data to generate a school list, a personalized timeline, and essay
           feedback. It&apos;s free to start.
         </p>

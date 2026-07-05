@@ -77,8 +77,9 @@ export default function LoginPage() {
         </Link>
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <div>
-            <label className="block text-sm text-text-gray mb-1">Email</label>
+            <label htmlFor="login-email" className="block text-sm text-text-gray mb-1">Email</label>
             <input
+              id="login-email"
               type="email"
               required
               value={email}
@@ -87,8 +88,9 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Password</label>
+            <label htmlFor="login-password" className="block text-sm text-text-gray mb-1">Password</label>
             <input
+              id="login-password"
               type="password"
               required
               value={password}
