@@ -159,6 +159,9 @@ function Constellation({ pointer }: { pointer: React.RefObject<{ x: number; y: n
   const plane = React.useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), []);
   const hitPoint = React.useRef(new THREE.Vector3());
 
+  // r3f's per-frame animation loop runs outside React's render phase, so mutating
+  // memoized objects (material, groupRef) here is the correct, standard r3f pattern.
+  /* eslint-disable react-hooks/immutability */
   useFrame((state, delta) => {
     material.uniforms.uTime.value = state.clock.elapsedTime;
 
@@ -173,6 +176,7 @@ function Constellation({ pointer }: { pointer: React.RefObject<{ x: number; y: n
       material.uniforms.uPointer.value.lerp(local, 0.15);
     }
   });
+  /* eslint-enable react-hooks/immutability */
 
   return (
     <group ref={groupRef} position={[1, 0, -0.4]}>

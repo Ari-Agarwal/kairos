@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
@@ -49,11 +49,12 @@ export default function TimelineClient({
   const reduceMotion = useReducedMotion();
   const [items, setItems] = useState(initialItems);
   const [generating, setGenerating] = useState(false);
-
-  useEffect(() => {
+  const [prevInitialItems, setPrevInitialItems] = useState(initialItems);
+  if (initialItems !== prevInitialItems) {
+    setPrevInitialItems(initialItems);
     setItems(initialItems);
     setGenerating(false);
-  }, [initialItems]);
+  }
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -130,7 +131,7 @@ export default function TimelineClient({
   if (items.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-6 text-center min-h-[60vh]">
-        {error && <p className="text-red text-sm mb-3">{error}</p>}
+        {error && <p role="alert" className="text-red text-sm mb-3">{error}</p>}
         {/* a single dim star, waiting to light up */}
         <div className="relative mb-5 h-10 w-10">
           <motion.span
@@ -207,6 +208,7 @@ export default function TimelineClient({
           <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
+              aria-label="Item title"
               placeholder="Title"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
@@ -214,6 +216,7 @@ export default function TimelineClient({
             />
             <input
               type="date"
+              aria-label="Due date"
               value={newDueDate}
               onChange={(e) => setNewDueDate(e.target.value)}
               className="rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"

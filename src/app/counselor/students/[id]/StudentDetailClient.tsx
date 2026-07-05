@@ -167,11 +167,12 @@ function SendReminderButton({ counselorId, studentUserId }: { counselorId: strin
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         rows={3}
+        aria-label="Reminder message"
         placeholder="e.g. Don't forget your FAFSA is due Oct 1..."
         className="w-full rounded-lg bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary resize-none mb-2"
       />
-      {error && <p className="text-red text-xs mb-2">{error}</p>}
-      {sentAt && <p className="text-green text-xs mb-2">Reminder sent.</p>}
+      {error && <p role="alert" className="text-red text-xs mb-2">{error}</p>}
+      {sentAt && <p role="status" className="text-green text-xs mb-2">Reminder sent.</p>}
       <div className="flex gap-2">
         <button
           onClick={handleSend}
@@ -366,11 +367,12 @@ function NotesTab({
         onChange={(e) => setText(e.target.value)}
         onBlur={handleBlur}
         rows={10}
+        aria-label="Counselor notes"
         placeholder="Meeting notes, observations, flags..."
         className="w-full rounded-xl bg-bg border border-border px-4 py-3 text-text text-sm outline-none focus:border-primary resize-none"
       />
-      {saving && <p className="text-text-gray text-xs mt-1">Saving...</p>}
-      {!saving && savedAt && <p className="text-text-gray text-xs mt-1">Saved.</p>}
+      {saving && <p role="status" className="text-text-gray text-xs mt-1">Saving...</p>}
+      {!saving && savedAt && <p role="status" className="text-text-gray text-xs mt-1">Saved.</p>}
     </div>
   );
 }

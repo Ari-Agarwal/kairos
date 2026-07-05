@@ -147,6 +147,9 @@ function Scene({ pointer }: { pointer: React.RefObject<{ x: number; y: number }>
     [path.destination]
   );
 
+  // r3f's per-frame animation loop runs outside React's render phase, so mutating
+  // memoized/ref-held three.js objects here is the correct, standard r3f pattern.
+  /* eslint-disable react-hooks/immutability */
   useFrame((state) => {
     const t = state.clock.elapsedTime;
     pointMaterial.uniforms.uTime.value = t;
@@ -187,13 +190,12 @@ function Scene({ pointer }: { pointer: React.RefObject<{ x: number; y: number }>
       pointer.current.x * 0.05 + Math.sin(t * 0.05) * 0.02,
       0.03
     );
-    /* eslint-disable react-hooks/immutability -- r3f camera is a mutable three.js object by design */
     state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, pointer.current.x * 0.5, 0.04);
     state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, 0.2 + pointer.current.y * 0.3, 0.04);
     state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, 5 - Math.sin(t * 0.04) * 0.4, 0.02);
-    /* eslint-enable react-hooks/immutability */
     state.camera.lookAt(0.5, 0, -4);
   });
+  /* eslint-enable react-hooks/immutability */
 
   const dest = path.destination;
 

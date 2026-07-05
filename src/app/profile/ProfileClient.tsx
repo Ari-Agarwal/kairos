@@ -125,8 +125,9 @@ export default function ProfileClient({
         <h1 className="font-serif text-2xl text-text mb-6">Edit Profile</h1>
         <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <div>
-            <label className="block text-sm text-text-gray mb-1">Full Name</label>
+            <label htmlFor="pf-full-name" className="block text-sm text-text-gray mb-1">Full Name</label>
             <input
+              id="pf-full-name"
               type="text"
               value={form.full_name}
               onChange={(e) => setForm({ ...form, full_name: e.target.value })}
@@ -134,8 +135,9 @@ export default function ProfileClient({
             />
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Grade Level</label>
+            <label htmlFor="pf-grade-level" className="block text-sm text-text-gray mb-1">Grade Level</label>
             <select
+              id="pf-grade-level"
               value={form.grade_level}
               onChange={(e) => setForm({ ...form, grade_level: e.target.value })}
               className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
@@ -148,8 +150,9 @@ export default function ProfileClient({
             </select>
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">GPA</label>
+            <label htmlFor="pf-gpa" className="block text-sm text-text-gray mb-1">GPA</label>
             <input
+              id="pf-gpa"
               type="number"
               step="0.01"
               value={form.gpa}
@@ -158,8 +161,9 @@ export default function ProfileClient({
             />
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Intended Major</label>
+            <label htmlFor="pf-intended-major" className="block text-sm text-text-gray mb-1">Intended Major</label>
             <input
+              id="pf-intended-major"
               type="text"
               value={form.intended_major}
               onChange={(e) => setForm({ ...form, intended_major: e.target.value })}
@@ -167,8 +171,9 @@ export default function ProfileClient({
             />
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Current School</label>
+            <label htmlFor="pf-current-school" className="block text-sm text-text-gray mb-1">Current School</label>
             <input
+              id="pf-current-school"
               type="text"
               value={form.current_school}
               onChange={(e) => setForm({ ...form, current_school: e.target.value })}
@@ -176,15 +181,16 @@ export default function ProfileClient({
             />
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Extracurriculars</label>
+            <span id="pf-activities-label" className="block text-sm text-text-gray mb-1">Extracurriculars</span>
             <p className="text-text-gray text-xs mb-2">
               Be as specific as possible, e.g. &quot;Varsity basketball, team captain, 3 years&quot; instead of just &quot;Basketball.&quot;
             </p>
-            <div className="space-y-2">
+            <div className="space-y-2" role="group" aria-labelledby="pf-activities-label">
               {activities.map((activity, idx) => (
                 <div key={idx} className="flex gap-2">
                   <input
                     type="text"
+                    aria-label={`Extracurricular activity ${idx + 1}`}
                     placeholder="e.g. Varsity basketball, team captain, 3 years"
                     value={activity}
                     onChange={(e) => updateActivity(idx, e.target.value)}
@@ -212,8 +218,9 @@ export default function ProfileClient({
             </div>
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Schools you&apos;re already considering</label>
+            <label htmlFor="pf-schools-considering" className="block text-sm text-text-gray mb-1">Schools you&apos;re already considering</label>
             <textarea
+              id="pf-schools-considering"
               rows={3}
               value={form.schools_already_considering}
               onChange={(e) => setForm({ ...form, schools_already_considering: e.target.value })}
@@ -221,12 +228,13 @@ export default function ProfileClient({
             />
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-2">Campus size preference *</label>
-            <div className="flex flex-wrap gap-2">
+            <span id="pf-campus-size-label" className="block text-sm text-text-gray mb-2">Campus size preference *</span>
+            <div className="flex flex-wrap gap-2" role="group" aria-labelledby="pf-campus-size-label">
               {CAMPUS_SIZES.map((size) => (
                 <button
                   key={size}
                   type="button"
+                  aria-pressed={form.campus_size_pref === size}
                   onClick={() =>
                     setForm({ ...form, campus_size_pref: form.campus_size_pref === size ? "" : size })
                   }
@@ -242,12 +250,13 @@ export default function ProfileClient({
             </div>
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-2">Campus setting preference *</label>
-            <div className="flex flex-wrap gap-2">
+            <span id="pf-campus-setting-label" className="block text-sm text-text-gray mb-2">Campus setting preference *</span>
+            <div className="flex flex-wrap gap-2" role="group" aria-labelledby="pf-campus-setting-label">
               {CAMPUS_SETTINGS.map((setting) => (
                 <button
                   key={setting}
                   type="button"
+                  aria-pressed={form.campus_setting_pref === setting}
                   onClick={() =>
                     setForm({
                       ...form,

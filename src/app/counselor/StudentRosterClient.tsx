@@ -64,6 +64,7 @@ export default function StudentRosterClient({
 
       <div className="flex flex-wrap gap-3 mb-5">
         <select
+          aria-label="Filter by grade"
           value={gradeFilter}
           onChange={(e) => setGradeFilter(e.target.value)}
           className="rounded-xl bg-card border border-border px-3 py-2 text-sm text-text outline-none focus:border-primary"
@@ -77,6 +78,7 @@ export default function StudentRosterClient({
         </select>
 
         <select
+          aria-label="Filter by status"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="rounded-xl bg-card border border-border px-3 py-2 text-sm text-text outline-none focus:border-primary"
@@ -88,6 +90,7 @@ export default function StudentRosterClient({
         </select>
 
         <select
+          aria-label="Sort students"
           value={sortKey}
           onChange={(e) => setSortKey(e.target.value as SortKey)}
           className="rounded-xl bg-card border border-border px-3 py-2 text-sm text-text outline-none focus:border-primary"
@@ -100,6 +103,7 @@ export default function StudentRosterClient({
 
         <input
           type="text"
+          aria-label="Search schools considering"
           placeholder="Search schools considering..."
           value={goalQuery}
           onChange={(e) => setGoalQuery(e.target.value)}
