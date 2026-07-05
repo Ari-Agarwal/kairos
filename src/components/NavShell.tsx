@@ -41,6 +41,24 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
   );
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    function handlePointerDown(e: MouseEvent) {
+      if (!(e.target as HTMLElement).closest("[data-account-menu]")) {
+        setDropdownOpen(false);
+      }
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setDropdownOpen(false);
+    }
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [dropdownOpen]);
+
   function setCollapsed(value: boolean) {
     setCollapsedState(value);
     localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(value));
@@ -62,14 +80,14 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="relative flex min-h-screen">
       <motion.aside
         initial={{ width: collapsed ? 72 : 240 }}
         animate={{ width: collapsed ? 72 : 240 }}
         transition={{ duration: 0.25, ease: "easeInOut" }}
-        className="hidden md:flex flex-col border-r border-border shrink-0 relative z-[60]"
+        className="hidden md:flex flex-col border-r border-border shrink-0 relative z-[60] bg-bg"
       >
-        <div className="relative px-3 py-4 border-b border-border">
+        <div className="relative px-3 py-4 border-b border-border" data-account-menu>
           <div className={`flex items-center ${collapsed ? "flex-col gap-2" : "justify-between gap-2"}`}>
             <button
               onClick={() => setDropdownOpen((v) => !v)}
@@ -153,18 +171,25 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`flex items-center gap-3 rounded-xl px-2.5 py-2 transition-colors ${
-                  active ? "bg-white/10 text-text font-bold" : "text-text-gray hover:text-text hover:bg-white/5"
+                className={`relative flex items-center gap-3 rounded-xl px-2.5 py-2 transition-colors ${
+                  active ? "text-text font-bold" : "text-text-gray hover:text-text hover:bg-white/5"
                 }`}
               >
-                <Icon className="w-4 h-4 shrink-0" />
+                {active && (
+                  <motion.span
+                    layoutId="nav-active-pill"
+                    className="absolute inset-0 rounded-xl bg-white/10"
+                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                  />
+                )}
+                <Icon className="relative w-4 h-4 shrink-0" />
                 <AnimatePresence>
                   {!collapsed && (
                     <motion.span
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="text-sm truncate"
+                      className="relative text-sm truncate"
                     >
                       {tab.label}
                     </motion.span>
@@ -176,8 +201,8 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
         </nav>
       </motion.aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="md:hidden relative z-[60] flex items-center justify-between px-4 py-3 border-b border-border">
+      <div className="relative z-10 flex-1 flex flex-col min-w-0">
+        <header className="md:hidden relative z-[60] bg-bg flex items-center justify-between px-4 py-3 border-b border-border" data-account-menu>
           <Link href="/dashboard" className="text-text font-bold text-sm">
             Kairos
           </Link>
@@ -231,7 +256,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
 
         <main className="flex-1 pb-20 md:pb-0 min-w-0">{children}</main>
 
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-black border-t border-border flex justify-around py-2 z-40">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-bg border-t border-border flex justify-around py-2 z-40">
           {TABS.map((tab) => {
             const active = pathname?.startsWith(tab.href);
             const Icon = tab.icon;
@@ -239,10 +264,17 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`flex flex-col items-center gap-1 px-4 py-2 min-h-[44px] justify-center ${active ? "text-text font-bold" : "text-text-gray"}`}
+                className={`relative flex flex-col items-center gap-1 px-1.5 py-2 min-h-[44px] justify-center transition-colors ${active ? "text-text font-bold" : "text-text-gray"}`}
               >
-                <Icon className="w-5 h-5" />
-                <span className="text-[10px]">{tab.label}</span>
+                {active && (
+                  <motion.span
+                    layoutId="nav-active-pill-mobile"
+                    className="absolute inset-x-1 inset-y-0.5 rounded-xl bg-white/10"
+                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                  />
+                )}
+                <Icon className="relative w-5 h-5" />
+                <span className="relative text-[10px]">{tab.label}</span>
               </Link>
             );
           })}

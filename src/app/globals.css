@@ -1,24 +1,32 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #000000;
-  --card: #000000;
-  --primary: #FFFFFF;
-  --primary-hover: rgba(255, 255, 255, 0.85);
-  --amber: #FFFFFF;
-  --amber-tint: rgba(255, 255, 255, 0.14);
-  --amber-text-on-tint: #FFFFFF;
-  --green: #FFFFFF;
+  --bg: #0A0A0A;
+  --card: #171717;
+  --primary: #F2F2F2;
+  --primary-hover: #D4D4D4;
+  /* target schools / "you are here" marker / warnings — upper-mid prominence */
+  --amber: #D4D4D4;
+  --amber-tint: rgba(255, 255, 255, 0.13);
+  --amber-text-on-tint: #D4D4D4;
+  /* safety schools / on-track / completed — calmest, most muted */
+  --green: #A3A3A3;
   --green-tint: rgba(255, 255, 255, 0.08);
-  --red: #FFFFFF;
-  --red-tint: rgba(255, 255, 255, 0.2);
-  --premium: #FFFFFF;
-  --premium-tint: rgba(255, 255, 255, 0.1);
-  --secondary: #FFFFFF;
-  --secondary-tint: rgba(255, 255, 255, 0.06);
-  --text: #FFFFFF;
-  --text-gray: #FFFFFF;
-  --border: rgba(255, 255, 255, 0.15);
+  /* reach schools / errors / overdue / needs-attention — brightest, most urgent */
+  --red: #FAFAFA;
+  --red-tint: rgba(255, 255, 255, 0.16);
+  /* premium tier — distinct mid-light shade */
+  --premium: #BFBFBF;
+  --premium-tint: rgba(255, 255, 255, 0.11);
+  /* neutral info / no-activity — dimmest of the five.
+     #8a8a8a (not #737373) so text-secondary clears WCAG AA 4.5:1 against
+     --bg, --card, and its own --secondary-tint pill background; still the
+     dimmest of the five semantic tones. */
+  --secondary: #8a8a8a;
+  --secondary-tint: rgba(255, 255, 255, 0.05);
+  --text: #FAFAFA;
+  --text-gray: #A3A3A3;
+  --border: #2A2A2A;
 }
 
 @theme inline {
@@ -72,6 +80,40 @@ h1, h2, h3, .font-serif {
 @media (prefers-reduced-motion: reduce) {
   .animate-auth-error {
     animation: none;
+  }
+}
+
+/* Server-safe entrance reveal: used on server components (e.g. the dashboard)
+   where framer-motion isn't available. Pair with an inline --reveal-delay var. */
+@keyframes reveal-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  animation: reveal-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--reveal-delay, 0s);
+}
+
+@keyframes ambient-twinkle {
+  0%, 100% { opacity: var(--twinkle-min, 0.15); }
+  50% { opacity: var(--twinkle-max, 0.6); }
+}
+
+.ambient-star {
+  animation: ambient-twinkle var(--twinkle-duration, 4s) ease-in-out infinite;
+  animation-delay: var(--twinkle-delay, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .ambient-star {
+    animation: none;
+    opacity: 0.3;
   }
 }
 

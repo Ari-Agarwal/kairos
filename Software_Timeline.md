@@ -1,5 +1,7 @@
 # Kairos Timeline — Student-Only MVP (Launch Jun 30, night)
 
+**Scope change (Jul 4, tonight):** demo with Shivam is **Jul 7 morning**, showing both the student app and the counselor dashboard — this is now the near-term target, not the original Jul 6 "product done" gate. **Stripe checkout, premium billing (even in sandbox mode), and the public pricing page are pushed to Phase 3** — not software/testing work needed for the demo, so the Jul 5 plan below no longer applies as written; see the new **Phase 3** section. The counselor dashboard (Phase 2's Jul 4 scope) is built, seeded with realistic multi-student data, bug-fixed, and QA'd end-to-end tonight — see Jul 4 below. Remaining Phase 1 launch-prep items (deploy, key rotation, SSL/deliverability check, real-phone mobile QA, Safari check) are **yours to run** — they need console access or a physical device, not more engineering.
+
 **Scope change (Jun 30, latest):** launch is tonight (Jun 30). Product name is now **Kairos** (was working title "Telos"). The only pre-launch external/billing item (Anthropic billing) is done and the key is confirmed in Vercel; custom domain + all DNS/email work is deferred to Phase 2, launching on the current Vercel URL. All remaining work runs in one ordered sequence today: **internet search + name decision → finish launch-hardening (security) → system prompt tuning → website content rewrite → UI/UX polish → thorough desktop/laptop testing → mobile device QA + troubleshooting → production deploy + key rotation + SSL/deliverability check → launch.** Naming + a final internet-search pass go first (the real product name has to be locked before any copy is written or the app is deployed); security is finished next so the app is safe before it's polished; mobile QA on a real phone is the last gate before deploy.
 
 **Scope change (Jun 28, 5:40pm):** compressed from a 6.5-week plan (Aug 11) to an **8-day sprint, launching Jul 6**. This is aggressive — feasible only because the core student flow is already built (auth, onboarding, matches, timeline, essay feedback, profile). The 8 days are almost entirely hardening/verification/polish, not new features.
@@ -106,20 +108,27 @@ Added from Jun 30 research into legal/privacy failure modes for AI-for-minors pr
 - [x] **Notice at collection / "why we collect" (`/privacy` §1)** — rewrote into a per-category → specific-purpose list (login identity, age confirmation, profile details, essay drafts, saved plan, diagnostics); removed stale fields (`location preference`/`college goals`). Satisfies CCPA/CPRA notice-at-collection and the "no generic purposes" rule.
 - [x] **Subprocessor / AI disclosure (`/privacy` §2)** — names every subprocessor (Anthropic, Supabase, Stripe, Resend, Vercel, Sentry) and what each receives; leads with "we don't sell your data / no targeted advertising"; discloses essay + profile data go to Anthropic. Closes the third-party-disclosure gap.
 - [x] **Just-in-time notices** — onboarding form ("we use this to build your matches/timeline, never sold," + Privacy Policy link) and a micro-note on the essay screen ("your draft is sent to Anthropic to generate feedback").
-- [ ] **Still open (deferred):** soften AI-washing marketing copy ("replaces a private counselor" → "counselor-style help, not a substitute") — fold into content rewrite (step 5); reach WCAG 2.1 AA before driving traffic (fast-follow, consider pulling forward); extend the COPPA/FERPA memo to cover SOPIPA + state student-privacy laws.
+- [x] Soften AI-washing marketing copy — done as part of the step 6 content rewrite: copy now reads "the kind of guidance a private counselor would give"/"would give, free to start" (comparative), not "replaces a private counselor" (replacement). Verified live in `essay-feedback/page.tsx` and `preview-heroes/page.tsx`.
+- [ ] **Still open:** reach WCAG 2.1 AA before driving traffic beyond the demo (a partial pass — focus states, keyboard nav, aria labels — is done, tracked under Fast-follow below; full AA is a bigger lift, correctly deferred); extend the COPPA/FERPA memo to cover SOPIPA + state student-privacy laws (legal-research work, yours).
   **Acceptance criteria:** every data category has a stated purpose at the point of collection; all subprocessors disclosed; no "we sell your data" ambiguity. **Not a substitute for legal review before going wide.**
 
-### 4. UI/UX polish pass
-- [ ] Freeze scope — no new features, nothing from Phase 2 pulled forward.
-- [ ] UI/UX pass via dev-server preview at desktop/tablet/mobile viewport widths (375px/414px/768px/1280px) — spacing, alignment, contrast, rounded-corner/typography consistency against the design system in `src/app/globals.css`.
+### 4. UI/UX polish pass — DONE (Jul 2)
+- [x] Freeze scope — no new features, nothing from Phase 2 pulled forward.
+- [x] UI/UX pass via dev-server preview at desktop/tablet/mobile viewport widths (375px/768px/1280px) — spacing, alignment, contrast, rounded-corner/typography consistency against the design system in `src/app/globals.css`.
+  **Found and fixed:**
+  - `globals.css` had regressed to pure black/white for every token (`--bg`/`--card` both `#000000`, `--text`/`--text-gray` both `#FFFFFF`, all 5 semantic accents — amber/green/red/premium/secondary — collapsed to identical white). Restored the full spec ramp (`--bg #0A0A0A`, `--card #171717`, `--text #FAFAFA`, `--text-gray #A3A3A3`, `--border #2A2A2A`) and gave each semantic accent a distinct shade/tint so reach/target/safety pills, status tags, and the timeline "you are here" marker read as visually distinct again.
+  - Account dropdown menu (`NavShell.tsx`) had no outside-click/Escape handler and stayed open indefinitely, overlapping page content. Added a document-level listener scoped via `data-account-menu`.
+  - Dashboard "top matches" and "coming up" cards overflowed horizontally on mobile (375px) — long school names/task titles had no `min-w-0`/`truncate`, and the fix had to be applied at both the flex-row and the outer grid-item level (grid items default to `min-width: auto` same as flex items).
+  - Bottom mobile nav (6 tabs) overflowed past the viewport edge at 375px (`px-4` per item); tightened to `px-1.5`.
+  - Bottom mobile nav used hardcoded `bg-black` instead of the `--bg` token — fixed.
   **Acceptance criteria:** every screen visually clean and internally consistent at all simulated viewport widths. Real-hardware confirmation still happens later, at Mobile Device QA (step 8) — this step catches what a simulator can.
 
-### 5. System prompt tuning
-- [ ] Further tuning pass on the 4 AI system prompts in `src/lib/anthropic.ts` and `src/app/api/career-path/route.ts`, building on the Day 7 refinement. Now running on `claude-sonnet-4-6`. Settle the AI-generated output before the copy pass below.
+### 5. System prompt tuning — DONE (Jul 3)
+- [x] Further tuning pass on the 4 AI system prompts in `src/lib/anthropic.ts` and `src/app/api/career-path/route.ts`, building on the Day 7 refinement. Matches prompt now guarantees a student's named "already considering" schools are never dropped for a round count; career-path prompt (previously the thinnest of the 4) now handles "Undecided" major properly, actually uses the named school instead of ignoring it, and guards against fabricated statistical precision. Logistics/strategic/essay-feedback prompts reviewed and already solid from the Day 7 pass, no changes needed.
 
-### 6. Website content rewrite
-- [ ] Pass over all on-page (static) copy — landing, dashboard, onboarding, about, upgrade, profile, matches, timeline, essay feedback — for tone, clarity, and accuracy. Separate from the prompt tuning above: this is the hardcoded text in the `.tsx` files, not AI-generated output.
-- [ ] Specific areas: landing hero/subhead, `/about` mission paragraph and stats, onboarding field labels/placeholders, dashboard empty-state copy ("no matches yet", "nothing upcoming"), upgrade page's coming-soon messaging.
+### 6. Website content rewrite — DONE (Jul 3)
+- [x] Pass over all on-page (static) copy — landing, dashboard, onboarding, about, upgrade, profile, matches, timeline, essay feedback — for tone, clarity, and accuracy. Separate from the prompt tuning above: this is the hardcoded text in the `.tsx` files, not AI-generated output.
+- [x] Specific areas: landing hero/subhead (em dash → comma, dropped the "Real profiles..." line), `/about` mission paragraph (heading no longer sits low on the screen, "runs the same analysis" wording), upgrade page blurb (em dashes removed, dropped the "what you can afford" cost-framing per user request), dashboard/timeline/matches empty-state copy, onboarding/profile extracurriculars hint, school-detail disclaimers — swept for em dashes site-wide as an established style preference (left Privacy/Terms untouched, those are legal docs queued for a lawyer read, not a tone target).
   **Acceptance criteria:** every screen's copy deliberately reviewed and rewritten where needed.
 
 ### 7. Thorough desktop/laptop testing — requires you
@@ -157,21 +166,73 @@ Added from Jun 30 research into legal/privacy failure modes for AI-for-minors pr
 
 ---
 
-## Phase 2 (post-MVP) — counselor + premium + billing
+## Phase 2 timeline — Jul 3 (today) through Jul 6 night
 
-Parked, not deleted. Existing in-progress artifacts to pick back up: `migration_001_counselor_dashboard.sql`, `seed_counselor.sql`, `supabase/seed_second_school.sql`, `src/lib/rls.integration.test.ts` (counselor/cross-school cases), `src/app/api/stripe/webhook/route.integration.test.ts`, and the `/counselor/*` routes/`isCounselor` guard already built.
+**Target: product fully done — including all UI design and testing — night of Jul 6.** That's a 3-day window from today. Reordered below into what actually fits that window vs. what can't be compressed no matter how the days are arranged, because it depends on someone else's turnaround (a bank/Stripe review, a legal read, a real human counselor's schedule) rather than engineering time.
 
-- [ ] Counselor dashboard: Screen C1 (Counselor Home), C2 (Student Detail View), C3 (At-Risk Flags), C4 (Send Reminder), C5 (Class-Level Aggregate View)
-- [ ] `counselors`, `counselor_notes`, `reminder_log` tables + RLS; `school_id`/`counselor_id` on `profiles`; multi-tenant edge cases (student transfers schools, counselor deactivated)
-- [ ] Premium tier: Stripe checkout, webhook as source of truth for `subscription_tier` (grant + revoke), idempotency on replayed events, failed payment/dunning, plan changes/proration, invoices/receipts, test→live checklist, refund runbook
-- [ ] Stripe business verification (payouts enabled, live mode) — requires business entity/banking info
-- [ ] Self-serve or sales-assisted school signup flow; admin tooling to onboard a school without raw SQL
-- [ ] Data Processing Agreement template for school districts
-- [ ] Support contact / SLA statement for paying school accounts
-- [ ] Sales collateral for school districts (one-pager / demo walkthrough)
+**What does NOT fit in 3 days, and why — flagged now so it doesn't quietly slip on Jul 6 night:**
+- **Stripe business verification (live mode/payouts)** — this is Stripe's own KYB review of your business entity/banking info, not something you can build faster. Typically days, sometimes longer if they ask follow-up questions. Start it *today* regardless; treat live payments as fast-follow if it hasn't cleared by Jul 6.
+- **A real (non-seeded) counselor pilot** — needs an actual counselor's calendar time, not just working code. Even a rushed version needs a person to say yes and show up. Start recruiting today; the pilot itself likely lands after Jul 6.
+- **DPA legal review + Terms/Privacy legal read (carried over from Phase 1, line 61)** — needs a human lawyer's turnaround, same constraint as above.
+- **Live-mode Stripe smoke test with a real card** — blocked on business verification above; can't happen before that clears.
+
+Given that, this window builds and ships the counselor dashboard + premium tier in **test/sandbox mode**, fully tested end-to-end, so the *product* (UI, flows, code) is done Jul 6 night — with the live-money/legal/pilot items explicitly queued right behind it rather than pretending they're done.
+
+### Jul 3 (today, evening) — finish Phase 1's remaining launch steps first
+Phase 1 was never fully closed (Software_Timeline steps 5–10 above were still open) — those block Phase 2 testing since Phase 2 QA assumes a finished student flow underneath it.
+- [x] Step 5: system prompt tuning pass — done, see Day/Step 5 above (Jul 3).
+- [x] Step 6: website content rewrite pass — done, see Day/Step 6 above (Jul 3).
+- [ ] Kick off Stripe business verification application — **not needed for the Jul 7 demo per the Jul 4 scope change**; still worth starting whenever you're ready for real Phase 3 billing work, but no longer gating anything below.
+- [ ] Reach out to a real counselor contact about a pilot — non-software, yours; not tracked as blocking the demo.
+- [ ] Send Terms/Privacy + DPA draft to whoever's doing the legal read — non-software, yours; not tracked as blocking the demo.
+
+### Jul 4 — counselor dashboard build — DONE (Jul 4, overnight + Jul 4 daytime session)
+- [x] `counselors`, `counselor_notes`, `reminder_log` tables + RLS migration — `migration_001_counselor_dashboard.sql` applied; verified live (both `Test High School` counselor rows present, RLS policies in `supabase/schema.sql` confirmed enforcing school-scoped reads).
+- [x] `school_id`/`counselor_id` on `profiles` — live and populated.
+- [x] Multi-tenant isolation — **verified programmatically, not just assumed**: spun up a temporary second school + counselor + student, confirmed via signed-in API calls that neither counselor can read the other's school/profiles/matches/timeline/notes, and that a forged cross-tenant `counselor_notes` write is rejected by the RLS `with check` clause itself (not just hidden client-side). All temp data cleaned up after. Narrower edge cases (a student transferring schools mid-year, a counselor being deactivated) are still untested — low-risk, not needed for the Jul 7 demo, flagged here for whenever real customers make it relevant.
+- [x] Screens C1 (Student Roster), C2 (Student Detail View — Profile/School Matches/Timeline/Counselor Notes tabs), C3 (At-Risk Flags) — built, wired to real data, QA'd.
+- [x] Screens C4 (Send Reminder), C5 (Class-Level Aggregate View) — built, wired to real data; Send Reminder tested end-to-end (real row confirmed written to `reminder_log`).
+- [x] Counselor UI/UX polish pass at desktop/tablet/mobile widths (375/768/1280px), same rigor as the Phase 1 pass — **real bugs found and fixed**:
+  1. **Student Roster table completely broken on mobile** — the 6-column grid (`StudentRosterClient.tsx`) had no responsive variant, so at 375px names truncated to unreadable fragments ("Jordan …") and column headers wrapped mid-word. Rebuilt as a responsive card layout below `md:`, kept the grid at `md:` and up.
+  2. **"N overdue" badge unreadable on the active Timeline tab** — `StudentDetailClient.tsx` gave the overdue-count badge colors meant for a dark card background, but it was rendering white-on-white once its parent tab button went active (`bg-primary`). Added a conditional dark variant for the active state.
+  3. **Timezone off-by-one on every displayed due date** — `new Date("2026-06-06")` parses as UTC midnight, so `.toLocaleDateString()` showed dates one day early in negative-UTC-offset timezones (e.g. a due date stored as Oct 14 displayed as "Oct 13"). Fixed in the counselor Timeline tab, the student Timeline page, and the dashboard "Coming up" widget (`${due}T00:00:00` forces local-midnight parsing). Confirmed dates shifted to the correct stored values after the fix.
+  4. Counselor Profile tab showed raw `{"SAT":1310}` JSON for test scores — now formats as "SAT: 1310".
+- [x] Seeded 9 additional realistic mock students into the demo counselor's school (was down to 1) — varied grade levels, GPAs, profile completeness, match/timeline states, and last-login recency, so At-Risk Flags (now 8 flagged students, real varied reasons) and Class-Level Overview (real per-grade GPA/completion averages, 8 distinct most-matched schools) actually look populated for the demo instead of empty.
+- [x] Schema-drift audit — wrote a script cross-checking every column in `supabase/schema.sql` against the live database. Found two real gaps: `profiles.stripe_customer_id` and `regeneration_log.timeline_count` are both referenced in code but **do not exist in the live DB** (the latter silently breaks the free-tier weekly timeline-regeneration cap — it always reads back as 0 used, so the cap never actually triggers, though timeline regeneration itself still works). Fix for the regen cap is drafted (`supabase/migration_006_timeline_regen_cap.sql`) but needs to be run from the Supabase SQL editor — not runnable from here (no direct Postgres connection, only the REST API, which can't do DDL). **Still open, needs you.**
+- [x] Full regression pass on the student flow underneath, to confirm none of the above broke it — login/logout, signup (age-gate), onboarding → real AI match generation (end-to-end, ~50s), matches list + school detail (Info/Breakdown/Career Path tabs, including the College Scorecard low-confidence-match rejection working as designed), timeline, essay feedback (tested with a real premium account and a real draft — feedback quality is genuinely sharp), profile edit, About/Privacy/Terms pages. `npx tsc --noEmit`, `npm run build`, and all 12 unit tests pass clean throughout.
+
+### Jul 6/7 — remaining QA for the Shivam demo (premium work moved to Phase 3, see below)
+- [x] Full end-to-end walkthrough of counselor flow (login → roster → student detail, all 4 tabs → at-risk flags → send reminder → aggregate view) — done tonight (Jul 4), in the Chromium-based dev preview.
+- [ ] Same walkthrough in actual Safari — not done; I only had a Chromium-based preview tool available tonight.
+- [ ] Mobile device QA on a real phone (both student and counselor flows) — requires you, real phone, same as the original Phase 1 plan.
+- [x] Cross-check every counselor screen against spec (same acceptance-criteria bar as Phase 1 Day 4) — done tonight, see Jul 4 above for the bugs this surfaced.
+- [x] Regression pass on the student flow underneath — confirm nothing in Phase 2 broke Phase 1 — done tonight, see Jul 4 above.
+- [ ] Run `migration_006_timeline_regen_cap.sql` in the Supabase SQL editor (one line, additive, safe — see Jul 4 above) — **the one known, un-fixed gap**, needs your DB console access.
+- [ ] **Software is demo-ready for Jul 7 morning modulo the three items above** (Safari pass, real-phone QA, running the one migration). Everything else in the original "done gate" — premium flow testing, live billing — no longer applies here; moved to Phase 3 below.
+
+---
+
+## Phase 3 — premium tier + billing (deferred from the original Jul 5 plan, Jul 4 scope change)
+
+Not needed for the Jul 7 Shivam demo. Pick this back up whenever premium/billing work actually becomes the priority.
+
+- [ ] Stripe checkout integration (test mode keys)
+- [ ] Webhook as source of truth for `subscription_tier` (grant + revoke), idempotency on replayed events (`route.integration.test.ts` already drafted — extend/run)
+- [ ] Failed payment/dunning flow, plan changes/proration, invoices/receipts — test-mode coverage
 - [ ] Public-facing pricing page
-- [ ] One real (non-seeded) counselor pilot before any counselor-facing public launch
-- [ ] Live-mode Stripe smoke test with a real card before any paid launch — requires a real card/real money transaction
+- [ ] Self-serve school signup flow; minimal admin tooling to onboard a school without raw SQL
+- [ ] Sales collateral for school districts (one-pager / demo walkthrough) — content only, doesn't block code
+- [ ] Full end-to-end desktop walkthrough of premium flow (checkout in test mode → webhook grants tier → gated features unlock → cancel/downgrade → webhook revokes), once built
+- Live-mode Stripe verification/billing is tracked separately below under "Post-Jul-6 — external-turnaround items," since it's external turnaround rather than engineering work.
+
+---
+
+## Post-Jul-6 — external-turnaround items (not blocked on engineering)
+
+- [ ] Stripe business verification clears → flip to live mode → live-mode smoke test with a real card
+- [ ] Real counselor pilot actually runs (once recruited + verification-mode dashboard is ready)
+- [ ] Legal read of Terms/Privacy/DPA comes back → fold in any changes
+- [ ] Support contact / SLA statement for paying school accounts — finalize once pricing is legally reviewed
 
 ## Post-Phase-2 roadmap
 

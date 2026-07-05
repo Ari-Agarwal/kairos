@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -11,6 +11,7 @@ interface FeedbackItem {
 }
 
 export default function EssayFeedbackClient() {
+  const reduceMotion = useReducedMotion();
   const [essay, setEssay] = useState("");
   const [feedback, setFeedback] = useState<FeedbackItem[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -54,7 +55,14 @@ export default function EssayFeedbackClient() {
         disabled={loading || !essay.trim()}
         className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-6 py-2.5 disabled:opacity-50 mb-6"
       >
-        {loading ? "Reading your draft..." : "Get Feedback"}
+        {loading ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-bg ambient-star" style={{ ["--twinkle-max" as string]: "1", ["--twinkle-duration" as string]: "1s" }} />
+            Reading your draft...
+          </span>
+        ) : (
+          "Get Feedback"
+        )}
       </button>
 
       {error && (
@@ -70,14 +78,14 @@ export default function EssayFeedbackClient() {
         {feedback && (
           <div className="space-y-3">
             <p className="text-text-gray text-xs">
-              AI-generated feedback — use it as a starting point, not a final verdict on your essay.
+              AI-generated feedback, use it as a starting point, not a final verdict on your essay.
             </p>
             {feedback.map((f, idx) => (
               <motion.div
                 key={idx}
-                initial={{ opacity: 1, y: 0 }}
+                initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, ease: EASE, delay: idx * 0.08 }}
+                transition={{ duration: 0.4, ease: EASE, delay: reduceMotion ? 0 : idx * 0.12 }}
                 className="bg-card border border-border rounded-2xl p-4"
               >
                 <p className="text-primary text-sm font-medium mb-1">{f.label}</p>

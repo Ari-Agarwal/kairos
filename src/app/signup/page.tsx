@@ -111,8 +111,9 @@ export default function SignupPage() {
         </Link>
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <div>
-            <label className="block text-sm text-text-gray mb-1">Full Name</label>
+            <label htmlFor="signup-name" className="block text-sm text-text-gray mb-1">Full Name</label>
             <input
+              id="signup-name"
               type="text"
               required
               value={fullName}
@@ -121,8 +122,9 @@ export default function SignupPage() {
             />
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Email</label>
+            <label htmlFor="signup-email" className="block text-sm text-text-gray mb-1">Email</label>
             <input
+              id="signup-email"
               type="email"
               required
               value={email}
@@ -131,8 +133,9 @@ export default function SignupPage() {
             />
           </div>
           <div>
-            <label className="block text-sm text-text-gray mb-1">Password</label>
+            <label htmlFor="signup-password" className="block text-sm text-text-gray mb-1">Password</label>
             <input
+              id="signup-password"
               type="password"
               required
               minLength={6}

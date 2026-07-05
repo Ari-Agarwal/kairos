@@ -9,7 +9,7 @@ export interface RosterStudent {
   name: string;
   grade_level: string;
   gpa: number;
-  college_goals: string | null;
+  schools_already_considering: string | null;
   activeMatchCount: number;
   incompleteTimelineCount: number;
   overdueCount: number;
@@ -20,16 +20,14 @@ export interface RosterStudent {
 function isProfileComplete(profile: {
   intended_major: string | null;
   extracurriculars: string[] | null;
-  location_preference: string | null;
-  college_goals: string | null;
+  schools_already_considering: string | null;
   test_scores: unknown;
 }): boolean {
   return Boolean(
     profile.intended_major &&
       profile.extracurriculars &&
       profile.extracurriculars.length > 0 &&
-      profile.location_preference &&
-      profile.college_goals &&
+      profile.schools_already_considering &&
       profile.test_scores
   );
 }
@@ -124,7 +122,7 @@ export default async function CounselorHomePage() {
       name: emailByUser.get(p.user_id) ?? "Student",
       grade_level: p.grade_level,
       gpa: p.gpa,
-      college_goals: p.college_goals,
+      schools_already_considering: p.schools_already_considering,
       activeMatchCount,
       incompleteTimelineCount: timeline.incomplete,
       overdueCount: timeline.overdue,

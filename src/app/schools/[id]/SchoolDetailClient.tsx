@@ -166,7 +166,7 @@ export default function SchoolDetailClient({
                   >
                     College Scorecard
                   </a>{" "}
-                  (U.S. Dept. of Education), most recent reporting year — may not reflect this
+                  (U.S. Dept. of Education), most recent reporting year, may not reflect this
                   year&apos;s admissions cycle.
                 </p>
               </>
@@ -174,7 +174,7 @@ export default function SchoolDetailClient({
               <p className="text-text-gray text-sm leading-relaxed mb-4">
                 Kairos doesn&apos;t have verified stats (acceptance rate, enrollment) for{" "}
                 {match.school_name}{" "}
-                yet — either it&apos;s outside the U.S. (our data source only covers U.S.
+                yet, either it&apos;s outside the U.S. (our data source only covers U.S.
                 institutions) or it&apos;s not in that dataset.{" "}
                 <a
                   href={`https://www.google.com/search?q=${encodeURIComponent(
@@ -190,8 +190,8 @@ export default function SchoolDetailClient({
               </p>
             )}
             <p className="text-text-gray text-sm">
-              Your personalized estimate for this school — grounded in your actual profile,
-              not a generic school-wide number — is on the{" "}
+              Your personalized estimate for this school, grounded in your actual profile,
+              not a generic school-wide number, is on the{" "}
               <button onClick={() => setTab("breakdown")} className="text-text underline underline-offset-2 hover:text-primary">
                 Breakdown tab
               </button>
@@ -272,7 +272,7 @@ export default function SchoolDetailClient({
             {careerPath && (
               <div className="space-y-4">
                 <p className="text-text-gray text-xs">
-                  AI-generated general patterns for this major — not specific to named individuals
+                  AI-generated general patterns for this major, not specific to named individuals
                   or guaranteed outcomes.
                 </p>
                 <p className="text-text-gray text-sm leading-relaxed">{careerPath.summary}</p>

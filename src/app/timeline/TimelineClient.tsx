@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import GenerationProgress from "@/components/GenerationProgress";
 
@@ -27,6 +27,12 @@ function sortItems(items: TimelineItem[]): TimelineItem[] {
   });
 }
 
+function formatDue(due: string): string {
+  const d = new Date(`${due}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return due;
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
 export default function TimelineClient({
   items: initialItems,
   isPremium,
@@ -40,6 +46,7 @@ export default function TimelineClient({
 }) {
   const router = useRouter();
   const supabase = createClient();
+  const reduceMotion = useReducedMotion();
   const [items, setItems] = useState(initialItems);
   const [generating, setGenerating] = useState(false);
 
@@ -124,20 +131,34 @@ export default function TimelineClient({
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-6 text-center min-h-[60vh]">
         {error && <p className="text-red text-sm mb-3">{error}</p>}
-        <p className="text-text-gray text-sm mb-1">No timeline yet.</p>
+        {/* a single dim star, waiting to light up */}
+        <div className="relative mb-5 h-10 w-10">
+          <motion.span
+            className="absolute inset-0 m-auto h-2.5 w-2.5 rounded-full bg-text-gray"
+            animate={reduceMotion ? undefined : { opacity: [0.35, 0.9, 0.35] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
+        <p className="font-serif text-xl text-text mb-1">Your path isn&apos;t charted yet.</p>
+        <p className="text-text-gray text-sm mb-1">Generate a timeline to map out every step ahead.</p>
         <p className="text-text-gray text-xs mb-4">
           {isPremium ? "Unlimited regenerations" : `${remaining} regeneration${remaining === 1 ? "" : "s"} left this week`}
         </p>
         <button
           onClick={handleGenerate}
           disabled={regenDisabled}
-          className="rounded-xl bg-primary hover:bg-primary-hover text-bg font-medium px-6 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="rounded-xl bg-primary hover:bg-primary-hover text-bg font-medium px-6 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           Generate Timeline
         </button>
       </div>
     );
   }
+
+  const completedCount = items.filter((i) => i.completed).length;
+  const total = items.length;
+  const hereIndex = items.findIndex((i) => i.id === youAreHereId);
+  const progressPct = total > 0 ? Math.round((completedCount / total) * 100) : 0;
 
   return (
     <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
@@ -159,9 +180,25 @@ export default function TimelineClient({
           </button>
         </div>
       </div>
-      <p className="text-text-gray text-xs mb-6">
-        {isPremium ? "Unlimited regenerations" : `${remaining} regeneration${remaining === 1 ? "" : "s"} left this week`}
-      </p>
+
+      {/* journey progress: how far along the path you've traveled */}
+      <div className="mb-1 flex items-center justify-between">
+        <p className="text-text-gray text-xs">
+          {completedCount} of {total} milestone{total === 1 ? "" : "s"} complete
+        </p>
+        <p className="text-text-gray text-xs">
+          {isPremium ? "Unlimited regenerations" : `${remaining} regen${remaining === 1 ? "" : "s"} left`}
+        </p>
+      </div>
+      <div className="mb-7 h-1 w-full overflow-hidden rounded-full bg-border/60">
+        <motion.div
+          className="h-full rounded-full bg-primary"
+          initial={{ width: reduceMotion ? `${progressPct}%` : 0 }}
+          animate={{ width: `${progressPct}%` }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+        />
+      </div>
+
       {error && <p className="text-red text-sm mb-4">{error}</p>}
 
       {editing && (
@@ -193,29 +230,46 @@ export default function TimelineClient({
         </div>
       )}
 
-      <div className="relative pl-8">
-        <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
+      <div className="relative pl-9">
+        {/* the path: draws itself in from the top, bright behind you and fading into the future */}
+        <motion.div
+          className="absolute left-[9px] top-2 bottom-2 w-px bg-gradient-to-b from-primary/70 via-text-gray/30 to-border"
+          style={{ transformOrigin: "top" }}
+          initial={{ scaleY: reduceMotion ? 1 : 0 }}
+          animate={{ scaleY: 1 }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+        />
         {items.map((item, i) => {
           const isHere = item.id === youAreHereId;
+          const traveled = item.completed || (hereIndex !== -1 && i < hereIndex);
           const locked = item.is_strategic && !isPremium;
           return (
             <motion.div
               key={item.id}
-              className="relative mb-5"
-              initial={{ opacity: 1, y: 0 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: Math.min(i * 0.05, 0.5) }}
+              className="relative mb-6"
+              initial={{ opacity: reduceMotion ? 1 : 0, x: reduceMotion ? 0 : -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.45, delay: reduceMotion ? 0 : 0.3 + Math.min(i * 0.07, 0.9), ease: [0.16, 1, 0.3, 1] }}
             >
+              {/* node on the path */}
               {isHere ? (
-                <motion.div
-                  className="absolute -left-8 top-1.5 w-3.5 h-3.5 rounded-full bg-amber border-2 border-amber"
-                  animate={{ boxShadow: ["0 0 0 0 rgba(255,255,255,0.5)", "0 0 0 6px rgba(255,255,255,0)"] }}
-                  transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
-                />
+                <>
+                  {/* soft beacon halo — the lighthouse, made literal */}
+                  <motion.div
+                    className="absolute -left-[41px] top-0 h-8 w-8 rounded-full bg-white/25 blur-md"
+                    animate={reduceMotion ? undefined : { opacity: [0.5, 0.95, 0.5], scale: [0.9, 1.1, 0.9] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    className="absolute -left-[33px] top-2 w-4 h-4 rounded-full bg-text border border-text"
+                    animate={reduceMotion ? undefined : { boxShadow: ["0 0 0 0 rgba(255,255,255,0.5)", "0 0 0 8px rgba(255,255,255,0)"] }}
+                    transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+                  />
+                </>
               ) : (
                 <div
-                  className={`absolute -left-8 top-1.5 w-3.5 h-3.5 rounded-full border-2 ${
-                    item.completed ? "bg-green border-green" : "bg-bg border-border"
+                  className={`absolute -left-8 top-2.5 w-3 h-3 rounded-full ${
+                    traveled ? "bg-text-gray border-2 border-text-gray" : "bg-bg border-2 border-border"
                   }`}
                 />
               )}
@@ -230,30 +284,45 @@ export default function TimelineClient({
               )}
               <Link
                 href={locked ? "/upgrade" : `/timeline/${item.id}`}
-                className={`block rounded-2xl p-4 border ${
-                  item.is_strategic
-                    ? "bg-premium-tint border-dashed border-premium"
-                    : "bg-card border-border"
+                className={`group block rounded-2xl p-5 border transition-all hover:-translate-y-0.5 ${
+                  isHere
+                    ? "bg-card border-primary/40 shadow-[0_0_24px_-8px_rgba(255,255,255,0.25)]"
+                    : item.is_strategic
+                    ? "bg-premium-tint border-dashed border-premium hover:border-premium"
+                    : "bg-card border-border hover:border-primary/40"
                 }`}
               >
-                <div className={`flex items-center justify-between mb-1 ${editing ? "pr-14" : ""}`}>
-                  <p className={`font-medium text-sm ${item.completed ? "text-text-gray line-through" : "text-text"}`}>
+                <div className={`flex items-center justify-between mb-1.5 ${editing ? "pr-14" : ""}`}>
+                  <p className={`font-medium text-[15px] ${item.completed ? "text-text-gray line-through" : "text-text"}`}>
                     {item.title}
                   </p>
                   {item.is_strategic && (
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-premium text-bg">
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-premium text-bg shrink-0 ml-2">
                       PREMIUM
                     </span>
                   )}
                 </div>
-                {item.due_date && <p className="text-text-gray text-xs mb-1">Due {item.due_date}</p>}
-                {isHere && <p className="text-amber text-xs font-medium mb-1">You are here</p>}
-                {locked ? (
-                  <p className="text-text-gray text-xs italic">
-                    Unlock Premium to see this and other tailored guidance
+                {item.due_date && (
+                  <p className="text-text-gray text-xs mb-1.5">Due {formatDue(item.due_date)}</p>
+                )}
+                {isHere && (
+                  <p className="text-text text-xs font-medium mb-1.5 flex items-center gap-1.5">
+                    <span className="inline-block w-1 h-1 rounded-full bg-text" />
+                    You are here
                   </p>
+                )}
+                {locked ? (
+                  <>
+                    <p className="text-text-gray text-sm leading-relaxed">
+                      <span>{item.why_text.split(" ").slice(0, 6).join(" ")} </span>
+                      <span className="blur-[3px] select-none">
+                        {item.why_text.split(" ").slice(6).join(" ")}
+                      </span>
+                    </p>
+                    <p className="text-premium text-xs italic mt-1.5">Unlock Premium to see the rest</p>
+                  </>
                 ) : (
-                  <p className="text-text-gray text-xs">{item.why_text}</p>
+                  <p className="text-text-gray text-sm">{item.why_text}</p>
                 )}
               </Link>
             </motion.div>

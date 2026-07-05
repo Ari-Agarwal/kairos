@@ -31,7 +31,7 @@ export default function StudentRosterClient({
     if (statusFilter !== "all") result = result.filter((s) => s.status === statusFilter);
     if (goalQuery.trim()) {
       const q = goalQuery.trim().toLowerCase();
-      result = result.filter((s) => s.college_goals?.toLowerCase().includes(q));
+      result = result.filter((s) => s.schools_already_considering?.toLowerCase().includes(q));
     }
 
     const sorted = [...result];
@@ -100,7 +100,7 @@ export default function StudentRosterClient({
 
         <input
           type="text"
-          placeholder="Search college goals..."
+          placeholder="Search schools considering..."
           value={goalQuery}
           onChange={(e) => setGoalQuery(e.target.value)}
           className="rounded-xl bg-card border border-border px-3 py-2 text-sm text-text outline-none focus:border-primary flex-1 min-w-[180px]"
@@ -108,7 +108,7 @@ export default function StudentRosterClient({
       </div>
 
       <div className="bg-card border border-border rounded-2xl overflow-hidden">
-        <div className="grid grid-cols-[1.5fr_0.8fr_0.6fr_0.8fr_0.8fr_1fr] gap-2 px-4 py-3 text-text-gray text-xs border-b border-border">
+        <div className="hidden md:grid grid-cols-[1.5fr_0.8fr_0.6fr_0.8fr_0.8fr_1fr] gap-2 px-4 py-3 text-text-gray text-xs border-b border-border">
           <span>Student</span>
           <span>Grade</span>
           <span>GPA</span>
@@ -120,14 +120,22 @@ export default function StudentRosterClient({
           <Link
             key={s.user_id}
             href={`/counselor/students/${s.user_id}`}
-            className="grid grid-cols-[1.5fr_0.8fr_0.6fr_0.8fr_0.8fr_1fr] gap-2 px-4 py-3 text-sm text-text border-b border-border last:border-b-0 hover:bg-white/5 transition-colors"
+            className="flex flex-col gap-2 px-4 py-3 text-sm text-text border-b border-border last:border-b-0 hover:bg-white/5 transition-colors md:grid md:grid-cols-[1.5fr_0.8fr_0.6fr_0.8fr_0.8fr_1fr] md:gap-2 md:items-center"
           >
-            <span className="truncate">{s.name}</span>
-            <span className="text-text-gray">{s.grade_level}</span>
-            <span className="text-text-gray">{s.gpa}</span>
-            <span className="text-text-gray">{s.activeMatchCount}</span>
-            <span className="text-text-gray">{s.incompleteTimelineCount}</span>
-            <span>
+            <span className="flex items-center justify-between gap-2 md:contents">
+              <span className="truncate font-medium md:font-normal">{s.name}</span>
+              <span className={`text-xs font-medium px-2 py-1 rounded-full shrink-0 md:hidden ${STATUS_STYLES[s.status]}`}>
+                {s.status}
+              </span>
+            </span>
+            <span className="text-text-gray text-xs md:hidden">
+              {s.grade_level} · GPA {s.gpa} · {s.activeMatchCount} matches · {s.incompleteTimelineCount} open
+            </span>
+            <span className="hidden md:inline text-text-gray">{s.grade_level}</span>
+            <span className="hidden md:inline text-text-gray">{s.gpa}</span>
+            <span className="hidden md:inline text-text-gray">{s.activeMatchCount}</span>
+            <span className="hidden md:inline text-text-gray">{s.incompleteTimelineCount}</span>
+            <span className="hidden md:inline">
               <span className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_STYLES[s.status]}`}>
                 {s.status}
               </span>

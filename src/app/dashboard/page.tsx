@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import NavShell from "@/components/NavShell";
 import ProfileCompletenessModal from "@/components/ProfileCompletenessModal";
+import CountUp from "@/components/CountUp";
 import GenerateTimelineCard from "./GenerateTimelineCard";
 
 const CATEGORY_STYLES: Record<string, string> = {
@@ -61,13 +62,13 @@ export default async function DashboardPage({
     <NavShell>
       <ProfileCompletenessModal profile={profile} />
       <div className="px-5 md:px-8 py-10 max-w-3xl mx-auto w-full">
-        <h1 className="font-serif text-3xl text-text mb-2">Welcome, {name}.</h1>
-        <p className="text-text-gray text-sm mb-8">
+        <h1 className="reveal font-serif text-3xl text-text mb-2">Welcome, {name}.</h1>
+        <p className="reveal text-text-gray text-sm mb-8" style={{ ["--reveal-delay" as string]: "0.06s" }}>
           {profile.grade_level} · {profile.current_school} · {profile.intended_major || "Major undecided"}
         </p>
 
         {matchError === "true" && (
-          <div className="bg-red-tint border border-border rounded-2xl px-5 py-4 mb-6">
+          <div className="reveal bg-red-tint border border-border rounded-2xl px-5 py-4 mb-6">
             <p className="text-red text-sm">
               We couldn&apos;t generate your school matches just now. Head to the Matches tab and
               tap &quot;Regenerate List&quot; to try again.
@@ -78,54 +79,66 @@ export default async function DashboardPage({
         <div className="grid sm:grid-cols-2 gap-5 mb-8">
           <Link
             href="/matches"
-            className="block bg-card border border-border rounded-2xl px-6 py-7 min-h-[220px] hover:border-primary/40 transition-colors"
+            className="reveal block min-w-0 bg-card border border-border rounded-2xl px-6 py-7 min-h-[220px] hover:border-primary/40 hover:-translate-y-0.5 transition-all"
+            style={{ ["--reveal-delay" as string]: "0.12s" }}
           >
             <div className="flex items-center justify-between mb-4">
               <p className="text-text-gray text-sm">Your top matches</p>
-              <span className="text-text-gray text-sm">{activeMatchCount ?? 0} schools</span>
+              <span className="text-text-gray text-sm">
+                <CountUp value={activeMatchCount ?? 0} suffix=" schools" />
+              </span>
             </div>
             {topMatches && topMatches.length > 0 ? (
               <div className="space-y-3">
                 {topMatches.map((m) => (
-                  <div key={m.school_name} className="flex items-center justify-between">
-                    <div>
+                  <div key={m.school_name} className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
                       <span
                         className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full mb-1.5 capitalize ${CATEGORY_STYLES[m.category]}`}
                       >
                         {m.category}
                       </span>
-                      <p className="font-serif text-base text-text">{m.school_name}</p>
+                      <p className="font-serif text-base text-text truncate">{m.school_name}</p>
                     </div>
-                    <span className="font-serif text-xl text-primary">{m.percentage}%</span>
+                    <CountUp value={m.percentage} suffix="%" className="font-serif text-xl text-primary shrink-0" />
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-text-gray text-sm">No matches yet — tap Matches below to generate your personalized school list.</p>
+              <div className="flex items-start gap-2.5">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-text-gray/70 ambient-star" style={{ ["--twinkle-max" as string]: "0.9" }} />
+                <p className="text-text-gray text-sm">No matches yet, tap Matches below to generate your personalized school list.</p>
+              </div>
             )}
           </Link>
 
           {!timelineItemCount ? (
-            <GenerateTimelineCard />
+            <div className="reveal" style={{ ["--reveal-delay" as string]: "0.18s" }}>
+              <GenerateTimelineCard />
+            </div>
           ) : (
             <Link
               href="/timeline"
-              className="block bg-card border border-border rounded-2xl px-6 py-7 min-h-[220px] hover:border-primary/40 transition-colors"
+              className="reveal block min-w-0 bg-card border border-border rounded-2xl px-6 py-7 min-h-[220px] hover:border-primary/40 hover:-translate-y-0.5 transition-all"
+              style={{ ["--reveal-delay" as string]: "0.18s" }}
             >
               <p className="text-text-gray text-sm mb-4">Coming up on your timeline</p>
               {upcomingTasks && upcomingTasks.length > 0 ? (
                 <div className="space-y-3">
                   {upcomingTasks.map((t) => (
-                    <div key={t.id} className="flex items-center justify-between">
-                      <p className="text-base text-text truncate pr-2">{t.title}</p>
+                    <div key={t.id} className="flex items-center justify-between gap-2">
+                      <p className="text-base text-text truncate min-w-0">{t.title}</p>
                       <span className="text-text-gray text-sm shrink-0">
-                        {t.due_date ? new Date(t.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "—"}
+                        {t.due_date ? new Date(`${t.due_date}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "—"}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-text-gray text-sm">Nothing upcoming yet — tap Timeline below to see your full plan.</p>
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-text-gray/70 ambient-star" style={{ ["--twinkle-max" as string]: "0.9" }} />
+                  <p className="text-text-gray text-sm">Nothing upcoming yet, tap Timeline below to see your full plan.</p>
+                </div>
               )}
             </Link>
           )}

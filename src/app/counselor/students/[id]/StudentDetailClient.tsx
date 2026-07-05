@@ -5,13 +5,25 @@ import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
+function formatDue(due: string): string {
+  const d = new Date(`${due}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return due;
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function formatTestScores(scores: Record<string, unknown> | null): string | null {
+  if (!scores) return null;
+  if (typeof scores.summary === "string") return scores.summary;
+  const parts = Object.entries(scores).map(([key, value]) => `${key}: ${value}`);
+  return parts.length ? parts.join(", ") : null;
+}
+
 interface Profile {
   grade_level: string;
   gpa: number;
   intended_major: string | null;
   extracurriculars: string[] | null;
-  location_preference: string | null;
-  college_goals: string | null;
+  schools_already_considering: string | null;
   test_scores: Record<string, unknown> | null;
 }
 
@@ -69,7 +81,10 @@ export default function StudentDetailClient({
         ← Back to roster
       </Link>
 
-      <h1 className="font-serif text-2xl text-text mb-1">{studentName}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-1">
+        <h1 className="font-serif text-2xl text-text">{studentName}</h1>
+        <SendReminderButton counselorId={counselorId} studentUserId={studentUserId} />
+      </div>
       <p className="text-text-gray text-sm mb-6">
         {profile.grade_level} · GPA {profile.gpa} · {profile.intended_major || "Major undecided"}
       </p>
@@ -85,7 +100,11 @@ export default function StudentDetailClient({
           >
             {t}
             {t === "Timeline" && overdueCount > 0 && (
-              <span className="ml-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-red-tint text-red">
+              <span
+                className={`ml-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                  tab === t ? "bg-bg/10 text-bg" : "bg-red-tint text-red"
+                }`}
+              >
                 {overdueCount} overdue
               </span>
             )}
@@ -99,6 +118,75 @@ export default function StudentDetailClient({
       {tab === "Counselor Notes" && (
         <NotesTab counselorId={counselorId} studentUserId={studentUserId} initialNoteText={initialNoteText} />
       )}
+    </div>
+  );
+}
+
+function SendReminderButton({ counselorId, studentUserId }: { counselorId: string; studentUserId: string }) {
+  const supabase = createClient();
+  const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sentAt, setSentAt] = useState<number | null>(null);
+  const [error, setError] = useState("");
+
+  async function handleSend() {
+    if (!message.trim()) return;
+    setSending(true);
+    setError("");
+    const { error: insertError } = await supabase
+      .from("reminder_log")
+      .insert({ counselor_id: counselorId, student_user_id: studentUserId, message_text: message.trim() });
+    setSending(false);
+    if (insertError) {
+      setError("Failed to send reminder. Please try again.");
+      return;
+    }
+    setSentAt(Date.now());
+    setMessage("");
+    setTimeout(() => setOpen(false), 1200);
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => {
+          setOpen(true);
+          setSentAt(null);
+        }}
+        className="shrink-0 text-sm font-medium px-3.5 py-2 rounded-xl border border-border text-text-gray hover:text-text hover:border-primary/40 transition-colors"
+      >
+        Send Reminder
+      </button>
+    );
+  }
+
+  return (
+    <div className="shrink-0 w-full sm:w-64 bg-card border border-border rounded-2xl p-3">
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        rows={3}
+        placeholder="e.g. Don't forget your FAFSA is due Oct 1..."
+        className="w-full rounded-lg bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary resize-none mb-2"
+      />
+      {error && <p className="text-red text-xs mb-2">{error}</p>}
+      {sentAt && <p className="text-green text-xs mb-2">Reminder sent.</p>}
+      <div className="flex gap-2">
+        <button
+          onClick={handleSend}
+          disabled={sending || !message.trim()}
+          className="flex-1 rounded-lg bg-primary hover:bg-primary-hover transition-colors text-bg text-xs font-medium px-3 py-2 disabled:opacity-40"
+        >
+          {sending ? "Sending..." : "Send"}
+        </button>
+        <button
+          onClick={() => setOpen(false)}
+          className="text-text-gray hover:text-text text-xs px-2"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
@@ -119,11 +207,14 @@ function ProfileTab({ profile }: { profile: Profile }) {
       value: profile.extracurriculars?.join(", ") || null,
       isEmpty: !profile.extracurriculars?.length,
     },
-    { label: "Location Preference", value: profile.location_preference, isEmpty: !profile.location_preference },
-    { label: "College Goals", value: profile.college_goals, isEmpty: !profile.college_goals },
+    {
+      label: "Schools Already Considering",
+      value: profile.schools_already_considering,
+      isEmpty: !profile.schools_already_considering,
+    },
     {
       label: "Test Scores",
-      value: profile.test_scores ? JSON.stringify(profile.test_scores) : null,
+      value: formatTestScores(profile.test_scores),
       isEmpty: !profile.test_scores,
     },
   ];
@@ -213,7 +304,7 @@ function TimelineTab({ items, today }: { items: TimelineItem[]; today: string })
               </p>
               {item.due_date && (
                 <p className={`text-xs mb-1 ${overdue ? "text-red" : "text-text-gray"}`}>
-                  Due {item.due_date}
+                  Due {formatDue(item.due_date)}
                   {overdue && " · Overdue"}
                 </p>
               )}

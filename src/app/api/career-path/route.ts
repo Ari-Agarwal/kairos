@@ -6,7 +6,15 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
 import { isTrustedOrigin } from "@/lib/origin-check";
 
-const CAREER_PATH_PROMPT = `You are describing typical post-graduation career patterns for a student with a given intended major considering a specific school. Ground your answer in general, real-world patterns for that major, not specifics about named individuals, and avoid naming specific employers unless they are broadly, publicly known as common hirers for that major (e.g. "large public accounting firms" rather than a specific invented company). Salary ranges should reflect realistic national early-career figures for that major, not the most extreme outcomes. Return JSON:
+const CAREER_PATH_PROMPT = `You are describing typical post-graduation career patterns for a student with a given intended major considering a specific school. Ground your answer in general, real-world patterns for that major, not specifics about named individuals, and avoid naming specific employers unless they are broadly, publicly known as common hirers for that major (e.g. "large public accounting firms" rather than a specific invented company). Salary ranges should reflect realistic national early-career figures for that major, not the most extreme outcomes.
+
+If the major is "Undecided," do not default to a single arbitrary field — instead describe the general shape of outcomes for an undecided student at this school (e.g. common first-declared majors, the range of paths available, how much time students typically have before declaring), rather than fabricating a specific career track.
+
+Use the named school only where it plausibly changes the real answer (e.g. a school with a strong co-op/internship program, a specific regional employer base, or a distinctive program strength for this major) — do not invent a school-specific detail you're not confident is real; when the school doesn't meaningfully change the general pattern for this major, say so implicitly by giving the general pattern rather than manufacturing a false school-specific claim.
+
+Never state a salary figure or statistic with more precision than you're genuinely confident in — round to a realistic range rather than implying false precision, and do not present a guess as if it were a verified data point.
+
+Return JSON:
 {
   "internships": ["string", "string", "string"],
   "employer_types": ["string", "string", "string"],
