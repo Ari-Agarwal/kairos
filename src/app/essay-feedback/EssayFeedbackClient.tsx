@@ -44,6 +44,7 @@ export default function EssayFeedbackClient() {
         value={essay}
         onChange={(e) => setEssay(e.target.value)}
         rows={10}
+        aria-label="Essay draft"
         placeholder="Paste your essay draft here..."
         className="w-full rounded-2xl bg-card border border-border px-4 py-3 text-text text-sm outline-none focus:border-primary resize-none mb-3"
       />

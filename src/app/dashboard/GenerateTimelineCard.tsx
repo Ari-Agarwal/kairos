@@ -36,7 +36,7 @@ export default function GenerateTimelineCard() {
           <p className="text-text-gray text-sm mb-3">
             No timeline yet, generate one from your matched schools.
           </p>
-          {error && <p className="text-red text-xs mb-2">{error}</p>}
+          {error && <p role="alert" className="text-red text-xs mb-2">{error}</p>}
           <button
             onClick={handleGenerate}
             className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-4 py-2"

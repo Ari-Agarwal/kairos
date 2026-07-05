@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
@@ -45,11 +45,12 @@ export default function MatchListClient({
   const reduceMotion = useReducedMotion();
   const [matches, setMatches] = useState(initialMatches);
   const [regenerating, setRegenerating] = useState(false);
-
-  useEffect(() => {
+  const [prevInitialMatches, setPrevInitialMatches] = useState(initialMatches);
+  if (initialMatches !== prevInitialMatches) {
+    setPrevInitialMatches(initialMatches);
     setMatches(initialMatches);
     setRegenerating(false);
-  }, [initialMatches]);
+  }
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [newSchoolName, setNewSchoolName] = useState("");
@@ -153,7 +154,7 @@ export default function MatchListClient({
         </span>
       </div>
 
-      {error && <p className="text-red text-sm mb-4">{error}</p>}
+      {error && <p role="alert" className="text-red text-sm mb-4">{error}</p>}
 
       {editing && (
         <div className="bg-card border border-border rounded-2xl p-4 mb-4 space-y-3">
@@ -161,12 +162,14 @@ export default function MatchListClient({
           <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
+              aria-label="School name"
               placeholder="School name"
               value={newSchoolName}
               onChange={(e) => setNewSchoolName(e.target.value)}
               className="flex-1 rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
             />
             <select
+              aria-label="School category"
               value={newSchoolCategory}
               onChange={(e) => setNewSchoolCategory(e.target.value as Category)}
               className="rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary capitalize"

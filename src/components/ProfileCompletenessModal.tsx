@@ -36,6 +36,9 @@ export default function ProfileCompletenessModal({ profile }: { profile: Profile
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Mount-only read of a browser API (sessionStorage) — can't run during SSR/render,
+    // so this can't be moved out of an effect without a hydration mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     setDismissed(sessionStorage.getItem(DISMISS_KEY) === "true");
   }, []);
