@@ -260,10 +260,10 @@ export default function SchoolDetailClient({
             transition={{ duration: 0.2, ease: EASE }}
             className="bg-card border border-border rounded-2xl p-5"
           >
-            {loading && <p className="text-text-gray text-sm animate-pulse">Loading career path...</p>}
+            {loading && <p role="status" className="text-text-gray text-sm animate-pulse">Loading career path...</p>}
             {error && (
               <div>
-                <p className="text-red text-sm mb-2">{error}</p>
+                <p role="alert" className="text-red text-sm mb-2">{error}</p>
                 <button onClick={loadCareerPath} className="text-primary text-sm hover:text-primary-hover">
                   Retry
                 </button>

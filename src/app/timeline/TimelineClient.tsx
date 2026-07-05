@@ -121,7 +121,7 @@ export default function TimelineClient({
   if (generating) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-6 text-center min-h-[60vh]">
-        <p className="font-serif text-2xl text-text mb-2 animate-pulse">Mapping out your timeline...</p>
+        <p role="status" className="font-serif text-2xl text-text mb-2 animate-pulse">Mapping out your timeline...</p>
         <p className="text-text-gray text-sm">Pulling together deadlines and strategic advice.</p>
         <GenerationProgress />
       </div>
@@ -200,7 +200,7 @@ export default function TimelineClient({
         />
       </div>
 
-      {error && <p className="text-red text-sm mb-4">{error}</p>}
+      {error && <p role="alert" className="text-red text-sm mb-4">{error}</p>}
 
       {editing && (
         <div className="bg-card border border-border rounded-2xl p-4 mb-6 space-y-3">
@@ -229,7 +229,7 @@ export default function TimelineClient({
               {adding ? "Adding..." : "Add"}
             </button>
           </div>
-          {addError && <p className="text-red text-sm">{addError}</p>}
+          {addError && <p role="alert" className="text-red text-sm">{addError}</p>}
         </div>
       )}
 

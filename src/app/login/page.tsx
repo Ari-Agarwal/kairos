@@ -54,13 +54,20 @@ export default function LoginPage() {
   async function handleOAuth(provider: "google" | "azure") {
     setError(null);
     setOauthLoading(provider);
-    const { error } = await supabase.auth.signInWithOAuth({
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    // signInWithOAuth doesn't redirect the browser itself in this SDK/config —
+    // it just returns the authorize URL, so we have to navigate to it ourselves.
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo },
     });
     if (error) {
       setOauthLoading(null);
       showError(error.message);
+      return;
+    }
+    if (data.url) {
+      window.location.href = data.url;
     }
   }
 

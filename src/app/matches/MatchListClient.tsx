@@ -120,7 +120,7 @@ export default function MatchListClient({
   if (regenerating) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-6 text-center min-h-[60vh]">
-        <p className="font-serif text-2xl text-text mb-2 animate-pulse">Building your personalized list...</p>
+        <p role="status" className="font-serif text-2xl text-text mb-2 animate-pulse">Building your personalized list...</p>
         <p className="text-text-gray text-sm">Hang tight while we re-match you against real schools.</p>
         <GenerationProgress />
       </div>
@@ -188,7 +188,7 @@ export default function MatchListClient({
               {adding ? "Adding..." : "Add"}
             </button>
           </div>
-          {addError && <p className="text-red text-sm">{addError}</p>}
+          {addError && <p role="alert" className="text-red text-sm">{addError}</p>}
         </div>
       )}
 

@@ -113,7 +113,7 @@ export default async function DashboardPage({
           </Link>
 
           {!timelineItemCount ? (
-            <div className="reveal" style={{ ["--reveal-delay" as string]: "0.18s" }}>
+            <div className="reveal h-full" style={{ ["--reveal-delay" as string]: "0.18s" }}>
               <GenerateTimelineCard />
             </div>
           ) : (
