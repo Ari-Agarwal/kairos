@@ -393,25 +393,37 @@ export default function OnboardingPage() {
           <p className="text-text-gray text-xs mb-2">
             Describe the activity, then tell us how long you&apos;ve done it.
           </p>
-          <div className="space-y-2" role="group" aria-labelledby="ob-activities-label">
+          <div className="space-y-4" role="group" aria-labelledby="ob-activities-label">
             {activities.map((activity, idx) => (
-              <div key={idx} className="flex gap-2">
-                <input
-                  type="text"
-                  aria-label={`Activity ${idx + 1} description`}
-                  placeholder="e.g. Varsity basketball, team captain"
-                  value={activity.idea}
-                  onChange={(e) => updateActivity(idx, { idea: e.target.value })}
-                  className={`${inputClass} flex-1`}
-                />
+              <div key={idx} className="bg-bg/40 border border-border rounded-xl p-3 space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    aria-label={`Activity ${idx + 1} description`}
+                    placeholder="e.g. Varsity basketball, team captain"
+                    value={activity.idea}
+                    onChange={(e) => updateActivity(idx, { idea: e.target.value })}
+                    className={`${inputClass} flex-1`}
+                  />
+                  {activities.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeActivity(idx)}
+                      className="text-text-gray hover:text-text px-1.5 shrink-0"
+                      aria-label="Remove activity"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  )}
+                </div>
                 <select
                   aria-label={`Activity ${idx + 1} length`}
                   value={activity.length}
                   onChange={(e) => updateActivity(idx, { length: e.target.value })}
-                  className={`${inputClass} w-40 shrink-0`}
+                  className={inputClass}
                 >
                   <option value="" disabled>
-                    Length
+                    How long have you done this?
                   </option>
                   {EC_LENGTHS.map((l) => (
                     <option key={l} value={l}>
@@ -419,16 +431,6 @@ export default function OnboardingPage() {
                     </option>
                   ))}
                 </select>
-                {activities.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeActivity(idx)}
-                    className="text-text-gray hover:text-text px-1.5 shrink-0"
-                    aria-label="Remove activity"
-                  >
-                    <X className="size-4" />
-                  </button>
-                )}
               </div>
             ))}
             <button
