@@ -20,7 +20,8 @@ function formatTestScores(scores: Record<string, unknown> | null): string | null
 
 interface Profile {
   grade_level: string;
-  gpa: number;
+  unweighted_gpa: number;
+  weighted_gpa: number;
   intended_major: string | null;
   extracurriculars: string[] | null;
   schools_already_considering: string | null;
@@ -86,7 +87,7 @@ export default function StudentDetailClient({
         <SendReminderButton counselorId={counselorId} studentUserId={studentUserId} />
       </div>
       <p className="text-text-gray text-sm mb-6">
-        {profile.grade_level} · GPA {profile.gpa} · {profile.intended_major || "Major undecided"}
+        {profile.grade_level} · GPA {profile.unweighted_gpa} unweighted / {profile.weighted_gpa} weighted · {profile.intended_major || "Major undecided"}
       </p>
 
       <div className="flex gap-1 mb-6 bg-card border border-border rounded-xl p-1 w-fit overflow-x-auto">

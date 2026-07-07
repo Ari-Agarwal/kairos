@@ -9,11 +9,18 @@ export default async function UpgradePage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase.from("profiles").select("subscription_tier").eq("user_id", user.id).maybeSingle();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("subscription_tier, premium_notify_requested")
+    .eq("user_id", user.id)
+    .maybeSingle();
 
   return (
     <NavShell>
-      <UpgradeClient isPremium={profile?.subscription_tier === "premium"} />
+      <UpgradeClient
+        isPremium={profile?.subscription_tier === "premium"}
+        notifyRequested={profile?.premium_notify_requested ?? false}
+      />
     </NavShell>
   );
 }

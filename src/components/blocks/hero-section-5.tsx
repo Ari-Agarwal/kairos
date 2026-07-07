@@ -19,7 +19,7 @@ export function HeroSection({ studentCount }: { studentCount: number }) {
       <main className="overflow-x-hidden">
         {view === "about" ? (
           <section className="relative min-h-screen bg-bg pt-20">
-            <AboutContent studentCount={studentCount} showLogo={false} />
+            <AboutContent showLogo={false} />
           </section>
         ) : (
           <section className="relative min-h-screen overflow-hidden bg-bg">
@@ -32,11 +32,12 @@ export function HeroSection({ studentCount }: { studentCount: number }) {
             <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col justify-center px-6 lg:px-12" style={{ transform: "translateZ(0)" }}>
               <div className="mx-auto max-w-lg text-center lg:mx-0 lg:max-w-xl lg:text-left">
                 <h1 className="font-serif text-balance text-5xl text-text md:text-6xl xl:text-7xl">
-                  Your future, mapped out clearly.
+                  Your AI college counselor.
                 </h1>
                 <p className="mt-8 max-w-xl text-balance text-lg text-text-gray">
-                  Real school matches, a personalized timeline, and honest essay feedback,
-                  the kind of guidance that used to cost thousands. Free to start.
+                  The one-stop counselor for real school matches, a personalized timeline, and
+                  honest essay feedback, the kind of guidance that used to cost thousands.
+                  Use Kairos, free to start.
                 </p>
 
                 <div className="mt-12 flex flex-col items-center justify-center gap-2 sm:flex-row lg:justify-start">
@@ -46,23 +47,15 @@ export function HeroSection({ studentCount }: { studentCount: number }) {
                       <ChevronRight className="ml-1" />
                     </Link>
                   </Button>
-                  <Button
-                    asChild
-                    size="lg"
-                    variant="ghost"
-                    className="h-12 rounded-full px-5 text-base"
-                  >
-                    <Link href="/login">
-                      <span className="text-nowrap">Log in</span>
-                    </Link>
-                  </Button>
                 </div>
 
-                <div className="mt-10 inline-block rounded-2xl bg-card/80 backdrop-blur-sm border border-border px-6 py-4">
-                  <p className="font-serif text-xl text-primary mb-0.5">
-                    {studentCount.toLocaleString()} students matched so far
-                  </p>
-                </div>
+                {studentCount > 10 && (
+                  <div className="mt-10 inline-block rounded-2xl bg-card/80 backdrop-blur-sm border border-border px-6 py-4">
+                    <p className="font-serif text-xl text-primary mb-0.5">
+                      {studentCount.toLocaleString()} students matched so far
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </section>

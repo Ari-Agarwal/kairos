@@ -3,7 +3,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion, useReducedMotion } from "framer-motion";
+import Link from "next/link";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { ArrowLeft, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import GenerationProgress from "@/components/GenerationProgress";
 
@@ -12,22 +14,71 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 const GRADE_LEVELS = ["Freshman", "Sophomore", "Junior", "Senior"];
 const CAMPUS_SIZES = ["Small", "Medium", "Large", "No preference"];
 const CAMPUS_SETTINGS = ["Urban", "Suburban", "Rural", "No preference"];
+const EC_LENGTHS = ["Less than 1 year", "1 year", "2 years", "3 years", "4+ years"];
+const TEST_TYPES = ["SAT", "ACT", "Haven't taken one"];
+
+const MAJORS = [
+  "Undecided", "Biology", "Business", "Chemistry", "Computer Science", "Economics",
+  "Education", "Engineering (general)", "English", "Environmental Science", "Finance",
+  "History", "International Relations", "Journalism", "Mathematics", "Medicine / Pre-Med",
+  "Nursing", "Philosophy", "Physics", "Political Science", "Psychology", "Public Health",
+  "Sociology", "Visual/Performing Arts", "Other",
+];
+
+const HIGH_SCHOOLS = [
+  "Stuyvesant High School", "Thomas Jefferson High School for Science and Technology",
+  "Lowell High School", "Boston Latin School", "Bronx High School of Science",
+  "Phillips Exeter Academy", "Phillips Academy Andover", "Lincoln High School",
+  "Central High School", "Washington High School", "Jefferson High School",
+];
+
+const COLLEGES = [
+  "Harvard University", "Stanford University", "Massachusetts Institute of Technology",
+  "Yale University", "Princeton University", "Columbia University", "University of Pennsylvania",
+  "Duke University", "University of Chicago", "Northwestern University", "Cornell University",
+  "University of California, Berkeley", "University of California, Los Angeles",
+  "University of Michigan", "New York University", "University of Southern California",
+  "Georgetown University", "University of Virginia", "University of North Carolina at Chapel Hill",
+  "Boston University", "Boston College", "University of Texas at Austin",
+  "University of Florida", "Ohio State University", "Penn State University",
+  "University of Washington", "Georgia Institute of Technology", "Carnegie Mellon University",
+  "Rice University", "Vanderbilt University", "Emory University", "Tufts University",
+];
+
+interface Activity {
+  idea: string;
+  length: string;
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
   const reduceMotion = useReducedMotion();
 
+  const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState(1);
+
   const [fullName, setFullName] = useState("");
   const [gradeLevel, setGradeLevel] = useState("");
-  const [gpa, setGpa] = useState("");
-  const [intendedMajor, setIntendedMajor] = useState("");
+  const [unweightedGpa, setUnweightedGpa] = useState("");
+  const [weightedGpa, setWeightedGpa] = useState("");
   const [currentSchool, setCurrentSchool] = useState("");
-  const [activities, setActivities] = useState<string[]>([""]);
-  const [schoolsAlreadyConsidering, setSchoolsAlreadyConsidering] = useState("");
-  const [testScores, setTestScores] = useState("");
+
+  const [intendedMajor, setIntendedMajor] = useState("");
+  const [majorOther, setMajorOther] = useState("");
+  const [interests, setInterests] = useState("");
+
+  const [activities, setActivities] = useState<Activity[]>([{ idea: "", length: "" }]);
+
+  const [testType, setTestType] = useState("");
+  const [testScore, setTestScore] = useState("");
+
+  const [collegesConsidering, setCollegesConsidering] = useState<string[]>([]);
+  const [collegeInput, setCollegeInput] = useState("");
+
   const [campusSizePref, setCampusSizePref] = useState("");
   const [campusSettingPref, setCampusSettingPref] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorKey, setErrorKey] = useState(0);
@@ -37,27 +88,40 @@ export default function OnboardingPage() {
     setErrorKey((k) => k + 1);
   }
 
-  function updateActivity(idx: number, value: string) {
-    setActivities((prev) => prev.map((a, i) => (i === idx ? value : a)));
+  function updateActivity(idx: number, patch: Partial<Activity>) {
+    setActivities((prev) => prev.map((a, i) => (i === idx ? { ...a, ...patch } : a)));
   }
 
   function addActivity() {
-    setActivities((prev) => [...prev, ""]);
+    setActivities((prev) => [...prev, { idea: "", length: "" }]);
   }
 
   function removeActivity(idx: number) {
     setActivities((prev) => prev.filter((_, i) => i !== idx));
   }
 
+  function addCollege(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed || collegesConsidering.includes(trimmed)) return;
+    setCollegesConsidering((prev) => [...prev, trimmed]);
+    setCollegeInput("");
+  }
+
+  function removeCollege(name: string) {
+    setCollegesConsidering((prev) => prev.filter((c) => c !== name));
+  }
+
+  const resolvedMajor = intendedMajor === "Other" ? majorOther : intendedMajor;
+
   const progressChecks = [
     !!fullName,
     !!gradeLevel,
-    !!gpa,
-    !!intendedMajor,
+    !!unweightedGpa,
+    !!weightedGpa,
     !!currentSchool,
-    activities.some((a) => a.trim()),
-    !!schoolsAlreadyConsidering,
-    !!testScores,
+    !!resolvedMajor,
+    activities.some((a) => a.idea.trim()),
+    !!testType,
     !!campusSizePref,
     !!campusSettingPref,
   ];
@@ -83,15 +147,53 @@ export default function OnboardingPage() {
     });
   }, [supabase, router]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
+  function validateStep(idx: number): string | null {
+    if (idx === 0) {
+      if (!fullName || !gradeLevel || !unweightedGpa || !weightedGpa || !currentSchool) {
+        return "Please fill out every field to continue.";
+      }
+    }
+    if (idx === 1) {
+      if (!resolvedMajor) return "Please select (or describe) your intended major.";
+    }
+    if (idx === 2) {
+      if (!activities.some((a) => a.idea.trim())) return "Add at least one activity.";
+    }
+    if (idx === 3) {
+      if (!testType) return "Let us know which test applies to you.";
+    }
+    if (idx === 5) {
+      if (!campusSizePref || !campusSettingPref) {
+        return "Please select a campus size and setting preference (pick \"No preference\" if you're not sure).";
+      }
+    }
+    return null;
+  }
 
-    if (!campusSizePref || !campusSettingPref) {
-      showError("Please select a campus size and setting preference (pick \"No preference\" if you're not sure).");
+  function goNext() {
+    const err = validateStep(step);
+    if (err) {
+      showError(err);
       return;
     }
+    setError(null);
+    setDirection(1);
+    setStep((s) => s + 1);
+  }
 
+  function goBack() {
+    setError(null);
+    setDirection(-1);
+    setStep((s) => Math.max(0, s - 1));
+  }
+
+  async function handleSubmit() {
+    const err = validateStep(step);
+    if (err) {
+      showError(err);
+      return;
+    }
+    setError(null);
     setLoading(true);
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -102,17 +204,26 @@ export default function OnboardingPage() {
 
     await supabase.auth.updateUser({ data: { full_name: fullName } });
 
-    const ecArray = activities.map((a) => a.trim()).filter(Boolean);
+    const ecArray = activities
+      .map((a) => (a.idea.trim() ? `${a.idea.trim()}${a.length ? ` (${a.length})` : ""}` : ""))
+      .filter(Boolean);
+
+    const testScoresValue =
+      testType && testType !== "Haven't taken one"
+        ? { test: testType, score: testScore || null }
+        : null;
 
     const { error } = await supabase.from("profiles").insert({
       user_id: user.id,
       grade_level: gradeLevel,
-      gpa: parseFloat(gpa),
-      intended_major: intendedMajor,
+      unweighted_gpa: parseFloat(unweightedGpa),
+      weighted_gpa: parseFloat(weightedGpa),
+      intended_major: resolvedMajor,
+      interests: interests || null,
       current_school: currentSchool,
       extracurriculars: ecArray.length > 0 ? ecArray : null,
-      schools_already_considering: schoolsAlreadyConsidering,
-      test_scores: testScores ? { summary: testScores } : null,
+      schools_already_considering: collegesConsidering.length > 0 ? collegesConsidering.join(", ") : "None",
+      test_scores: testScoresValue,
       campus_size_pref: campusSizePref,
       campus_setting_pref: campusSettingPref,
     });
@@ -144,17 +255,16 @@ export default function OnboardingPage() {
   const inputClass =
     "w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary transition-colors";
 
-  const sections: { title: string; fields: React.ReactNode }[] = [
+  const rounds: { title: string; fields: React.ReactNode }[] = [
     {
-      title: "Basics",
+      title: "The basics",
       fields: (
         <>
           <div>
-            <label htmlFor="ob-full-name" className="block text-sm text-text-gray mb-1">Full Name *</label>
+            <label htmlFor="ob-full-name" className="block text-sm text-text-gray mb-1">Full Name</label>
             <input
               id="ob-full-name"
               type="text"
-              required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className={inputClass}
@@ -162,10 +272,9 @@ export default function OnboardingPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="ob-grade-level" className="block text-sm text-text-gray mb-1">Grade Level *</label>
+              <label htmlFor="ob-grade-level" className="block text-sm text-text-gray mb-1">Grade Level</label>
               <select
                 id="ob-grade-level"
-                required
                 value={gradeLevel}
                 onChange={(e) => setGradeLevel(e.target.value)}
                 className={inputClass}
@@ -181,95 +290,95 @@ export default function OnboardingPage() {
               </select>
             </div>
             <div>
-              <label htmlFor="ob-gpa" className="block text-sm text-text-gray mb-1">GPA *</label>
+              <label htmlFor="ob-unweighted-gpa" className="block text-sm text-text-gray mb-1">Unweighted GPA</label>
               <input
-                id="ob-gpa"
+                id="ob-unweighted-gpa"
                 type="number"
                 step="0.01"
                 min="0"
-                max="5"
-                required
-                value={gpa}
-                onChange={(e) => setGpa(e.target.value)}
+                max="4"
+                value={unweightedGpa}
+                onChange={(e) => setUnweightedGpa(e.target.value)}
                 className={inputClass}
               />
             </div>
           </div>
           <div>
-            <label htmlFor="ob-current-school" className="block text-sm text-text-gray mb-1">Current School *</label>
+            <label htmlFor="ob-weighted-gpa" className="block text-sm text-text-gray mb-1">Weighted GPA</label>
+            <input
+              id="ob-weighted-gpa"
+              type="number"
+              step="0.01"
+              min="0"
+              max="5"
+              value={weightedGpa}
+              onChange={(e) => setWeightedGpa(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="ob-current-school" className="block text-sm text-text-gray mb-1">Current School</label>
             <input
               id="ob-current-school"
               type="text"
-              required
+              list="ob-high-schools"
               placeholder="e.g. Lincoln High School"
               value={currentSchool}
               onChange={(e) => setCurrentSchool(e.target.value)}
               className={inputClass}
             />
+            <datalist id="ob-high-schools">
+              {HIGH_SCHOOLS.map((s) => (
+                <option key={s} value={s} />
+              ))}
+            </datalist>
           </div>
         </>
       ),
     },
     {
-      title: "Background",
+      title: "Major & interests",
       fields: (
         <>
           <div>
-            <label htmlFor="ob-intended-major" className="block text-sm text-text-gray mb-1">Intended Major / Interests *</label>
-            <input
+            <label htmlFor="ob-intended-major" className="block text-sm text-text-gray mb-1">Intended Major</label>
+            <select
               id="ob-intended-major"
-              type="text"
-              required
               value={intendedMajor}
               onChange={(e) => setIntendedMajor(e.target.value)}
               className={inputClass}
-            />
-          </div>
-          <div>
-            <span id="ob-activities-label" className="block text-sm text-text-gray mb-1">Extracurriculars</span>
-            <p className="text-text-gray text-xs mb-2">
-              Be as specific as possible, e.g. &quot;Varsity basketball, team captain, 3 years&quot; instead of just &quot;Basketball.&quot;
-            </p>
-            <div className="space-y-2" role="group" aria-labelledby="ob-activities-label">
-              {activities.map((activity, idx) => (
-                <div key={idx} className="flex gap-2">
-                  <input
-                    type="text"
-                    aria-label={`Extracurricular activity ${idx + 1}`}
-                    placeholder="e.g. Varsity basketball, team captain, 3 years"
-                    value={activity}
-                    onChange={(e) => updateActivity(idx, e.target.value)}
-                    className={`${inputClass} flex-1`}
-                  />
-                  {activities.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeActivity(idx)}
-                      className="text-text-gray hover:text-text px-2"
-                      aria-label="Remove activity"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
+            >
+              <option value="" disabled>
+                Select
+              </option>
+              {MAJORS.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
               ))}
-              <button
-                type="button"
-                onClick={addActivity}
-                className="text-sm text-text-gray hover:text-text underline underline-offset-2"
-              >
-                + Add another activity
-              </button>
-            </div>
+            </select>
+            {intendedMajor === "Other" && (
+              <input
+                type="text"
+                placeholder="Tell us your intended major"
+                value={majorOther}
+                onChange={(e) => setMajorOther(e.target.value)}
+                className={`${inputClass} mt-2`}
+              />
+            )}
           </div>
           <div>
-            <label htmlFor="ob-test-scores" className="block text-sm text-text-gray mb-1">Test Scores (SAT/ACT, optional)</label>
+            <label htmlFor="ob-interests" className="block text-sm text-text-gray mb-1">
+              Interests <span className="text-text-gray/70">— optional</span>
+            </label>
+            <p className="text-text-gray text-xs mb-2">
+              Anything you&apos;re into that doesn&apos;t fit neatly into a major, e.g. &quot;robotics, creative writing, climate policy.&quot;
+            </p>
             <input
-              id="ob-test-scores"
+              id="ob-interests"
               type="text"
-              placeholder="e.g. SAT 1380"
-              value={testScores}
-              onChange={(e) => setTestScores(e.target.value)}
+              value={interests}
+              onChange={(e) => setInterests(e.target.value)}
               className={inputClass}
             />
           </div>
@@ -277,21 +386,160 @@ export default function OnboardingPage() {
       ),
     },
     {
-      title: "Goals",
+      title: "Extracurriculars",
       fields: (
         <div>
-          <label htmlFor="ob-schools-considering" className="block text-sm text-text-gray mb-1">
-            Schools you&apos;re already considering *
+          <span id="ob-activities-label" className="block text-sm text-text-gray mb-1">Your activities</span>
+          <p className="text-text-gray text-xs mb-2">
+            Describe the activity, then tell us how long you&apos;ve done it.
+          </p>
+          <div className="space-y-2" role="group" aria-labelledby="ob-activities-label">
+            {activities.map((activity, idx) => (
+              <div key={idx} className="flex gap-2">
+                <input
+                  type="text"
+                  aria-label={`Activity ${idx + 1} description`}
+                  placeholder="e.g. Varsity basketball, team captain"
+                  value={activity.idea}
+                  onChange={(e) => updateActivity(idx, { idea: e.target.value })}
+                  className={`${inputClass} flex-1`}
+                />
+                <select
+                  aria-label={`Activity ${idx + 1} length`}
+                  value={activity.length}
+                  onChange={(e) => updateActivity(idx, { length: e.target.value })}
+                  className={`${inputClass} w-40 shrink-0`}
+                >
+                  <option value="" disabled>
+                    Length
+                  </option>
+                  {EC_LENGTHS.map((l) => (
+                    <option key={l} value={l}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+                {activities.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeActivity(idx)}
+                    className="text-text-gray hover:text-text px-1.5 shrink-0"
+                    aria-label="Remove activity"
+                  >
+                    <X className="size-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addActivity}
+              className="text-sm text-text-gray hover:text-text underline underline-offset-2"
+            >
+              + Add another activity
+            </button>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Test scores",
+      fields: (
+        <>
+          <div>
+            <span id="ob-test-type-label" className="block text-sm text-text-gray mb-2">Which test?</span>
+            <div className="flex flex-wrap gap-2" role="group" aria-labelledby="ob-test-type-label">
+              {TEST_TYPES.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  aria-pressed={testType === t}
+                  onClick={() => setTestType(testType === t ? "" : t)}
+                  className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                    testType === t
+                      ? "bg-primary text-bg border-primary"
+                      : "border-border text-text-gray hover:text-text"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+          {testType && testType !== "Haven't taken one" && (
+            <div>
+              <label htmlFor="ob-test-score" className="block text-sm text-text-gray mb-1">
+                {testType} Score <span className="text-text-gray/70">— optional</span>
+              </label>
+              <input
+                id="ob-test-score"
+                type="text"
+                placeholder={testType === "SAT" ? "e.g. 1380" : "e.g. 30"}
+                value={testScore}
+                onChange={(e) => setTestScore(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+          )}
+        </>
+      ),
+    },
+    {
+      title: "Schools on your mind",
+      fields: (
+        <div>
+          <label htmlFor="ob-college-input" className="block text-sm text-text-gray mb-1">
+            Schools you&apos;re already considering <span className="text-text-gray/70">— optional</span>
           </label>
-          <textarea
-            id="ob-schools-considering"
-            required
-            placeholder="List any schools already on your mind, or write &quot;None&quot;"
-            value={schoolsAlreadyConsidering}
-            onChange={(e) => setSchoolsAlreadyConsidering(e.target.value)}
-            rows={3}
-            className={`${inputClass} resize-none`}
-          />
+          <div className="flex gap-2 mb-2">
+            <input
+              id="ob-college-input"
+              type="text"
+              list="ob-colleges"
+              placeholder="Start typing a school name"
+              value={collegeInput}
+              onChange={(e) => setCollegeInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addCollege(collegeInput);
+                }
+              }}
+              className={`${inputClass} flex-1`}
+            />
+            <datalist id="ob-colleges">
+              {COLLEGES.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+            <button
+              type="button"
+              onClick={() => addCollege(collegeInput)}
+              className="rounded-xl border border-border text-text-gray hover:text-text px-4 shrink-0"
+            >
+              Add
+            </button>
+          </div>
+          {collegesConsidering.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {collegesConsidering.map((c) => (
+                <span
+                  key={c}
+                  className="flex items-center gap-1.5 text-sm bg-secondary-tint border border-border rounded-full pl-3 pr-1.5 py-1"
+                >
+                  {c}
+                  <button
+                    type="button"
+                    onClick={() => removeCollege(c)}
+                    aria-label={`Remove ${c}`}
+                    className="text-text-gray hover:text-text"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       ),
     },
@@ -300,7 +548,7 @@ export default function OnboardingPage() {
       fields: (
         <>
           <div>
-            <span id="ob-campus-size-label" className="block text-sm text-text-gray mb-2">Campus size *</span>
+            <span id="ob-campus-size-label" className="block text-sm text-text-gray mb-2">Campus size</span>
             <div className="flex flex-wrap gap-2" role="group" aria-labelledby="ob-campus-size-label">
               {CAMPUS_SIZES.map((size) => (
                 <button
@@ -320,7 +568,7 @@ export default function OnboardingPage() {
             </div>
           </div>
           <div>
-            <span id="ob-campus-setting-label" className="block text-sm text-text-gray mb-2">Campus setting *</span>
+            <span id="ob-campus-setting-label" className="block text-sm text-text-gray mb-2">Campus setting</span>
             <div className="flex flex-wrap gap-2" role="group" aria-labelledby="ob-campus-setting-label">
               {CAMPUS_SETTINGS.map((setting) => (
                 <button
@@ -344,16 +592,28 @@ export default function OnboardingPage() {
     },
   ];
 
+  const isLastRound = step === rounds.length - 1;
+
   return (
     <div className="flex-1 px-6 py-10 md:py-16 max-w-xl mx-auto w-full">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 text-text-gray hover:text-text text-sm mb-6 transition-colors"
+      >
+        <ArrowLeft className="size-4" />
+        Back to home
+      </Link>
       <motion.h1
         initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: EASE }}
-        className="font-serif text-3xl text-text mb-6"
+        className="font-serif text-3xl text-text mb-2"
       >
-        Build your profile
+        Let&apos;s get to know you
       </motion.h1>
+      <p className="text-text-gray text-sm mb-6">
+        A few quick rounds of questions, we want to know you well so your matches can be optimal.
+      </p>
 
       <motion.div
         initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
@@ -369,7 +629,9 @@ export default function OnboardingPage() {
 
       <div className="mb-6">
         <div className="flex items-center justify-between mb-1.5">
-          <p className="text-xs text-text-gray">Profile progress</p>
+          <p className="text-xs text-text-gray">
+            Round {step + 1} of {rounds.length}
+          </p>
           <p className="text-xs text-text-gray">{progressPercent}% complete</p>
         </div>
         <div className="h-1.5 rounded-full bg-secondary-tint overflow-hidden">
@@ -381,19 +643,21 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {sections.map((section, i) => (
+      <div className="space-y-5">
+        <AnimatePresence mode="wait" custom={direction} initial={false}>
           <motion.div
-            key={section.title}
-            initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: EASE, delay: reduceMotion ? 0 : 0.14 + i * 0.08 }}
+            key={step}
+            custom={direction}
+            initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: direction * 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -direction * 16 }}
+            transition={{ duration: 0.3, ease: EASE }}
             className="bg-card border border-border rounded-2xl p-6 space-y-4"
           >
-            <p className="text-xs font-medium text-text-gray uppercase tracking-wide">{section.title}</p>
-            {section.fields}
+            <p className="text-xs font-medium text-text-gray uppercase tracking-wide">{rounds[step].title}</p>
+            {rounds[step].fields}
           </motion.div>
-        ))}
+        </AnimatePresence>
 
         {error && (
           <p key={errorKey} role="alert" className="text-red text-sm animate-auth-error">
@@ -401,18 +665,32 @@ export default function OnboardingPage() {
           </p>
         )}
 
-        <p className="text-text-gray text-xs leading-relaxed">
-          We use this to build your school matches and timeline. We never sell it.{" "}
-          <a href="/privacy" className="text-text underline underline-offset-2">Privacy Policy</a>
-        </p>
+        {isLastRound && (
+          <p className="text-text-gray text-xs leading-relaxed">
+            We use this to build your school matches and timeline. We never sell it.{" "}
+            <a href="/privacy" className="text-text underline underline-offset-2">Privacy Policy</a>
+          </p>
+        )}
 
-        <button
-          type="submit"
-          className="w-full rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium py-3"
-        >
-          Continue
-        </button>
-      </form>
+        <div className="flex gap-3">
+          {step > 0 && (
+            <button
+              type="button"
+              onClick={goBack}
+              className="rounded-xl border border-border text-text-gray hover:text-text font-medium py-3 px-6"
+            >
+              Back
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={isLastRound ? handleSubmit : goNext}
+            className="flex-1 rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium py-3"
+          >
+            {isLastRound ? "Complete profile" : "Continue"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

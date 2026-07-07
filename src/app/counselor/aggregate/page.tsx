@@ -55,7 +55,7 @@ export default async function AggregatePage() {
     const gradeProfiles = (profiles ?? []).filter((p) => p.grade_level === grade);
     const count = gradeProfiles.length;
     const avgGpa = count
-      ? gradeProfiles.reduce((sum, p) => sum + (p.gpa ?? 0), 0) / count
+      ? gradeProfiles.reduce((sum, p) => sum + (p.unweighted_gpa ?? 0), 0) / count
       : 0;
     const completionRates = gradeProfiles.map((p) => {
       const entry = completionByUser.get(p.user_id);

@@ -7,13 +7,7 @@ const STATS = [
   { value: "$0", label: "cost to start with Kairos" },
 ];
 
-export function AboutContent({
-  studentCount,
-  showLogo,
-}: {
-  studentCount: number;
-  showLogo: boolean;
-}) {
+export function AboutContent({ showLogo }: { showLogo: boolean }) {
   return (
     <div className="px-5 md:px-8 py-12 max-w-2xl mx-auto w-full">
       {showLogo && (
@@ -21,9 +15,11 @@ export function AboutContent({
           Kairos
         </Link>
       )}
-      <h1 className={`font-serif text-3xl text-text mb-2 ${showLogo ? "mt-6" : ""}`}>Our mission</h1>
-      <p className="font-serif text-xl text-primary mb-8">
-        {studentCount.toLocaleString()} students matched so far
+      <h1 className={`font-serif text-3xl text-text mb-4 ${showLogo ? "mt-6" : ""}`}>Our mission</h1>
+      <p className="font-serif text-xl text-text mb-8 leading-relaxed">
+        Every student deserves the caliber of college guidance today only wealthy families can
+        afford. Kairos gives every student a real, data-backed read on where they stand and
+        where they could go, for free.
       </p>
 
       <div className="grid grid-cols-2 gap-4 mb-10">

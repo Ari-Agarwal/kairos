@@ -81,14 +81,17 @@ function generatePoints() {
 function buildPath() {
   // A route from lower-left foreground, weaving through the field, to a
   // destination deep on the right — the "clear line through the noise".
+  // Mirrored on x so the destination (the glowing lighthouse, the point that
+  // draws the eye) lands on the left, near the hero copy, instead of pulling
+  // attention to the empty right side of the screen.
   const curve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-7.5, -1.6, 0.8),
-    new THREE.Vector3(-4.2, -0.4, -1.2),
-    new THREE.Vector3(-1.6, -1.1, -2.8),
-    new THREE.Vector3(1.2, 0.3, -4.2),
-    new THREE.Vector3(3.4, -0.5, -5.6),
-    new THREE.Vector3(5.2, 0.7, -7.2),
-    new THREE.Vector3(6.4, 1.1, -8.6),
+    new THREE.Vector3(7.5, -1.6, 0.8),
+    new THREE.Vector3(4.2, -0.4, -1.2),
+    new THREE.Vector3(1.6, -1.1, -2.8),
+    new THREE.Vector3(-1.2, 0.3, -4.2),
+    new THREE.Vector3(-3.4, -0.5, -5.6),
+    new THREE.Vector3(-5.2, 0.7, -7.2),
+    new THREE.Vector3(-6.4, 1.1, -8.6),
   ]);
   const tube = new THREE.TubeGeometry(curve, PATH_SAMPLES, 0.035, 6, false);
   // count in index entries when indexed, vertices otherwise — drawRange units differ
@@ -193,7 +196,7 @@ function Scene({ pointer }: { pointer: React.RefObject<{ x: number; y: number }>
     state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, pointer.current.x * 0.5, 0.04);
     state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, 0.2 + pointer.current.y * 0.3, 0.04);
     state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, 5 - Math.sin(t * 0.04) * 0.4, 0.02);
-    state.camera.lookAt(0.5, 0, -4);
+    state.camera.lookAt(-0.5, 0, -4);
   });
   /* eslint-enable react-hooks/immutability */
 

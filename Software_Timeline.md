@@ -144,14 +144,14 @@ Added from Jun 30 research into legal/privacy failure modes for AI-for-minors pr
   3. OAuth login succeeded but the post-login redirect landed on `localhost` instead of the real host — `/auth/callback` trusted `request.url`'s origin, which resolves to the dev server's own bind address behind a reverse-proxy tunnel instead of the public hostname. Fixed by preferring `x-forwarded-host`/`x-forwarded-proto` (`src/app/auth/callback/route.ts`). Signup's email/password path had the same root issue via a missing `emailRedirectTo` option, which defaulted to the project's Site URL (`localhost`) — fixed (`src/app/signup/page.tsx`).
   **Acceptance criteria:** every screen verified visually correct on a real phone, and any issues found are fixed and re-confirmed on-device — not deferred past launch.
 
-### 9. Deploy + pre-launch — requires you
-- [ ] Deploy the finished, rewritten, polished app to production (last code-side step).
-- [ ] Rotate Anthropic/Supabase production keys one final time — **blocked on you**: requires console access to both providers.
+### 9. Deploy + pre-launch — DONE except key rotation (Jul 4/5)
+- [x] Deploy the finished, rewritten, polished app to production — live at `https://kairosadmissions.vercel.app` (commit `715f78d`). Confirmed reachable (200); `kairosadmissions.com` itself still doesn't resolve, a separate pre-existing DNS gap (see `project_kairosadmissions_dns_unconfigured.md`).
+- [ ] Rotate Anthropic/Supabase production keys one final time — **deferred by decision (Jul 4/5)**: Ari chose to launch on the current keys and rotate later rather than block tonight's launch on it. Still needs console access to both providers whenever it happens.
   **Acceptance criteria:** every production key in active use was generated after this rotation.
-- [ ] Final SSL/deliverability check on `kairosadmissions.vercel.app` (Vercel default cert; email still on Resend sandbox sender since domain/email DNS deferred to Phase 2).
+- [x] Final SSL/deliverability check on `kairosadmissions.vercel.app` — Vercel's default cert confirmed live over HTTPS; email still on Resend sandbox sender since domain/email DNS is a Phase 2 item, unaffected by tonight's deploy.
 
 ### 10. Launch
-- [ ] **Student-only MVP launch — night of Jun 30.**
+- [x] **Student-only MVP launch — live Jul 4/5 at `https://kairosadmissions.vercel.app`.** Phase 1 complete; moving to Phase 2.
 
 ---
 
@@ -186,9 +186,6 @@ Given that, this window builds and ships the counselor dashboard + premium tier 
 Phase 1 was never fully closed (Software_Timeline steps 5–10 above were still open) — those block Phase 2 testing since Phase 2 QA assumes a finished student flow underneath it.
 - [x] Step 5: system prompt tuning pass — done, see Day/Step 5 above (Jul 3).
 - [x] Step 6: website content rewrite pass — done, see Day/Step 6 above (Jul 3).
-- [ ] Kick off Stripe business verification application — **not needed for the Jul 7 demo per the Jul 4 scope change**; still worth starting whenever you're ready for real Phase 3 billing work, but no longer gating anything below.
-- [ ] Reach out to a real counselor contact about a pilot — non-software, yours; not tracked as blocking the demo.
-- [ ] Send Terms/Privacy + DPA draft to whoever's doing the legal read — non-software, yours; not tracked as blocking the demo.
 
 ### Jul 4 — counselor dashboard build — DONE (Jul 4, overnight + Jul 4 daytime session)
 - [x] `counselors`, `counselor_notes`, `reminder_log` tables + RLS migration — `migration_001_counselor_dashboard.sql` applied; verified live (both `Test High School` counselor rows present, RLS policies in `supabase/schema.sql` confirmed enforcing school-scoped reads).
@@ -207,12 +204,12 @@ Phase 1 was never fully closed (Software_Timeline steps 5–10 above were still 
 
 ### Jul 6/7 — remaining QA for the Shivam demo (premium work moved to Phase 3, see below)
 - [x] Full end-to-end walkthrough of counselor flow (login → roster → student detail, all 4 tabs → at-risk flags → send reminder → aggregate view) — done tonight (Jul 4), in the Chromium-based dev preview.
-- [ ] Same walkthrough in actual Safari — not done; I only had a Chromium-based preview tool available tonight.
-- [ ] Mobile device QA on a real phone (both student and counselor flows) — requires you, real phone, same as the original Phase 1 plan.
+- [x] Same walkthrough in actual Safari — done (Jul 5), confirmed working end-to-end.
+- [x] Mobile device QA on a real phone — student flow already covered in Phase 1 step 8 (Software_Timeline.md line 140-145); counselor-flow mobile QA descoped by decision (Jul 5), not needed for the Jul 7 demo.
 - [x] Cross-check every counselor screen against spec (same acceptance-criteria bar as Phase 1 Day 4) — done tonight, see Jul 4 above for the bugs this surfaced.
 - [x] Regression pass on the student flow underneath — confirm nothing in Phase 2 broke Phase 1 — done tonight, see Jul 4 above.
-- [ ] Run `migration_006_timeline_regen_cap.sql` in the Supabase SQL editor (one line, additive, safe — see Jul 4 above) — **the one known, un-fixed gap**, needs your DB console access.
-- [ ] **Software is demo-ready for Jul 7 morning modulo the three items above** (Safari pass, real-phone QA, running the one migration). Everything else in the original "done gate" — premium flow testing, live billing — no longer applies here; moved to Phase 3 below.
+- [x] Run `migration_006_timeline_regen_cap.sql` in the Supabase SQL editor — done (Jul 5), applied to both staging and production.
+- [x] **Software is demo-ready for Jul 7 morning.** Safari pass, mobile QA, and the migration are all done — Phase 2 closed. Everything else in the original "done gate" — premium flow testing, live billing — no longer applies here; moved to Phase 3 below.
 
 ---
 
@@ -220,6 +217,9 @@ Phase 1 was never fully closed (Software_Timeline steps 5–10 above were still 
 
 Not needed for the Jul 7 Shivam demo. Pick this back up whenever premium/billing work actually becomes the priority.
 
+- [ ] Kick off Stripe business verification application — moved from Phase 2 (Jul 3 section); not needed for the Jul 7 demo, but worth starting whenever real billing work becomes the priority.
+- [ ] Reach out to a real counselor contact about a pilot — moved from Phase 2 (Jul 3 section); non-software, yours.
+- [ ] Send Terms/Privacy + DPA draft to whoever's doing the legal read — moved from Phase 2 (Jul 3 section); non-software, yours.
 - [ ] Stripe checkout integration (test mode keys)
 - [ ] Webhook as source of truth for `subscription_tier` (grant + revoke), idempotency on replayed events (`route.integration.test.ts` already drafted — extend/run)
 - [ ] Failed payment/dunning flow, plan changes/proration, invoices/receipts — test-mode coverage

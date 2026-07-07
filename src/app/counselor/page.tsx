@@ -8,7 +8,8 @@ export interface RosterStudent {
   user_id: string;
   name: string;
   grade_level: string;
-  gpa: number;
+  unweightedGpa: number;
+  weightedGpa: number;
   schools_already_considering: string | null;
   activeMatchCount: number;
   incompleteTimelineCount: number;
@@ -121,7 +122,8 @@ export default async function CounselorHomePage() {
       user_id: p.user_id,
       name: emailByUser.get(p.user_id) ?? "Student",
       grade_level: p.grade_level,
-      gpa: p.gpa,
+      unweightedGpa: p.unweighted_gpa,
+      weightedGpa: p.weighted_gpa,
       schools_already_considering: p.schools_already_considering,
       activeMatchCount,
       incompleteTimelineCount: timeline.incomplete,

@@ -28,6 +28,7 @@ interface SchoolResult {
 
 interface Profile {
   intended_major: string | null;
+  interests: string | null;
   current_school: string | null;
   extracurriculars: string[] | null;
   schools_already_considering: string | null;
@@ -83,8 +84,10 @@ export async function POST(req: Request) {
   const missing = missingFields(profile);
   const userMessage = `Student profile:
 Grade level: ${profile.grade_level}
-GPA: ${profile.gpa}
+Unweighted GPA: ${profile.unweighted_gpa}
+Weighted GPA: ${profile.weighted_gpa}
 Intended major: ${profile.intended_major ?? "missing"}
+Interests: ${profile.interests ?? "none given"}
 Current school: ${profile.current_school ?? "missing"}
 Extracurriculars: ${profile.extracurriculars?.join("; ") ?? "missing"}
 Schools already considering: ${profile.schools_already_considering ?? "missing"}
@@ -162,7 +165,13 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
           throw new Error(`tool_use input.schools was not a populated array for category ${category}`);
         }
         // Trust the category the call was scoped to, not the model's echo.
-        return parsed.schools.map((s) => ({ ...s, category }));
+        // Clamp/round the model's percentage so it can't render as e.g. "73.4182%"
+        // or drift outside a sane 1-99 admission-chance range.
+        return parsed.schools.map((s) => ({
+          ...s,
+          category,
+          percentage: Math.min(99, Math.max(1, Math.round(s.percentage))),
+        }));
       } catch (err) {
         lastErr = err;
         console.error(`generateCategory(${category}) attempt ${attempt + 1} failed:`, err);

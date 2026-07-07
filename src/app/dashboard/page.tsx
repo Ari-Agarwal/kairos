@@ -65,7 +65,31 @@ export default async function DashboardPage({
         <h1 className="reveal font-serif text-3xl text-text mb-2">Welcome, {name}.</h1>
         <p className="reveal text-text-gray text-sm mb-8" style={{ ["--reveal-delay" as string]: "0.06s" }}>
           {profile.grade_level} · {profile.current_school} · {profile.intended_major || "Major undecided"}
+          {" · "}
+          {profile.unweighted_gpa} UW / {profile.weighted_gpa} W GPA
         </p>
+
+        {(() => {
+          const cta = !activeMatchCount
+            ? { text: "Generate your school matches to see where you stand.", href: "/matches", label: "Get Matches" }
+            : !timelineItemCount
+            ? { text: "Build your personalized application timeline.", href: "/timeline", label: "Build Timeline" }
+            : { text: "Get feedback on your college essays.", href: "/essay-feedback", label: "Get Essay Feedback" };
+          return (
+            <div
+              className="reveal flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-card border border-border rounded-2xl px-5 py-4 mb-6"
+              style={{ ["--reveal-delay" as string]: "0.08s" }}
+            >
+              <p className="text-text text-sm">{cta.text}</p>
+              <Link
+                href={cta.href}
+                className="shrink-0 rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium text-sm px-4 py-2 text-center"
+              >
+                {cta.label}
+              </Link>
+            </div>
+          );
+        })()}
 
         {matchError === "true" && (
           <div className="reveal bg-red-tint border border-border rounded-2xl px-5 py-4 mb-6">

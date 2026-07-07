@@ -62,7 +62,8 @@ export async function POST(req: Request) {
 
 Student profile:
 Grade level: ${profile.grade_level}
-GPA: ${profile.gpa}
+Unweighted GPA: ${profile.unweighted_gpa}
+Weighted GPA: ${profile.weighted_gpa}
 Intended major: ${profile.intended_major ?? "not specified"}
 Extracurriculars: ${(profile.extracurriculars as string[] | null)?.join("; ") || "not specified"}
 Test scores: ${profile.test_scores ? JSON.stringify(profile.test_scores) : "not specified"}
