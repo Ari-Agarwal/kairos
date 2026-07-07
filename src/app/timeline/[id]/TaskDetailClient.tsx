@@ -44,6 +44,14 @@ export default function TaskDetailClient({ item }: { item: TimelineItem }) {
     router.refresh();
   }
 
+  async function handleMarkIncomplete() {
+    setSaving(true);
+    await supabase.from("timeline_items").update({ completed: false }).eq("id", item.id);
+    setCompleted(false);
+    setSaving(false);
+    router.refresh();
+  }
+
   return (
     <motion.div
       initial={{ opacity: 1, y: 0 }}
@@ -75,9 +83,13 @@ export default function TaskDetailClient({ item }: { item: TimelineItem }) {
       </div>
 
       <button
-        onClick={handleComplete}
-        disabled={completed || saving}
-        className="relative w-full rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium py-3 disabled:opacity-50 overflow-hidden"
+        onClick={completed ? handleMarkIncomplete : handleComplete}
+        disabled={saving}
+        className={`relative w-full rounded-xl transition-colors font-medium py-3 disabled:opacity-50 overflow-hidden ${
+          completed
+            ? "border border-border text-text-gray hover:text-text"
+            : "bg-primary hover:bg-primary-hover text-bg"
+        }`}
       >
         <AnimatePresence mode="wait" initial={false}>
           {completed ? (
@@ -89,7 +101,7 @@ export default function TaskDetailClient({ item }: { item: TimelineItem }) {
               className="flex items-center justify-center gap-2"
             >
               <Check className="size-4" />
-              Completed
+              {saving ? "Saving..." : "Completed — mark as incomplete"}
             </motion.span>
           ) : (
             <motion.span key="pending" exit={{ opacity: 0 }}>

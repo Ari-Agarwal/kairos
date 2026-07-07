@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kairosadmissions.vercel.app";
@@ -33,6 +35,8 @@ export default function RootLayout({
         style={{ fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" }}
       >
         {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

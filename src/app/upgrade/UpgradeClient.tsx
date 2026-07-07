@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { createClient } from "@/lib/supabase/client";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -18,8 +20,30 @@ function Cell({ value }: { value: boolean | string }) {
   return value ? <span className="text-green">✓</span> : <span className="text-text-gray">—</span>;
 }
 
-export default function UpgradeClient({ isPremium }: { isPremium: boolean }) {
+export default function UpgradeClient({
+  isPremium,
+  notifyRequested,
+}: {
+  isPremium: boolean;
+  notifyRequested: boolean;
+}) {
   const reduceMotion = useReducedMotion();
+  const supabase = createClient();
+  const [notified, setNotified] = useState(notifyRequested);
+  const [saving, setSaving] = useState(false);
+
+  async function handleNotifyMe() {
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ premium_notify_requested: true })
+        .eq("user_id", user.id);
+    }
+    setNotified(true);
+    setSaving(false);
+  }
   return (
     <motion.div
       initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
@@ -41,10 +65,17 @@ export default function UpgradeClient({ isPremium }: { isPremium: boolean }) {
       ) : (
         <div className="bg-card border border-border rounded-2xl p-6 text-center mb-8">
           <p className="text-text font-medium">Premium is on the way.</p>
-          <p className="text-text-gray text-sm mt-1">
+          <p className="text-text-gray text-sm mt-1 mb-4">
             We&apos;re putting the finishing touches on it. Everything in the free tier is
             yours in the meantime.
           </p>
+          <button
+            onClick={handleNotifyMe}
+            disabled={notified || saving}
+            className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-5 py-2.5 text-sm disabled:opacity-60"
+          >
+            {notified ? "We'll notify you" : saving ? "Saving..." : "Notify me when ready"}
+          </button>
         </div>
       )}
 

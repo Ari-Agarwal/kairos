@@ -44,9 +44,9 @@ export default function StudentRosterClient({
         return aTime - bTime;
       });
     } else if (sortKey === "gpaAsc") {
-      sorted.sort((a, b) => a.gpa - b.gpa);
+      sorted.sort((a, b) => a.unweightedGpa - b.unweightedGpa);
     } else if (sortKey === "gpaDesc") {
-      sorted.sort((a, b) => b.gpa - a.gpa);
+      sorted.sort((a, b) => b.unweightedGpa - a.unweightedGpa);
     }
     return sorted;
   }, [students, gradeFilter, statusFilter, goalQuery, sortKey]);
@@ -133,10 +133,10 @@ export default function StudentRosterClient({
               </span>
             </span>
             <span className="text-text-gray text-xs md:hidden">
-              {s.grade_level} · GPA {s.gpa} · {s.activeMatchCount} matches · {s.incompleteTimelineCount} open
+              {s.grade_level} · GPA {s.unweightedGpa} · {s.activeMatchCount} matches · {s.incompleteTimelineCount} open
             </span>
             <span className="hidden md:inline text-text-gray">{s.grade_level}</span>
-            <span className="hidden md:inline text-text-gray">{s.gpa}</span>
+            <span className="hidden md:inline text-text-gray">{s.unweightedGpa}</span>
             <span className="hidden md:inline text-text-gray">{s.activeMatchCount}</span>
             <span className="hidden md:inline text-text-gray">{s.incompleteTimelineCount}</span>
             <span className="hidden md:inline">

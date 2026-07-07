@@ -12,7 +12,8 @@ const CAMPUS_SETTINGS = ["Urban", "Suburban", "Rural", "No preference"];
 
 interface Profile {
   grade_level: string;
-  gpa: number;
+  unweighted_gpa: number;
+  weighted_gpa: number;
   intended_major: string | null;
   current_school: string;
   extracurriculars: string[] | null;
@@ -41,7 +42,8 @@ export default function ProfileClient({
   const [form, setForm] = useState({
     full_name: fullName,
     grade_level: profile.grade_level,
-    gpa: String(profile.gpa),
+    unweighted_gpa: String(profile.unweighted_gpa),
+    weighted_gpa: String(profile.weighted_gpa),
     intended_major: profile.intended_major ?? "",
     current_school: profile.current_school ?? "",
     schools_already_considering: profile.schools_already_considering ?? "",
@@ -100,7 +102,8 @@ export default function ProfileClient({
       .from("profiles")
       .update({
         grade_level: form.grade_level,
-        gpa: parseFloat(form.gpa),
+        unweighted_gpa: parseFloat(form.unweighted_gpa),
+        weighted_gpa: parseFloat(form.weighted_gpa),
         intended_major: form.intended_major,
         current_school: form.current_school,
         extracurriculars: ecArray.length > 0 ? ecArray : null,
@@ -150,13 +153,24 @@ export default function ProfileClient({
             </select>
           </div>
           <div>
-            <label htmlFor="pf-gpa" className="block text-sm text-text-gray mb-1">GPA</label>
+            <label htmlFor="pf-unweighted-gpa" className="block text-sm text-text-gray mb-1">Unweighted GPA</label>
             <input
-              id="pf-gpa"
+              id="pf-unweighted-gpa"
               type="number"
               step="0.01"
-              value={form.gpa}
-              onChange={(e) => setForm({ ...form, gpa: e.target.value })}
+              value={form.unweighted_gpa}
+              onChange={(e) => setForm({ ...form, unweighted_gpa: e.target.value })}
+              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label htmlFor="pf-weighted-gpa" className="block text-sm text-text-gray mb-1">Weighted GPA</label>
+            <input
+              id="pf-weighted-gpa"
+              type="number"
+              step="0.01"
+              value={form.weighted_gpa}
+              onChange={(e) => setForm({ ...form, weighted_gpa: e.target.value })}
               className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
             />
           </div>
@@ -300,7 +314,8 @@ export default function ProfileClient({
   }
 
   const stats: { label: string; value: number; isInteger: boolean }[] = [
-    { label: "GPA", value: profile.gpa, isInteger: false },
+    { label: "Unweighted GPA", value: profile.unweighted_gpa, isInteger: false },
+    { label: "Weighted GPA", value: profile.weighted_gpa, isInteger: false },
     { label: "Active Schools", value: activeSchoolCount, isInteger: true },
     { label: "Extracurriculars", value: ecCount, isInteger: true },
   ];
@@ -348,7 +363,7 @@ export default function ProfileClient({
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-3 mb-6">
         {stats.map((stat, i) => (
           <motion.div
             key={stat.label}
