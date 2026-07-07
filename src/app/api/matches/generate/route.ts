@@ -143,6 +143,13 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
     // the platform killing the whole request mid-retry instead of us returning a
     // clean 502.
     let lastErr: unknown;
+    // A retry after an empty-schools miss reuses the identical prompt, so without
+    // added pressure the model can repeat the same "too uncertain to commit" empty
+    // response (seen in practice on "safety" — its extra "genuinely glad to attend"
+    // qualifier makes the model more willing to return nothing than a list it isn't
+    // fully confident clears that bar). Telling it plainly that empty is invalid and
+    // some real answer is required fixes the retry without touching the base prompt.
+    let forceNonEmpty = false;
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
         const response = await getAnthropic().messages.create({
@@ -150,7 +157,9 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
           max_tokens: 8192,
           thinking: { type: "adaptive" },
           output_config: { effort: "high" },
-          system: schoolMatchingPrompt(category),
+          system: schoolMatchingPrompt(category) + (forceNonEmpty
+            ? `\n\nYour previous attempt returned zero schools for this category. That response was invalid — an empty list is never an acceptable answer. Apply your best judgment and return at least 3 real, currently-operating schools that genuinely fit the "${category}" band for this student, even if you are not fully certain about every detail.`
+            : ""),
           messages: [{ role: "user", content: userMessage }],
           tools: [SCHOOLS_TOOL],
           tool_choice: { type: "tool", name: "submit_schools" },
@@ -162,6 +171,7 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
         if (!toolUse) throw new Error(`No tool_use block in response for category ${category}`);
         const parsed = toolUse.input as { schools?: Omit<SchoolResult, "category">[] };
         if (!Array.isArray(parsed.schools) || parsed.schools.length === 0) {
+          forceNonEmpty = true;
           throw new Error(`tool_use input.schools was not a populated array for category ${category}`);
         }
         // Trust the category the call was scoped to, not the model's echo.
