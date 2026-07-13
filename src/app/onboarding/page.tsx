@@ -236,8 +236,12 @@ export default function OnboardingPage() {
 
     fetch("/api/email/welcome", { method: "POST" }).catch(() => {});
 
-    const matchRes = await fetch("/api/matches/generate", { method: "POST" });
-    router.push(matchRes.ok ? "/dashboard" : "/dashboard?matchError=true");
+    try {
+      const matchRes = await fetch("/api/matches/generate", { method: "POST" });
+      router.push(matchRes.ok ? "/dashboard" : "/dashboard?matchError=true");
+    } catch {
+      router.push("/dashboard?matchError=true");
+    }
   }
 
   if (loading) {

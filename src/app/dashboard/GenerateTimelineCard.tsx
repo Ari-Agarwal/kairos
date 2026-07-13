@@ -12,15 +12,20 @@ export default function GenerateTimelineCard() {
   async function handleGenerate() {
     setGenerating(true);
     setError(null);
-    const res = await fetch("/api/timeline/generate", { method: "POST" });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "Failed to generate timeline.");
+    try {
+      const res = await fetch("/api/timeline/generate", { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? "Failed to generate timeline.");
+        setGenerating(false);
+        return;
+      }
+      router.refresh();
       setGenerating(false);
-      return;
+    } catch {
+      setError("Failed to generate timeline. Please try again.");
+      setGenerating(false);
     }
-    router.refresh();
-    setGenerating(false);
   }
 
   return (
