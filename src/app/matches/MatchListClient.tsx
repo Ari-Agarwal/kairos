@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
@@ -70,6 +70,20 @@ export default function MatchListClient({
     }
     router.refresh();
   }
+
+  // Onboarding kicks off generation itself, but that call can take up to ~50s
+  // and is abandoned if the user closes the tab before it finishes — leaving
+  // a saved profile with zero matches. Rather than making the user notice
+  // that and hunt for "Regenerate List", auto-fire the first generation the
+  // moment they land here with an empty list.
+  const autoTriggered = useRef(false);
+  useEffect(() => {
+    if (matches.length === 0 && !autoTriggered.current && (isPremium || remaining !== 0)) {
+      autoTriggered.current = true;
+      handleRegenerate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleRemove(id: string) {
     await supabase.from("school_matches").update({ is_active: false }).eq("id", id);
@@ -236,7 +250,7 @@ export default function MatchListClient({
         {matches.length === 0 && (
           <div className="flex flex-col items-center gap-3 py-12">
             <span className="h-1.5 w-1.5 rounded-full bg-text-gray/70 ambient-star" style={{ ["--twinkle-max" as string]: "0.9" }} />
-            <p className="text-text-gray text-sm text-center">No active matches. Try regenerating your list.</p>
+            <p className="text-text-gray text-sm text-center">No active matches. Tap &quot;Regenerate List&quot; to build one.</p>
           </div>
         )}
       </div>

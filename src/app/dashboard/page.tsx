@@ -95,7 +95,7 @@ export default async function DashboardPage({
           <div className="reveal bg-red-tint border border-border rounded-2xl px-5 py-4 mb-6">
             <p className="text-red text-sm">
               We couldn&apos;t generate your school matches just now. Head to the Matches tab and
-              tap &quot;Regenerate List&quot; to try again.
+              we&apos;ll pick it back up automatically.
             </p>
           </div>
         )}
