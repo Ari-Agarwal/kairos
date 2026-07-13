@@ -76,30 +76,53 @@ ${matches.map((m) => `- ${m.school_name} (${m.category})`).join("\n")}`;
     system: string,
     key: K
   ): Promise<TimelineEntry[]> {
-    const response = await getAnthropic().messages.create({
-      model: MODEL,
-      max_tokens: 6144,
-      thinking: { type: "adaptive" },
-      output_config: { effort: "high" },
-      system,
-      messages: [{ role: "user", content: userMessage }],
-    });
-    const text = response.content.find((b) => b.type === "text")?.text ?? "";
-    return extractJson<Record<K, TimelineEntry[]>>(text)[key];
+    let lastErr: unknown;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const response = await getAnthropic().messages.create({
+          model: MODEL,
+          max_tokens: 6144,
+          thinking: { type: "adaptive" },
+          // "medium" rather than "high" -- cuts per-call wall time substantially
+          // (this is the dominant cost in the 60s Vercel duration budget) at the
+          // cost of somewhat less exhaustive reasoning per item.
+          output_config: { effort: "medium" },
+          system,
+          messages: [{ role: "user", content: userMessage }],
+        });
+        if (response.stop_reason === "max_tokens") {
+          throw new Error(`Response truncated at max_tokens for section ${key}`);
+        }
+        const text = response.content.find((b) => b.type === "text")?.text ?? "";
+        return extractJson<Record<K, TimelineEntry[]>>(text)[key];
+      } catch (err) {
+        lastErr = err;
+        console.error(`generateSection(${key}) attempt ${attempt + 1} failed:`, err);
+      }
+    }
+    throw lastErr;
   }
 
-  let logistics: TimelineEntry[];
-  let strategic_advice: TimelineEntry[];
-  try {
-    // Deadlines and strategic advice generate concurrently.
-    [logistics, strategic_advice] = await Promise.all([
-      generateSection(LOGISTICS_PROMPT, "logistics"),
-      generateSection(STRATEGIC_PROMPT, "strategic_advice"),
-    ]);
-  } catch (err) {
-    console.error("Timeline generation failed:", err);
+  // Deadlines and strategic advice generate concurrently. allSettled rather
+  // than all: one section failing its retries shouldn't wipe out the other
+  // section that succeeded fine.
+  const [logisticsResult, strategicResult] = await Promise.allSettled([
+    generateSection(LOGISTICS_PROMPT, "logistics"),
+    generateSection(STRATEGIC_PROMPT, "strategic_advice"),
+  ]);
+
+  if (logisticsResult.status === "rejected") {
+    console.error("Timeline generation failed for logistics:", logisticsResult.reason);
+  }
+  if (strategicResult.status === "rejected") {
+    console.error("Timeline generation failed for strategic_advice:", strategicResult.reason);
+  }
+  if (logisticsResult.status === "rejected" && strategicResult.status === "rejected") {
     return NextResponse.json({ error: "Failed to generate timeline. Please try again." }, { status: 502 });
   }
+
+  const logistics: TimelineEntry[] = logisticsResult.status === "fulfilled" ? logisticsResult.value : [];
+  const strategic_advice: TimelineEntry[] = strategicResult.status === "fulfilled" ? strategicResult.value : [];
 
   await supabase.from("timeline_items").delete().eq("user_id", user.id);
 

@@ -156,7 +156,12 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
           model: MODEL,
           max_tokens: 8192,
           thinking: { type: "adaptive" },
-          output_config: { effort: "high" },
+          // "medium" rather than "high" -- cuts per-call wall time substantially,
+          // which is the dominant driver of the 20-50s-per-category time. Traded
+          // against somewhat less exhaustive reasoning per school; the prompt's
+          // methodology section is what's carrying most of the accuracy here, not
+          // the effort tier, so this should stay close in quality.
+          output_config: { effort: "medium" },
           system: schoolMatchingPrompt(category) + (forceNonEmpty
             ? `\n\nYour previous attempt returned zero schools for this category. That response was invalid — an empty list is never an acceptable answer. Apply your best judgment and return at least 3 real, currently-operating schools that genuinely fit the "${category}" band for this student, even if you are not fully certain about every detail.`
             : ""),

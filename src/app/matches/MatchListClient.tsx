@@ -61,14 +61,19 @@ export default function MatchListClient({
   async function handleRegenerate() {
     setRegenerating(true);
     setError(null);
-    const res = await fetch("/api/matches/generate", { method: "POST" });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "Failed to regenerate. Please try again.");
+    try {
+      const res = await fetch("/api/matches/generate", { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? "Failed to regenerate. Please try again.");
+        setRegenerating(false);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError("Failed to regenerate. Please try again.");
       setRegenerating(false);
-      return;
     }
-    router.refresh();
   }
 
   // Onboarding kicks off generation itself, but that call can take up to ~50s
