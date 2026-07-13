@@ -190,21 +190,30 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
     throw lastErr;
   }
 
-  let schools: SchoolResult[];
-  try {
-    // Reach/target/safety run concurrently — ~1/3 the wall-clock of one 15-school call.
-    const byCategory = await Promise.all(CATEGORIES.map(generateCategory));
-    const seen = new Set<string>();
-    schools = byCategory.flat().filter((s) => {
-      const key = s.name.trim().toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  } catch (err) {
-    console.error("Match generation failed:", err);
+  // Reach/target/safety run concurrently — ~1/3 the wall-clock of one 15-school call.
+  // allSettled rather than all: one category (e.g. "safety") failing its retries
+  // shouldn't sink the other two categories that succeeded fine.
+  const settled = await Promise.allSettled(CATEGORIES.map(generateCategory));
+  settled.forEach((result, i) => {
+    if (result.status === "rejected") {
+      console.error(`Match generation failed for category ${CATEGORIES[i]}:`, result.reason);
+    }
+  });
+  const byCategory = settled
+    .filter((r): r is PromiseFulfilledResult<SchoolResult[]> => r.status === "fulfilled")
+    .map((r) => r.value);
+
+  if (byCategory.length === 0) {
     return NextResponse.json({ error: "Failed to generate matches. Please try again." }, { status: 502 });
   }
+
+  const seen = new Set<string>();
+  const schools = byCategory.flat().filter((s) => {
+    const key = s.name.trim().toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 
   await supabase.from("school_matches").update({ is_active: false }).eq("user_id", user.id);
 
