@@ -154,13 +154,13 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
       try {
         const response = await getAnthropic().messages.create({
           model: MODEL,
-          // Raised from 8192: the "guaranteed inclusion" rule can push output
-          // (many schools x 5 detailed factors each) close enough to that
-          // ceiling to truncate on a clean, otherwise-correct response,
-          // forcing an entire extra ~20-50s retry for no quality reason.
-          // This only raises the cap, not a target -- it doesn't add latency
-          // on typical-length responses.
-          max_tokens: 16000,
+          // NOTE: previously raised to 16000 to reduce max_tokens truncation
+          // retries, but reverted -- thinking:{type:"adaptive"} draws its
+          // thinking budget from this same ceiling, so the higher cap let
+          // the model think substantially longer per call instead of just
+          // giving cleaner headroom for output, making stalls worse, not
+          // better. Left at 8192; truncation retries are the lesser evil.
+          max_tokens: 8192,
           thinking: { type: "adaptive" },
           // "medium" rather than "high" -- cuts per-call wall time substantially,
           // which is the dominant driver of the 20-50s-per-category time. Traded
