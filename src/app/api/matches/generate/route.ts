@@ -154,7 +154,13 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
       try {
         const response = await getAnthropic().messages.create({
           model: MODEL,
-          max_tokens: 8192,
+          // Raised from 8192: the "guaranteed inclusion" rule can push output
+          // (many schools x 5 detailed factors each) close enough to that
+          // ceiling to truncate on a clean, otherwise-correct response,
+          // forcing an entire extra ~20-50s retry for no quality reason.
+          // This only raises the cap, not a target -- it doesn't add latency
+          // on typical-length responses.
+          max_tokens: 16000,
           thinking: { type: "adaptive" },
           // "medium" rather than "high" -- cuts per-call wall time substantially,
           // which is the dominant driver of the 20-50s-per-category time. Traded

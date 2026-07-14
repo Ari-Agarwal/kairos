@@ -61,8 +61,15 @@ export default function MatchListClient({
   async function handleRegenerate() {
     setRegenerating(true);
     setError(null);
+    // The server route is capped at maxDuration=60s, but that cap isn't
+    // enforced locally and an abrupt platform kill doesn't always reach the
+    // client as a clean rejection -- without a client-side bound, a hang
+    // leaves the spinner running forever with no way to recover. 65s gives
+    // the server's own cap a moment to win first under normal conditions.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 65_000);
     try {
-      const res = await fetch("/api/matches/generate", { method: "POST" });
+      const res = await fetch("/api/matches/generate", { method: "POST", signal: controller.signal });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         setError(body.error ?? "Failed to regenerate. Please try again.");
@@ -70,9 +77,15 @@ export default function MatchListClient({
         return;
       }
       router.refresh();
-    } catch {
-      setError("Failed to regenerate. Please try again.");
+    } catch (err) {
+      setError(
+        err instanceof DOMException && err.name === "AbortError"
+          ? "This is taking longer than expected. Please try again."
+          : "Failed to regenerate. Please try again."
+      );
       setRegenerating(false);
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
