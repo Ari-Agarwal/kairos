@@ -236,12 +236,10 @@ export default function OnboardingPage() {
 
     fetch("/api/email/welcome", { method: "POST" }).catch(() => {});
 
-    try {
-      const matchRes = await fetch("/api/matches/generate", { method: "POST" });
-      router.push(matchRes.ok ? "/dashboard" : "/dashboard?matchError=true");
-    } catch {
-      router.push("/dashboard?matchError=true");
-    }
+    // Match generation takes up to ~50s. Don't await it here -- the matches
+    // page already auto-triggers generation (with a proper progress UI) the
+    // moment it loads with zero active matches, so just get the user there.
+    router.push("/matches");
   }
 
   if (loading) {
