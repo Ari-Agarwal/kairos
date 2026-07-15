@@ -9,10 +9,6 @@ const FIELD_LABELS: Record<string, string> = {
   extracurriculars: "Extracurriculars",
   schools_already_considering: "Schools You're Already Considering",
   test_scores: "Test Scores",
-  career_goals: "Career Goals",
-  class_rank: "Class Rank",
-  campus_size_pref: "Campus Size Preference",
-  campus_setting_pref: "Campus Setting Preference",
 };
 
 interface Profile {
@@ -20,12 +16,6 @@ interface Profile {
   extracurriculars: string[] | null;
   schools_already_considering: string | null;
   test_scores: unknown;
-  sat_score?: number | null;
-  act_score?: number | null;
-  career_goals?: string | null;
-  class_rank?: string | null;
-  campus_size_pref?: string | null;
-  campus_setting_pref?: string | null;
 }
 
 export function getMissingFields(profile: Profile | null | undefined): string[] {
@@ -34,11 +24,7 @@ export function getMissingFields(profile: Profile | null | undefined): string[] 
   if (!profile.intended_major) missing.push("intended_major");
   if (!profile.extracurriculars || profile.extracurriculars.length === 0) missing.push("extracurriculars");
   if (!profile.schools_already_considering) missing.push("schools_already_considering");
-  if (!profile.test_scores && !profile.sat_score && !profile.act_score) missing.push("test_scores");
-  if (!profile.career_goals) missing.push("career_goals");
-  if (!profile.class_rank) missing.push("class_rank");
-  if (!profile.campus_size_pref) missing.push("campus_size_pref");
-  if (!profile.campus_setting_pref) missing.push("campus_setting_pref");
+  if (!profile.test_scores) missing.push("test_scores");
   return missing;
 }
 
@@ -62,7 +48,7 @@ export default function ProfileCompletenessModal({ profile }: { profile: Profile
   if (!mounted || missing.length === 0 || dismissed) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-bg/50">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
       <div
         role="dialog"
         aria-modal="true"

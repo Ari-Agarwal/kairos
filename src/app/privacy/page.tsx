@@ -4,7 +4,7 @@ export default function PrivacyPage() {
   return (
     <div className="px-5 md:px-8 py-12 max-w-2xl mx-auto w-full">
       <h1 className="font-serif text-3xl text-text mb-2">Privacy Policy</h1>
-      <p className="text-text-gray text-sm mb-8">Last updated July 15, 2026</p>
+      <p className="text-text-gray text-sm mb-8">Last updated June 30, 2026</p>
 
       <div className="space-y-6 text-text-gray text-sm leading-relaxed">
         <section>
@@ -40,29 +40,6 @@ export default function PrivacyPage() {
             <li>
               <span className="text-text">Error and diagnostic data</span> — to detect and fix
               crashes and keep the product working.
-            </li>
-            <li>
-              <span className="text-text">Financial need, career goals, class rank, course
-              rigor, and first-gen/legacy context</span> (all optional) — to factor real
-              affordability and background context into your matches and timeline, instead of
-              guidance that ignores them.
-            </li>
-            <li>
-              <span className="text-text">Admissions decisions you log</span> (accept/reject/
-              waitlist, aid offer amount, notes) — to track your own outcomes over time. We do
-              not currently use this data to inform other students&apos; matches; if that changes,
-              it will only ever be in aggregated, de-identified form, and we&apos;ll update this
-              notice before it happens.
-            </li>
-            <li>
-              <span className="text-text">Human-review requests you submit</span> — to route your
-              request to a counselor for review.
-            </li>
-            <li>
-              <span className="text-text">Content of a shared read-only link you create</span>{" "}
-              (e.g. for a parent or counselor) — to generate that link and show them the match/
-              timeline snapshot you chose to share. You control creation and revocation of these
-              links; see Section 3.
             </li>
           </ul>
         </section>
@@ -101,26 +78,10 @@ export default function PrivacyPage() {
         </section>
         <section>
           <h2 className="text-text font-medium mb-2">3. Who can see your data</h2>
-          <p className="mb-3">
-            By default, only you. A few features give other specific people limited, opt-in
-            access, and only because you took an action to grant it:
+          <p>
+            Only you. This MVP does not currently connect students to a school or counselor
+            account — no one else at your school has access to your Kairos data.
           </p>
-          <ul className="space-y-2">
-            <li>
-              <span className="text-text">A school counselor</span> can see your matches and
-              timeline only if your account is affiliated with a school running the Kairos
-              counselor dashboard, and only that counselor — not the whole school.
-            </li>
-            <li>
-              <span className="text-text">A human-review request</span> is visible to the
-              counselor it&apos;s routed to, and only for the purpose of that review.
-            </li>
-            <li>
-              <span className="text-text">A shared read-only link</span> you create (e.g. for a
-              parent) is visible to anyone holding that specific link, until it expires or you
-              revoke it. Links are long, random, and not guessable or listed anywhere public.
-            </li>
-          </ul>
         </section>
         <section>
           <h2 className="text-text font-medium mb-2">4. Children&apos;s privacy (COPPA)</h2>

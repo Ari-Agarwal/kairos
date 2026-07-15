@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAnthropic, MODEL, extractJson } from "@/lib/anthropic";
-import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
 import { canAccessFeature } from "@/lib/access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
@@ -49,8 +48,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  flagAnomalousUsage("career-path", user.id);
-  const t0 = Date.now();
   try {
     const response = await getAnthropic().messages.create({
       model: MODEL,
@@ -64,11 +61,9 @@ export async function POST(req: Request) {
         },
       ],
     });
-    logAiUsage("career-path", user.id, MODEL, t0, response);
     const text = response.content.find((b) => b.type === "text")?.text ?? "";
     return NextResponse.json(extractJson(text));
-  } catch (err) {
-    logAiUsage("career-path", user.id, MODEL, t0, err instanceof Error ? err : new Error(String(err)));
+  } catch {
     return NextResponse.json({ error: "Failed to generate career path. Please try again." }, { status: 502 });
   }
 }
