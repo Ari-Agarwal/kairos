@@ -2,11 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import NavShell from "@/components/NavShell";
-import ProfileCompletenessModal, { getMissingFields } from "@/components/ProfileCompletenessModal";
-import LivingProfileNudge from "@/components/LivingProfileNudge";
+import ProfileCompletenessModal from "@/components/ProfileCompletenessModal";
 import CountUp from "@/components/CountUp";
 import GenerateTimelineCard from "./GenerateTimelineCard";
-import HumanReviewCard from "@/components/HumanReviewCard";
 
 const CATEGORY_STYLES: Record<string, string> = {
   reach: "bg-red-tint text-red",
@@ -63,7 +61,6 @@ export default async function DashboardPage({
   return (
     <NavShell>
       <ProfileCompletenessModal profile={profile} />
-      {getMissingFields(profile).length === 0 && <LivingProfileNudge profile={profile} />}
       <div className="px-5 md:px-8 py-10 max-w-3xl mx-auto w-full">
         <h1 className="reveal font-serif text-3xl text-text mb-2">Welcome, {name}.</h1>
         <p className="reveal text-text-gray text-sm mb-8" style={{ ["--reveal-delay" as string]: "0.06s" }}>
@@ -170,7 +167,6 @@ export default async function DashboardPage({
             </Link>
           )}
         </div>
-        <HumanReviewCard />
       </div>
     </NavShell>
   );

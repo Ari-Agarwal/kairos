@@ -4,9 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, CalendarPlus } from "lucide-react";
+import { Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { buildSingleIcs, downloadIcs, googleCalendarUrl } from "@/lib/ics";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -65,35 +64,7 @@ export default function TaskDetailClient({ item }: { item: TimelineItem }) {
       </Link>
 
       <h1 className="font-serif text-2xl text-text mb-1">{item.title}</h1>
-      {item.due_date && (
-        <div className="flex items-center gap-3 mb-6">
-          <p className="text-text-gray text-sm">Due {item.due_date}</p>
-          <button
-            onClick={() =>
-              downloadIcs(
-                buildSingleIcs({ id: item.id, title: item.title, due_date: item.due_date!, why_text: item.why_text }),
-                `kairos-${item.id}.ics`
-              )
-            }
-            className="flex items-center gap-1 text-text-gray hover:text-text text-xs transition-colors"
-            title="Download .ics — works with Apple Calendar, Outlook, and any calendar app"
-          >
-            <CalendarPlus className="size-3.5" />
-            Apple / Outlook
-          </button>
-          <a
-            href={googleCalendarUrl({ id: item.id, title: item.title, due_date: item.due_date!, why_text: item.why_text })}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-text-gray hover:text-text text-xs transition-colors"
-            title="Add to Google Calendar"
-          >
-            <CalendarPlus className="size-3.5" />
-            Google Calendar
-          </a>
-        </div>
-      )}
-      {!item.due_date && <div className="mb-6" />}
+      {item.due_date && <p className="text-text-gray text-sm mb-6">Due {item.due_date}</p>}
 
       <div className="bg-card border border-border rounded-2xl p-5 mb-4">
         <p className="text-text font-medium text-sm mb-2">Why this matters</p>

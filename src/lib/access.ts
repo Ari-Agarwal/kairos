@@ -3,7 +3,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export type FeatureKey =
   | "career_path_explorer"
   | "essay_feedback"
-  | "activity_evaluation"
   | "unlimited_regenerations"
   | "strategic_timeline_advice";
 
