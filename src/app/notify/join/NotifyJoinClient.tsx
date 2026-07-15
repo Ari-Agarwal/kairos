@@ -13,7 +13,6 @@ export function NotifyJoinClient() {
 
   const [contactType, setContactType] = useState<ContactType>("email");
   const [contact, setContact] = useState("");
-  const [smsConsent, setSmsConsent] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +27,6 @@ export function NotifyJoinClient() {
         body: JSON.stringify({
           contact_type: contactType,
           contact,
-          sms_consent: smsConsent,
           source: source ?? undefined,
         }),
       });
@@ -106,18 +104,6 @@ export function NotifyJoinClient() {
             onChange={(e) => setContact(e.target.value)}
             className="w-full rounded-xl border border-border bg-card px-4 py-3 text-text placeholder:text-text-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           />
-        )}
-
-        {contactType === "phone" && (
-          <label className="mt-3 flex items-start gap-2 text-xs text-text-gray">
-            <input
-              type="checkbox"
-              checked={smsConsent}
-              onChange={(e) => setSmsConsent(e.target.checked)}
-              className="mt-0.5"
-            />
-            Text me when Kairos launches
-          </label>
         )}
 
         {error && <p className="mt-3 text-sm text-red" role="alert">{error}</p>}
