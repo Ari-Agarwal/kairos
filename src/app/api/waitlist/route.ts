@@ -43,8 +43,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Enter a valid phone number." }, { status: 400 });
     }
 
-    const sms_consent = contact_type === "phone" && b.sms_consent === true;
-
     let source: string | null = null;
     if (b.source !== undefined && b.source !== null && b.source !== "") {
       source = requireString(b.source, "source", 60);
@@ -54,7 +52,6 @@ export async function POST(req: Request) {
     const { error } = await service.from("waitlist_signups").insert({
       contact,
       contact_type,
-      sms_consent,
       source,
     });
 
