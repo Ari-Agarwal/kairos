@@ -7,6 +7,10 @@ export interface CollegeStats {
   acceptanceRate: number | null; // 0-1
   enrollment: number | null;
   ownership: string | null;
+  avgNetPrice: number | null; // school-wide average net price after aid (USD/yr)
+  costOfAttendance: number | null; // sticker-price cost of attendance (USD/yr)
+  medianDebt: number | null; // median federal debt at completion (USD)
+  medianEarnings10yr: number | null; // median earnings 10 yrs after entry, school-wide (USD/yr)
 }
 
 const OWNERSHIP_LABELS: Record<number, string> = {
@@ -44,7 +48,16 @@ async function fetchFromScorecard(schoolName: string): Promise<CollegeStats | nu
   const apiKey = process.env.COLLEGE_SCORECARD_API_KEY || "DEMO_KEY";
   const params = new URLSearchParams({
     "school.name": schoolName,
-    fields: "school.name,latest.student.size,latest.admissions.admission_rate.overall,school.ownership",
+    fields: [
+      "school.name",
+      "latest.student.size",
+      "latest.admissions.admission_rate.overall",
+      "school.ownership",
+      "latest.cost.avg_net_price.overall",
+      "latest.cost.attendance.academic_year",
+      "latest.aid.median_debt.completers.overall",
+      "latest.earnings.10_yrs_after_entry.median",
+    ].join(","),
     per_page: "1",
     api_key: apiKey,
   });
@@ -74,6 +87,10 @@ async function fetchFromScorecard(schoolName: string): Promise<CollegeStats | nu
     acceptanceRate: result["latest.admissions.admission_rate.overall"] ?? null,
     enrollment: result["latest.student.size"] ?? null,
     ownership: OWNERSHIP_LABELS[result["school.ownership"]] ?? null,
+    avgNetPrice: result["latest.cost.avg_net_price.overall"] ?? null,
+    costOfAttendance: result["latest.cost.attendance.academic_year"] ?? null,
+    medianDebt: result["latest.aid.median_debt.completers.overall"] ?? null,
+    medianEarnings10yr: result["latest.earnings.10_yrs_after_entry.median"] ?? null,
   };
 }
 
@@ -95,7 +112,15 @@ export async function getCollegeStats(schoolName: string): Promise<CollegeStats 
   const isFresh = cached && Date.now() - new Date(cached.fetched_at).getTime() < CACHE_TTL_MS;
   if (isFresh) {
     return cached.found
-      ? { acceptanceRate: cached.acceptance_rate, enrollment: cached.enrollment, ownership: cached.ownership }
+      ? {
+          acceptanceRate: cached.acceptance_rate,
+          enrollment: cached.enrollment,
+          ownership: cached.ownership,
+          avgNetPrice: cached.avg_net_price ?? null,
+          costOfAttendance: cached.cost_of_attendance ?? null,
+          medianDebt: cached.median_debt ?? null,
+          medianEarnings10yr: cached.median_earnings_10yr ?? null,
+        }
       : null;
   }
 
@@ -107,7 +132,15 @@ export async function getCollegeStats(schoolName: string): Promise<CollegeStats 
     // Fall back to stale cache rather than nothing, if we have it.
     if (cached) {
       return cached.found
-        ? { acceptanceRate: cached.acceptance_rate, enrollment: cached.enrollment, ownership: cached.ownership }
+        ? {
+            acceptanceRate: cached.acceptance_rate,
+            enrollment: cached.enrollment,
+            ownership: cached.ownership,
+            avgNetPrice: cached.avg_net_price ?? null,
+            costOfAttendance: cached.cost_of_attendance ?? null,
+            medianDebt: cached.median_debt ?? null,
+            medianEarnings10yr: cached.median_earnings_10yr ?? null,
+          }
         : null;
     }
     return null;
@@ -118,6 +151,10 @@ export async function getCollegeStats(schoolName: string): Promise<CollegeStats 
     acceptance_rate: stats?.acceptanceRate ?? null,
     enrollment: stats?.enrollment ?? null,
     ownership: stats?.ownership ?? null,
+    avg_net_price: stats?.avgNetPrice ?? null,
+    cost_of_attendance: stats?.costOfAttendance ?? null,
+    median_debt: stats?.medianDebt ?? null,
+    median_earnings_10yr: stats?.medianEarnings10yr ?? null,
     found: stats !== null,
     fetched_at: new Date().toISOString(),
   });

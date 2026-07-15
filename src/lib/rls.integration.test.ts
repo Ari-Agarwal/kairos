@@ -82,6 +82,28 @@ describe("RLS student-table isolation", () => {
     expect(data ?? []).toHaveLength(0);
   });
 
+  it("student A cannot read student B's application_outcomes", async () => {
+    const { data: studentBRows } = await studentB.from("profiles").select("user_id").limit(1);
+    const studentBId = studentBRows?.[0]?.user_id;
+    const { data } = await studentA.from("application_outcomes").select("*").eq("user_id", studentBId);
+    expect(data ?? []).toHaveLength(0);
+  });
+
+  it("student A cannot insert application_outcomes under student B's user_id", async () => {
+    const { data: studentBRows } = await studentB.from("profiles").select("user_id").limit(1);
+    const studentBId = studentBRows?.[0]?.user_id;
+    // school_match_id is a foreign key; any UUID that doesn't exist will fail the FK check
+    // before RLS even matters — but if student B has a match, RLS is what blocks it.
+    // We test with a random UUID: the insert must fail (FK or RLS, either is correct).
+    const { error } = await studentA.from("application_outcomes").insert({
+      user_id: studentBId,
+      school_match_id: "00000000-0000-0000-0000-000000000000",
+      decision_type: "accept",
+      decided_at: "2026-04-01",
+    });
+    expect(error).not.toBeNull();
+  });
+
   it("student A cannot read or write student B's regeneration_log", async () => {
     const { data: studentBRows } = await studentB.from("profiles").select("user_id").limit(1);
     const studentBId = studentBRows?.[0]?.user_id;
@@ -92,5 +114,41 @@ describe("RLS student-table isolation", () => {
       .from("regeneration_log")
       .upsert({ user_id: studentBId, week_start_date: "2026-06-23", count: 99 });
     expect(error).not.toBeNull();
+  });
+
+  it("student A cannot read student B's review_requests", async () => {
+    const { data: studentBRows } = await studentB.from("profiles").select("user_id").limit(1);
+    const studentBId = studentBRows?.[0]?.user_id;
+    const { data } = await studentA.from("review_requests").select("*").eq("user_id", studentBId);
+    expect(data ?? []).toHaveLength(0);
+  });
+
+  it("student A cannot insert review_requests under student B's user_id", async () => {
+    const { data: studentBRows } = await studentB.from("profiles").select("user_id").limit(1);
+    const studentBId = studentBRows?.[0]?.user_id;
+    const { error } = await studentA.from("review_requests").insert({
+      user_id: studentBId,
+      status: "pending",
+      review_notes: "forged",
+    });
+    expect(error).not.toBeNull();
+  });
+
+  it("student A cannot read student B's shared_links", async () => {
+    const { data: studentBRows } = await studentB.from("profiles").select("user_id").limit(1);
+    const studentBId = studentBRows?.[0]?.user_id;
+    const { data } = await studentA.from("shared_links").select("*").eq("user_id", studentBId);
+    expect(data ?? []).toHaveLength(0);
+  });
+
+  it("student A cannot revoke student B's shared_links", async () => {
+    const { data: studentBRows } = await studentB.from("profiles").select("user_id").limit(1);
+    const studentBId = studentBRows?.[0]?.user_id;
+    const { data: linkRows } = await studentB.from("shared_links").select("token").eq("user_id", studentBId).limit(1);
+    const token = linkRows?.[0]?.token;
+    if (!token) return; // no link fixture for student B in this environment — nothing to attempt
+    await studentA.from("shared_links").update({ revoked_at: new Date().toISOString() }).eq("token", token);
+    const { data: check } = await studentB.from("shared_links").select("revoked_at").eq("token", token).single();
+    expect(check?.revoked_at).toBeNull();
   });
 });

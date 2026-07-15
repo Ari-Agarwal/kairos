@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "/counselor", label: "Roster" },
   { href: "/counselor/at-risk", label: "At-Risk Flags" },
   { href: "/counselor/aggregate", label: "Class Overview" },
+  { href: "/counselor/review-requests", label: "Review Requests" },
 ];
 
 export default function CounselorNavShell({
