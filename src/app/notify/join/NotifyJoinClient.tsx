@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type ContactType = "email" | "phone";
-const GRAD_YEARS = ["Freshman", "Sophomore", "Junior", "Senior"] as const;
 
 export function NotifyJoinClient() {
   const searchParams = useSearchParams();
@@ -14,7 +13,6 @@ export function NotifyJoinClient() {
 
   const [contactType, setContactType] = useState<ContactType>("email");
   const [contact, setContact] = useState("");
-  const [gradYear, setGradYear] = useState<string | null>(null);
   const [smsConsent, setSmsConsent] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +28,6 @@ export function NotifyJoinClient() {
         body: JSON.stringify({
           contact_type: contactType,
           contact,
-          grad_year: gradYear ? gradYear.toLowerCase() : undefined,
           sms_consent: smsConsent,
           source: source ?? undefined,
         }),
@@ -122,27 +119,6 @@ export function NotifyJoinClient() {
             Text me when Kairos launches
           </label>
         )}
-
-        <div className="mt-4">
-          <p className="text-xs text-text-gray mb-2">Grade (optional)</p>
-          <div className="grid grid-cols-4 gap-2">
-            {GRAD_YEARS.map((g) => (
-              <button
-                key={g}
-                type="button"
-                onClick={() => setGradYear((prev) => (prev === g ? null : g))}
-                className={cn(
-                  "rounded-lg border py-2 text-xs font-medium transition-colors",
-                  gradYear === g
-                    ? "border-primary bg-amber-tint text-amber-text-on-tint"
-                    : "border-border text-text-gray hover:text-text"
-                )}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {error && <p className="mt-3 text-sm text-red" role="alert">{error}</p>}
 

@@ -6,7 +6,6 @@ import { ValidationError, requireString, rejectScriptTags } from "@/lib/validate
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^\+?[0-9()\-.\s]{7,20}$/;
-const GRAD_YEARS = ["freshman", "sophomore", "junior", "senior"] as const;
 
 export async function POST(req: Request) {
   if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -44,15 +43,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Enter a valid phone number." }, { status: 400 });
     }
 
-    let grad_year: string | null = null;
-    if (b.grad_year !== undefined && b.grad_year !== null && b.grad_year !== "") {
-      const gy = requireString(b.grad_year, "grad_year", 20).toLowerCase();
-      if (!GRAD_YEARS.includes(gy as (typeof GRAD_YEARS)[number])) {
-        return NextResponse.json({ error: "Invalid grad_year." }, { status: 400 });
-      }
-      grad_year = gy;
-    }
-
     const sms_consent = contact_type === "phone" && b.sms_consent === true;
 
     let source: string | null = null;
@@ -64,7 +54,6 @@ export async function POST(req: Request) {
     const { error } = await service.from("waitlist_signups").insert({
       contact,
       contact_type,
-      grad_year,
       sms_consent,
       source,
     });
