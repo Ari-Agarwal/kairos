@@ -4,8 +4,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
+import { CalendarDays } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import GenerationProgress from "@/components/GenerationProgress";
+import { buildBulkIcs, downloadIcs } from "@/lib/ics";
 
 interface TimelineItem {
   id: string;
@@ -172,6 +174,18 @@ export default function TimelineClient({
             className="text-primary text-sm hover:text-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Regenerate
+          </button>
+          <button
+            onClick={() => {
+              const upcoming = items.filter((i): i is TimelineItem & { due_date: string } => !!i.due_date && !i.completed);
+              if (upcoming.length === 0) return;
+              downloadIcs(buildBulkIcs(upcoming), "kairos-timeline.ics");
+            }}
+            title="Download all upcoming deadlines as a .ics file"
+            className="rounded-xl border border-border text-text-gray hover:text-text text-sm font-medium px-3 py-1.5 transition-colors flex items-center gap-1.5"
+          >
+            <CalendarDays className="size-3.5" />
+            Sync
           </button>
           <button
             onClick={() => setEditing((e) => !e)}

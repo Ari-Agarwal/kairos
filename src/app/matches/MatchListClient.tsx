@@ -7,6 +7,11 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import GenerationProgress from "@/components/GenerationProgress";
 import CountUp from "@/components/CountUp";
+import { track } from "@/lib/analytics";
+import ShareChancesCard from "@/components/ShareChancesCard";
+import OutcomeLogModal from "./OutcomeLogModal";
+import LociModal from "./LociModal";
+import AidAppealModal from "./AidAppealModal";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -58,6 +63,41 @@ export default function MatchListClient({
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
+  // Share card state
+  const [shareMatch, setShareMatch] = useState<Match | null>(null);
+
+  // Outcome modal open/closed — decision is tracked here because card labels read it
+  const [outcomeMatchId, setOutcomeMatchId] = useState<string | null>(null);
+  const [outcomeSaved, setOutcomeSaved] = useState<Record<string, string>>({});
+
+  // Aid offers loaded from DB (matchId → amount) — used to gate appeal button
+  const [aidOffers, setAidOffers] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    async function loadAidOffers() {
+      const ids = matches.map((m) => m.id);
+      if (ids.length === 0) return;
+      const { data } = await supabase
+        .from("application_outcomes")
+        .select("school_match_id, aid_offer_amount")
+        .in("school_match_id", ids)
+        .not("aid_offer_amount", "is", null);
+      if (data) {
+        const map: Record<string, number> = {};
+        for (const row of data as { school_match_id: string; aid_offer_amount: number }[]) {
+          map[row.school_match_id] = row.aid_offer_amount;
+        }
+        setAidOffers(map);
+      }
+    }
+    loadAidOffers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Appeal and LOCI modal open/closed
+  const [appealMatchId, setAppealMatchId] = useState<string | null>(null);
+  const [lociMatchId, setLociMatchId] = useState<string | null>(null);
+
   async function handleRegenerate() {
     setRegenerating(true);
     setError(null);
@@ -95,6 +135,7 @@ export default function MatchListClient({
   // that and hunt for "Regenerate List", auto-fire the first generation the
   // moment they land here with an empty list.
   const autoTriggered = useRef(false);
+  const wasEmptyOnFirstLoad = useRef(matches.length === 0);
   useEffect(() => {
     if (matches.length === 0 && !autoTriggered.current && (isPremium || remaining !== 0)) {
       autoTriggered.current = true;
@@ -102,6 +143,18 @@ export default function MatchListClient({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Funnel instrumentation (Phase 3 Section 1): fires once, the first time a
+  // previously-empty match list becomes non-empty -- i.e. "reached a first
+  // real match," the metric the onboarding-restructure acceptance criteria
+  // depend on being measurable.
+  const firstMatchTracked = useRef(false);
+  useEffect(() => {
+    if (wasEmptyOnFirstLoad.current && matches.length > 0 && !firstMatchTracked.current) {
+      firstMatchTracked.current = true;
+      track("first_match_generated", { match_count: matches.length });
+    }
+  }, [matches.length]);
 
   async function handleRemove(id: string) {
     await supabase.from("school_matches").update({ is_active: false }).eq("id", id);
@@ -188,6 +241,83 @@ export default function MatchListClient({
 
       {error && <p role="alert" className="text-red text-sm mb-4">{error}</p>}
 
+      {shareMatch && (
+        <ShareChancesCard
+          data={{ schoolName: shareMatch.school_name, percentage: shareMatch.percentage, category: shareMatch.category }}
+          onClose={() => setShareMatch(null)}
+        />
+      )}
+
+      {outcomeMatchId && (
+        <OutcomeLogModal
+          matchId={outcomeMatchId}
+          onClose={() => setOutcomeMatchId(null)}
+          onSaved={(id, decision, aidAmount) => {
+            setOutcomeSaved((prev) => ({ ...prev, [id]: decision }));
+            if (aidAmount !== "") {
+              setAidOffers((prev) => ({ ...prev, [id]: parseFloat(aidAmount) }));
+            }
+            setOutcomeMatchId(null);
+          }}
+        />
+      )}
+
+      {appealMatchId && (
+        <AidAppealModal
+          matchId={appealMatchId}
+          matches={matches}
+          aidOffers={aidOffers}
+          onClose={() => setAppealMatchId(null)}
+        />
+      )}
+
+      {lociMatchId && (
+        <LociModal
+          matchId={lociMatchId}
+          onClose={() => setLociMatchId(null)}
+        />
+      )}
+
+      {matches.length > 0 && (() => {
+        const counts = { reach: 0, target: 0, safety: 0 };
+        for (const m of matches) counts[m.category] = (counts[m.category] ?? 0) + 1;
+        if (counts.safety === 0) {
+          return (
+            <div className="bg-amber-tint border border-amber/30 rounded-2xl px-4 py-3 mb-4 flex items-start gap-3">
+              <span className="text-amber text-lg leading-none mt-0.5">!</span>
+              <p className="text-text-gray text-sm">
+                <span className="text-text font-medium">Your list has no safety schools.</span>{" "}
+                Add 1–2 schools where your GPA and test scores are comfortably above the typical admitted range to balance your list.
+              </p>
+            </div>
+          );
+        }
+        if (counts.reach === 0) {
+          return (
+            <div className="bg-card border border-border rounded-2xl px-4 py-3 mb-4 flex items-start gap-3">
+              <span className="text-text-gray text-lg leading-none mt-0.5">!</span>
+              <p className="text-text-gray text-sm">
+                <span className="text-text font-medium">Your list has no reach schools.</span>{" "}
+                Consider adding 1–2 selective schools — a strong application deserves at least a few ambitious choices.
+              </p>
+            </div>
+          );
+        }
+        const total = matches.length;
+        if (counts.safety / total < 0.15 && total >= 6) {
+          return (
+            <div className="bg-amber-tint border border-amber/30 rounded-2xl px-4 py-3 mb-4 flex items-start gap-3">
+              <span className="text-amber text-lg leading-none mt-0.5">!</span>
+              <p className="text-text-gray text-sm">
+                <span className="text-text font-medium">Your list is light on safety schools.</span>{" "}
+                Aim for at least 2 safety schools ({counts.safety} of {total} currently) so you have a strong fallback option.
+              </p>
+            </div>
+          );
+        }
+        return null;
+      })()}
+
       {editing && (
         <div className="bg-card border border-border rounded-2xl p-4 mb-4 space-y-3">
           <p className="text-text text-sm font-medium">Add a school</p>
@@ -237,7 +367,7 @@ export default function MatchListClient({
             >
               <Link href={`/schools/${m.id}`} className="absolute inset-0 rounded-2xl" aria-label={`View ${m.school_name} details`} />
 
-              {editing && (
+              {editing ? (
                 <button
                   onClick={() => handleRemove(m.id)}
                   className="absolute top-3 right-3 z-10 text-text-gray hover:text-red text-xs px-2.5 py-2 rounded-lg transition-colors"
@@ -245,10 +375,47 @@ export default function MatchListClient({
                 >
                   Remove
                 </button>
+              ) : (
+                <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-1">
+                  <button
+                    onClick={() => setOutcomeMatchId(m.id)}
+                    className="text-text-gray hover:text-text text-xs px-2.5 py-2 rounded-lg border border-transparent hover:border-border transition-colors"
+                    aria-label={`Log decision for ${m.school_name}`}
+                  >
+                    {outcomeSaved[m.id] ? `✓ ${outcomeSaved[m.id]}` : "Log decision"}
+                  </button>
+                  {(outcomeSaved[m.id] === "waitlist" || outcomeSaved[m.id] === "defer") && (
+                    <button
+                      onClick={() => setLociMatchId(m.id)}
+                      className="text-primary hover:text-primary-hover text-xs px-2.5 py-1.5 rounded-lg border border-primary/30 hover:border-primary/60 transition-colors whitespace-nowrap"
+                      aria-label={`Draft letter of continued interest for ${m.school_name}`}
+                    >
+                      Draft LOCI
+                    </button>
+                  )}
+                  {aidOffers[m.id] !== undefined && Object.keys(aidOffers).length >= 2 && (
+                    <button
+                      onClick={() => setAppealMatchId(m.id)}
+                      className="text-primary hover:text-primary-hover text-xs px-2.5 py-1.5 rounded-lg border border-primary/30 hover:border-primary/60 transition-colors whitespace-nowrap"
+                      aria-label={`Draft aid appeal letter for ${m.school_name}`}
+                    >
+                      Appeal aid
+                    </button>
+                  )}
+                  {(m.category === "target" || m.category === "safety") && (
+                    <button
+                      onClick={() => setShareMatch(m)}
+                      className="text-text-gray hover:text-text text-xs px-2.5 py-1.5 rounded-lg border border-transparent hover:border-border transition-colors whitespace-nowrap"
+                      aria-label={`Share chances card for ${m.school_name}`}
+                    >
+                      Share
+                    </button>
+                  )}
+                </div>
               )}
 
               <div className="pointer-events-none">
-                <div className={`flex items-start justify-between mb-2 ${editing ? "pr-14" : ""}`}>
+                <div className="flex items-start justify-between mb-2 pr-24">
                   <div>
                     <span
                       className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full mb-2 capitalize ${CATEGORY_STYLES[m.category]}`}
@@ -275,7 +442,10 @@ export default function MatchListClient({
 
       <p className="text-text-gray text-xs mt-6">
         AI-generated estimates based on your profile and general acceptance data, not a
-        guarantee of admission.
+        guarantee of admission.{" "}
+        <Link href="/methodology" className="underline underline-offset-2 hover:text-text transition-colors">
+          How is this calculated?
+        </Link>
       </p>
     </div>
   );

@@ -26,8 +26,8 @@ export default function GlobalError({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#0A0A0A",
-          color: "#FAFAFA",
+          backgroundColor: "var(--bg)",
+          color: "var(--text)",
           fontFamily: "system-ui, sans-serif",
           padding: "24px",
         }}
@@ -42,15 +42,15 @@ export default function GlobalError({
           >
             Something went wrong
           </h1>
-          <p style={{ color: "#A3A3A3", marginBottom: "24px", lineHeight: 1.5 }}>
+          <p style={{ color: "var(--text-gray)", marginBottom: "24px", lineHeight: 1.5 }}>
             An unexpected error occurred. The team has been notified. Please try
             again.
           </p>
           <button
             onClick={() => reset()}
             style={{
-              backgroundColor: "#F2F2F2",
-              color: "#0A0A0A",
+              backgroundColor: "var(--text)",
+              color: "var(--bg)",
               border: "none",
               borderRadius: "12px",
               padding: "12px 24px",

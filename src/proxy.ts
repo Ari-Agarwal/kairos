@@ -1,7 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/", "/login", "/signup", "/api/stripe/webhook", "/auth/callback", "/preview-heroes", "/terms", "/privacy", "/about", "/notify", "/notify/join", "/api/waitlist", "/admin/waitlist"];
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/api/stripe/webhook", "/auth/callback", "/preview-heroes", "/terms", "/privacy", "/about", "/methodology", "/notify", "/notify/join", "/api/waitlist", "/admin/waitlist"];
+
+// Prefix-matched public paths — for routes with dynamic segments that must
+// stay reachable by an unauthenticated visitor (share links, recommender
+// pages). Token/existence validation happens inside each route itself;
+// the proxy's job is only to not block the request before it gets there.
+// Deliberately narrow: only the specific public sub-routes, never a bare
+// "/api/recommendations/" prefix — that would also unauth-gate the
+// authenticated CRUD routes ([id] list/update/delete) at the proxy layer,
+// leaving their own internal getUser()/401 check as the only remaining
+// guard instead of defense-in-depth.
+const PUBLIC_PATH_PREFIXES = ["/shared/", "/api/shared/", "/recommender/"];
+const PUBLIC_PATH_PATTERNS = [/^\/api\/recommendations\/[^/]+\/talking-points$/];
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -28,7 +40,11 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isPublic = PUBLIC_PATHS.includes(path) || path.startsWith("/_next");
+  const isPublic =
+    PUBLIC_PATHS.includes(path) ||
+    path.startsWith("/_next") ||
+    PUBLIC_PATH_PREFIXES.some((prefix) => path.startsWith(prefix)) ||
+    PUBLIC_PATH_PATTERNS.some((pattern) => pattern.test(path));
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

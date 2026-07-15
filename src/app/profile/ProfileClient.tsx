@@ -3,8 +3,11 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import CountUp from "@/components/CountUp";
+import { checkFeeWaiverEligibility } from "@/lib/fee-waiver";
+import ShareLinksManager from "@/components/ShareLinksManager";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const CAMPUS_SIZES = ["Small", "Medium", "Large", "No preference"];
@@ -21,6 +24,16 @@ interface Profile {
   subscription_tier: string;
   campus_size_pref: string;
   campus_setting_pref: string;
+  sat_score: number | null;
+  act_score: number | null;
+  class_rank: string | null;
+  ap_ib_count: number | null;
+  career_goals: string | null;
+  geographic_pref: string | null;
+  financial_aid_need: boolean | null;
+  budget_ceiling: number | null;
+  first_gen: boolean | null;
+  legacy_school: string | null;
 }
 
 export default function ProfileClient({
@@ -49,7 +62,17 @@ export default function ProfileClient({
     schools_already_considering: profile.schools_already_considering ?? "",
     campus_size_pref: profile.campus_size_pref ?? "",
     campus_setting_pref: profile.campus_setting_pref ?? "",
+    sat_score: profile.sat_score !== null ? String(profile.sat_score) : "",
+    act_score: profile.act_score !== null ? String(profile.act_score) : "",
+    class_rank: profile.class_rank ?? "",
+    ap_ib_count: profile.ap_ib_count !== null ? String(profile.ap_ib_count) : "",
+    career_goals: profile.career_goals ?? "",
+    geographic_pref: profile.geographic_pref ?? "",
+    budget_ceiling: profile.budget_ceiling !== null ? String(profile.budget_ceiling) : "",
+    legacy_school: profile.legacy_school ?? "",
   });
+  const [financialAidNeed, setFinancialAidNeed] = useState<boolean | null>(profile.financial_aid_need);
+  const [firstGen, setFirstGen] = useState<boolean | null>(profile.first_gen);
   const [activities, setActivities] = useState<string[]>(
     profile.extracurriculars && profile.extracurriculars.length > 0 ? profile.extracurriculars : [""]
   );
@@ -110,6 +133,17 @@ export default function ProfileClient({
         schools_already_considering: form.schools_already_considering,
         campus_size_pref: form.campus_size_pref,
         campus_setting_pref: form.campus_setting_pref,
+        sat_score: form.sat_score ? parseInt(form.sat_score, 10) : null,
+        act_score: form.act_score ? parseInt(form.act_score, 10) : null,
+        class_rank: form.class_rank || null,
+        ap_ib_count: form.ap_ib_count ? parseInt(form.ap_ib_count, 10) : null,
+        career_goals: form.career_goals || null,
+        geographic_pref: form.geographic_pref || null,
+        financial_aid_need: financialAidNeed,
+        budget_ceiling: form.budget_ceiling ? parseFloat(form.budget_ceiling) : null,
+        first_gen: firstGen,
+        legacy_school: form.legacy_school || null,
+        last_profile_check_at: new Date().toISOString(),
       })
       .eq("user_id", user.id);
     setSaving(false);
@@ -241,6 +275,132 @@ export default function ProfileClient({
               className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary resize-none"
             />
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="pf-sat-score" className="block text-sm text-text-gray mb-1">SAT Score</label>
+              <input
+                id="pf-sat-score"
+                type="number"
+                value={form.sat_score}
+                onChange={(e) => setForm({ ...form, sat_score: e.target.value })}
+                className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="pf-act-score" className="block text-sm text-text-gray mb-1">ACT Score</label>
+              <input
+                id="pf-act-score"
+                type="number"
+                value={form.act_score}
+                onChange={(e) => setForm({ ...form, act_score: e.target.value })}
+                className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="pf-class-rank" className="block text-sm text-text-gray mb-1">Class rank</label>
+            <input
+              id="pf-class-rank"
+              type="text"
+              placeholder="e.g. Top 10%, or 12/340"
+              value={form.class_rank}
+              onChange={(e) => setForm({ ...form, class_rank: e.target.value })}
+              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label htmlFor="pf-ap-ib-count" className="block text-sm text-text-gray mb-1">AP/IB courses taken (or in progress)</label>
+            <input
+              id="pf-ap-ib-count"
+              type="number"
+              min="0"
+              value={form.ap_ib_count}
+              onChange={(e) => setForm({ ...form, ap_ib_count: e.target.value })}
+              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label htmlFor="pf-career-goals" className="block text-sm text-text-gray mb-1">Career goals</label>
+            <textarea
+              id="pf-career-goals"
+              rows={2}
+              value={form.career_goals}
+              onChange={(e) => setForm({ ...form, career_goals: e.target.value })}
+              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary resize-none"
+            />
+          </div>
+          <div>
+            <label htmlFor="pf-geo-pref" className="block text-sm text-text-gray mb-1">Geographic preference</label>
+            <input
+              id="pf-geo-pref"
+              type="text"
+              value={form.geographic_pref}
+              onChange={(e) => setForm({ ...form, geographic_pref: e.target.value })}
+              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <span id="pf-financial-need-label" className="block text-sm text-text-gray mb-2">Will financial aid affect where you apply?</span>
+            <div className="flex flex-wrap gap-2" role="group" aria-labelledby="pf-financial-need-label">
+              {[{ label: "Yes", value: true }, { label: "No", value: false }].map((opt) => (
+                <button
+                  key={opt.label}
+                  type="button"
+                  aria-pressed={financialAidNeed === opt.value}
+                  onClick={() => setFinancialAidNeed(financialAidNeed === opt.value ? null : opt.value)}
+                  className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                    financialAidNeed === opt.value
+                      ? "bg-primary text-bg border-primary"
+                      : "border-border text-text-gray hover:text-text"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {financialAidNeed && (
+            <div>
+              <label htmlFor="pf-budget-ceiling" className="block text-sm text-text-gray mb-1">Annual budget ceiling (out-of-pocket, in $)</label>
+              <input
+                id="pf-budget-ceiling"
+                type="number"
+                value={form.budget_ceiling}
+                onChange={(e) => setForm({ ...form, budget_ceiling: e.target.value })}
+                className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+              />
+            </div>
+          )}
+          <div>
+            <span id="pf-first-gen-label" className="block text-sm text-text-gray mb-2">First-generation college student?</span>
+            <div className="flex flex-wrap gap-2" role="group" aria-labelledby="pf-first-gen-label">
+              {[{ label: "Yes", value: true }, { label: "No", value: false }].map((opt) => (
+                <button
+                  key={opt.label}
+                  type="button"
+                  aria-pressed={firstGen === opt.value}
+                  onClick={() => setFirstGen(firstGen === opt.value ? null : opt.value)}
+                  className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                    firstGen === opt.value
+                      ? "bg-primary text-bg border-primary"
+                      : "border-border text-text-gray hover:text-text"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label htmlFor="pf-legacy-school" className="block text-sm text-text-gray mb-1">Legacy school</label>
+            <input
+              id="pf-legacy-school"
+              type="text"
+              value={form.legacy_school}
+              onChange={(e) => setForm({ ...form, legacy_school: e.target.value })}
+              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+            />
+          </div>
           <div>
             <span id="pf-campus-size-label" className="block text-sm text-text-gray mb-2">Campus size preference *</span>
             <div className="flex flex-wrap gap-2" role="group" aria-labelledby="pf-campus-size-label">
@@ -325,13 +485,21 @@ export default function ProfileClient({
       title: "Extracurriculars",
       content:
         ecCount > 0 ? (
-          <ul className="space-y-1">
-            {profile.extracurriculars!.map((ec, idx) => (
-              <li key={idx} className="text-text-gray text-sm">
-                • {ec}
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-1 mb-3">
+              {profile.extracurriculars!.map((ec, idx) => (
+                <li key={idx} className="text-text-gray text-sm">
+                  • {ec}
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/activities/evaluate"
+              className="text-primary hover:text-primary-hover text-sm font-medium"
+            >
+              Evaluate my activities →
+            </Link>
+          </>
         ) : (
           <EmptyNote />
         ),
@@ -382,6 +550,38 @@ export default function ProfileClient({
         ))}
       </div>
 
+      {checkFeeWaiverEligibility({ financial_aid_need: profile.financial_aid_need, first_gen: profile.first_gen }) === "likely_eligible" && (
+        <div className="bg-card border border-border rounded-2xl p-5 mb-4">
+          <p className="text-text font-medium text-sm mb-1">You may qualify for application fee waivers</p>
+          <p className="text-text-gray text-sm mb-3">
+            Based on your profile, you could be eligible for the{" "}
+            <strong className="text-text">Common App fee waiver</strong> or a{" "}
+            <strong className="text-text">NACAC fee waiver</strong> — which let you apply to many schools at no cost.
+            Eligibility is determined by each school using criteria such as financial need, first-generation status,
+            and participation in programs like free/reduced lunch or public assistance. You do not need to prove
+            eligibility upfront — just indicate it on your Common App application.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href="https://www.commonapp.org/apply/fee-waivers"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-primary-hover text-sm font-medium"
+            >
+              Common App fee waiver info →
+            </a>
+            <a
+              href="https://www.nacacnet.org/college-admission-basics/fees-and-fee-waivers/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-primary-hover text-sm font-medium"
+            >
+              NACAC fee waiver info →
+            </a>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-4">
         {sections.map((section, i) => (
           <motion.div
@@ -399,7 +599,13 @@ export default function ProfileClient({
         This profile updates automatically as you check off items on your timeline.
       </p>
 
-      <div className="mt-10 pt-6 border-t border-border">
+      <div className="mt-8 pt-6 border-t border-border">
+        <div className="bg-card border border-border rounded-2xl p-5 mb-6">
+          <ShareLinksManager />
+        </div>
+      </div>
+
+      <div className="mt-4 pt-6 border-t border-border">
         {!confirmingDelete ? (
           <button
             onClick={() => setConfirmingDelete(true)}
