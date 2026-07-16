@@ -124,7 +124,7 @@ export default function StudentRosterClient({
           <Link
             key={s.user_id}
             href={`/counselor/students/${s.user_id}`}
-            className="flex flex-col gap-2 px-4 py-3 text-sm text-text border-b border-border last:border-b-0 hover:bg-white/5 transition-colors md:grid md:grid-cols-[1.5fr_0.8fr_0.6fr_0.8fr_0.8fr_1fr] md:gap-2 md:items-center"
+            className="flex flex-col gap-2 px-4 py-3 text-sm text-text border-b border-border last:border-b-0 hover:bg-secondary-tint transition-colors md:grid md:grid-cols-[1.5fr_0.8fr_0.6fr_0.8fr_0.8fr_1fr] md:gap-2 md:items-center"
           >
             <span className="flex items-center justify-between gap-2 md:contents">
               <span className="truncate font-medium md:font-normal">{s.name}</span>

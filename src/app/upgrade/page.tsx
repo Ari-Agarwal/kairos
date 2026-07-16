@@ -9,11 +9,13 @@ export default async function UpgradePage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("subscription_tier, premium_notify_requested")
     .eq("user_id", user.id)
     .maybeSingle();
+
+  if (profileError) console.error("upgrade profile query failed:", profileError);
 
   return (
     <NavShell>

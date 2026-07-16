@@ -4,7 +4,7 @@ export default function PrivacyPage() {
   return (
     <div className="px-5 md:px-8 py-12 max-w-2xl mx-auto w-full">
       <h1 className="font-serif text-3xl text-text mb-2">Privacy Policy</h1>
-      <p className="text-text-gray text-sm mb-8">Last updated June 30, 2026</p>
+      <p className="text-text-gray text-sm mb-8">Last updated July 15, 2026</p>
 
       <div className="space-y-6 text-text-gray text-sm leading-relaxed">
         <section>
@@ -41,6 +41,60 @@ export default function PrivacyPage() {
               <span className="text-text">Error and diagnostic data</span> — to detect and fix
               crashes and keep the product working.
             </li>
+            <li>
+              <span className="text-text">Financial need, career goals, class rank, course
+              rigor, and first-gen/legacy context</span> (all optional) — to factor real
+              affordability and background context into your matches and timeline, instead of
+              guidance that ignores them.
+            </li>
+            <li>
+              <span className="text-text">Admissions decisions you log</span> (accept/reject/
+              waitlist, aid offer amount, notes) — to track your own outcomes over time. We do
+              not currently use this data to inform other students&apos; matches; if that changes,
+              it will only ever be in aggregated, de-identified form, and we&apos;ll update this
+              notice before it happens.
+            </li>
+            <li>
+              <span className="text-text">Human-review requests you submit</span> — to route your
+              request to a counselor for review.
+            </li>
+            <li>
+              <span className="text-text">Content of a shared read-only link you create</span>{" "}
+              (e.g. for a parent or counselor) — to generate that link and show them the match/
+              timeline snapshot you chose to share. You control creation and revocation of these
+              links; see Section 3.
+            </li>
+            <li>
+              <span className="text-text">Activity descriptions, recommender details and brag
+              sheets, and career-path questions</span> — to generate AI feedback, talking points,
+              or guidance specific to that feature. Sent only when you use the corresponding tool
+              (Activities, Rec Letters, Career Path).
+            </li>
+            <li>
+              <span className="text-text">Mock interview question and answer text</span> — to
+              score your practice answer and give feedback. Your spoken answer is transcribed
+              entirely in your browser; we never receive or store audio, only the resulting text.
+            </li>
+            <li>
+              <span className="text-text">Phone number and SMS opt-in preference</span> — to send
+              you deadline reminders and essay prompts by text, only if you opt in. Message and
+              data rates may apply; reply STOP at any time to opt out. See Section 2 for the SMS
+              provider.
+            </li>
+            <li>
+              <span className="text-text">Mentor opt-in, mentor request, and message content</span>{" "}
+              — to connect you with a peer mentor or mentee once both sides accept a request. First
+              contact is always a request, not open messaging; see Section 3 for who can see this.
+            </li>
+            <li>
+              <span className="text-text">War room comments</span> on a specific application — to
+              share a running discussion with the people you&apos;ve given access to that
+              application (yourself, and any parent, counselor, or accepted mentor for it).
+            </li>
+            <li>
+              <span className="text-text">Reports and blocks you submit against another user</span>{" "}
+              — to enforce our safety policy. A block is never visible to the person you blocked.
+            </li>
           </ul>
         </section>
         <section>
@@ -74,14 +128,40 @@ export default function PrivacyPage() {
               <span className="text-text">Sentry</span> — receives error/diagnostic data so we can
               fix bugs.
             </li>
+            <li>
+              <span className="text-text">Twilio</span> — if you opt in to SMS, sends your text
+              messages. Receives your phone number and message content only for that purpose.
+            </li>
           </ul>
         </section>
         <section>
           <h2 className="text-text font-medium mb-2">3. Who can see your data</h2>
-          <p>
-            Only you. This MVP does not currently connect students to a school or counselor
-            account — no one else at your school has access to your Kairos data.
+          <p className="mb-3">
+            By default, only you. A few features give other specific people limited, opt-in
+            access, and only because you took an action to grant it:
           </p>
+          <ul className="space-y-2">
+            <li>
+              <span className="text-text">A school counselor</span> can see your matches and
+              timeline only if your account is affiliated with a school running the Kairos
+              counselor dashboard, and only that counselor — not the whole school.
+            </li>
+            <li>
+              <span className="text-text">A human-review request</span> is visible to the
+              counselor it&apos;s routed to, and only for the purpose of that review.
+            </li>
+            <li>
+              <span className="text-text">A shared read-only link</span> you create (e.g. for a
+              parent) is visible to anyone holding that specific link, until it expires or you
+              revoke it. Links are long, random, and not guessable or listed anywhere public.
+            </li>
+            <li>
+              <span className="text-text">A mentor or mentee</span> can see your mentor profile
+              only after you both accept a connection request — never before. A shared
+              application&apos;s war room is visible only to you, and to any parent, counselor, or
+              accepted mentor you&apos;ve given access to that specific application.
+            </li>
+          </ul>
         </section>
         <section>
           <h2 className="text-text font-medium mb-2">4. Children&apos;s privacy (COPPA)</h2>

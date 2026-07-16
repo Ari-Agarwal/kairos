@@ -32,11 +32,12 @@ export default function LoginPage() {
       return;
     }
     if (data.user) {
-      const { data: counselor } = await supabase
+      const { data: counselor, error: counselorError } = await supabase
         .from("counselors")
         .select("counselor_id")
         .eq("user_id", data.user.id)
         .maybeSingle();
+      if (counselorError) console.error("login counselor lookup failed:", counselorError);
       if (counselor) {
         router.push("/counselor");
         router.refresh();

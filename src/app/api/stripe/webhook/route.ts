@@ -21,11 +21,12 @@ export async function POST(req: Request) {
   // event more than once (retries on timeout/non-2xx). The handlers below are
   // idempotent on their own, but this avoids redundant work and is required for
   // any future non-idempotent handler.
-  const { data: alreadyProcessed } = await supabase
+  const { data: alreadyProcessed, error: alreadyProcessedError } = await supabase
     .from("processed_stripe_events")
     .select("event_id")
     .eq("event_id", event.id)
     .maybeSingle();
+  if (alreadyProcessedError) console.error("stripe webhook idempotency check failed:", alreadyProcessedError);
   if (alreadyProcessed) return NextResponse.json({ received: true, duplicate: true });
 
   switch (event.type) {
@@ -42,7 +43,8 @@ export async function POST(req: Request) {
       const customer = await getStripe().customers.retrieve(subscription.customer as string);
       const email = "deleted" in customer ? null : customer.email;
       if (email) {
-        const { data } = await supabase.auth.admin.listUsers();
+        const { data, error: listUsersError } = await supabase.auth.admin.listUsers();
+        if (listUsersError) console.error("stripe webhook listUsers failed:", listUsersError);
         const match = data.users.find((u: { id: string; email?: string }) => u.email === email);
         if (match) {
           await supabase.from("profiles").update({ subscription_tier: "free" }).eq("user_id", match.id);
@@ -55,7 +57,8 @@ export async function POST(req: Request) {
       const customer = await getStripe().customers.retrieve(invoice.customer as string);
       const email = "deleted" in customer ? null : customer.email;
       if (email) {
-        const { data } = await supabase.auth.admin.listUsers();
+        const { data, error: listUsersError2 } = await supabase.auth.admin.listUsers();
+        if (listUsersError2) console.error("stripe webhook listUsers failed:", listUsersError2);
         const match = data.users.find((u: { id: string; email?: string }) => u.email === email);
         if (match) {
           await supabase.from("profiles").update({ subscription_tier: "free" }).eq("user_id", match.id);

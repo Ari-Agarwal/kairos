@@ -100,7 +100,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
               aria-label="Account menu"
               aria-haspopup="menu"
               aria-expanded={dropdownOpen}
-              className="flex items-center gap-2 text-left rounded-xl px-1.5 py-1.5 hover:bg-white/5 transition-colors min-w-0"
+              className="flex items-center gap-2 text-left rounded-xl px-1.5 py-1.5 hover:bg-secondary-tint transition-colors min-w-0"
             >
               <div className="w-7 h-7 rounded-full bg-primary text-bg flex items-center justify-center shrink-0">
                 <UserIcon className="w-4 h-4" />
@@ -127,7 +127,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
             <button
               onClick={() => setCollapsed(!collapsed)}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className="shrink-0 rounded-lg p-1.5 text-text-gray hover:text-text hover:bg-white/5 transition-colors"
+              className="shrink-0 rounded-lg p-1.5 text-text-gray hover:text-text hover:bg-secondary-tint transition-colors"
             >
               {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
             </button>
@@ -147,20 +147,20 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
                 <Link
                   href="/profile"
                   onClick={() => setDropdownOpen(false)}
-                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-white/5 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-secondary-tint transition-colors"
                 >
                   <UserIcon className="w-4 h-4" /> Profile
                 </Link>
                 <Link
                   href="/profile?edit=true"
                   onClick={() => setDropdownOpen(false)}
-                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-white/5 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-secondary-tint transition-colors"
                 >
                   <Settings className="w-4 h-4" /> Settings
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-white/5 transition-colors w-full text-left border-t border-border"
+                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-secondary-tint transition-colors w-full text-left border-t border-border"
                 >
                   <LogOut className="w-4 h-4" /> Log Out
                 </button>
@@ -179,13 +179,13 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
                 className={`relative flex items-center gap-3 rounded-xl px-2.5 py-2 transition-colors ${
-                  active ? "text-text font-bold" : "text-text-gray hover:text-text hover:bg-white/5"
+                  active ? "text-text font-bold" : "text-text-gray hover:text-text hover:bg-secondary-tint"
                 }`}
               >
                 {active && (
                   <motion.span
                     layoutId="nav-active-pill"
-                    className="absolute inset-0 rounded-xl bg-white/10"
+                    className="absolute inset-0 rounded-xl bg-active-tint"
                     transition={{ type: "spring", stiffness: 400, damping: 32 }}
                   />
                 )}
@@ -218,7 +218,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
             aria-label="Account menu"
             aria-haspopup="menu"
             aria-expanded={dropdownOpen}
-            className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 hover:bg-white/5 transition-colors"
+            className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 hover:bg-secondary-tint transition-colors"
           >
             <div className="w-6 h-6 rounded-full bg-primary text-bg flex items-center justify-center shrink-0">
               <UserIcon className="w-3.5 h-3.5" />
@@ -239,20 +239,20 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
                 <Link
                   href="/profile"
                   onClick={() => setDropdownOpen(false)}
-                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-white/5 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-secondary-tint transition-colors"
                 >
                   <UserIcon className="w-4 h-4" /> Profile
                 </Link>
                 <Link
                   href="/profile?edit=true"
                   onClick={() => setDropdownOpen(false)}
-                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-white/5 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-secondary-tint transition-colors"
                 >
                   <Settings className="w-4 h-4" /> Settings
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-white/5 transition-colors w-full text-left border-t border-border"
+                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-secondary-tint transition-colors w-full text-left border-t border-border"
                 >
                   <LogOut className="w-4 h-4" /> Log Out
                 </button>
@@ -277,7 +277,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
                 {active && (
                   <motion.span
                     layoutId="nav-active-pill-mobile"
-                    className="absolute inset-x-1 inset-y-0.5 rounded-xl bg-white/10"
+                    className="absolute inset-x-1 inset-y-0.5 rounded-xl bg-active-tint"
                     transition={{ type: "spring", stiffness: 400, damping: 32 }}
                   />
                 )}

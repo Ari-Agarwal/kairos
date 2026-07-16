@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAnthropic, MODEL, schoolMatchingPrompt } from "@/lib/anthropic";
+import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
 import { canRegenerate, weekStart } from "@/lib/access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isTrustedOrigin } from "@/lib/origin-check";
@@ -33,15 +34,26 @@ interface Profile {
   extracurriculars: string[] | null;
   schools_already_considering: string | null;
   test_scores: unknown;
-  campus_size_pref: string;
-  campus_setting_pref: string;
+  sat_score: number | null;
+  act_score: number | null;
+  campus_size_pref: string | null;
+  campus_setting_pref: string | null;
+  class_rank: string | null;
+  ap_ib_count: number | null;
+  career_goals: string | null;
+  geographic_pref: string | null;
+  financial_aid_need: boolean | null;
+  budget_ceiling: number | null;
+  first_gen: boolean | null;
+  legacy_school: string | null;
 }
 
 function missingFields(profile: Profile): string[] {
   const missing: string[] = [];
   if (!profile.intended_major) missing.push("intended major");
   if (!profile.extracurriculars || profile.extracurriculars.length === 0) missing.push("extracurriculars");
-  if (!profile.test_scores) missing.push("test scores");
+  if (!profile.test_scores && !profile.sat_score && !profile.act_score) missing.push("test scores");
+  if (!profile.campus_size_pref || !profile.campus_setting_pref) missing.push("campus preferences");
   return missing;
 }
 
@@ -51,26 +63,34 @@ export async function POST(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = user.id;
 
-  if (!(await checkRateLimit(supabase, `matches:${user.id}`, 5, 60_000)).ok) {
+  if (!(await checkRateLimit(supabase, `matches:${userId}`, 5, 60_000)).ok) {
     return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
+
+  if (profileError) {
+    console.error("matches generate profile query failed:", profileError);
+    return NextResponse.json({ error: "Failed to load profile" }, { status: 500 });
+  }
 
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   const week = weekStart(new Date());
-  const { data: regenRow } = await supabase
+  const { data: regenRow, error: regenRowError } = await supabase
     .from("regeneration_log")
     .select("count")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("week_start_date", week)
     .maybeSingle();
+
+  if (regenRowError) console.error("matches generate regeneration_log query failed:", regenRowError);
 
   const currentCount = regenRow?.count ?? 0;
 
@@ -91,9 +111,18 @@ Interests: ${profile.interests ?? "none given"}
 Current school: ${profile.current_school ?? "missing"}
 Extracurriculars: ${profile.extracurriculars?.join("; ") ?? "missing"}
 Schools already considering: ${profile.schools_already_considering ?? "missing"}
-Test scores: ${profile.test_scores ? JSON.stringify(profile.test_scores) : "missing"}
-Campus size preference: ${profile.campus_size_pref}
-Campus setting preference: ${profile.campus_setting_pref}
+SAT score: ${profile.sat_score ?? "not given"}
+ACT score: ${profile.act_score ?? "not given"}
+Class rank: ${profile.class_rank ?? "not given"}
+AP/IB courses: ${profile.ap_ib_count ?? "not given"}
+Career goals: ${profile.career_goals ?? "not given"}
+Geographic preference: ${profile.geographic_pref ?? "not given"}
+Financial aid need: ${profile.financial_aid_need === null ? "not given" : profile.financial_aid_need ? "yes" : "no"}
+Annual budget ceiling: ${profile.budget_ceiling ?? "not given"}
+First-generation student: ${profile.first_gen === null ? "not given" : profile.first_gen ? "yes" : "no"}
+Legacy school: ${profile.legacy_school ?? "none"}
+Campus size preference: ${profile.campus_size_pref ?? "no preference given"}
+Campus setting preference: ${profile.campus_setting_pref ?? "no preference given"}
 ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
 
   const CATEGORIES = ["reach", "target", "safety"] as const;
@@ -149,8 +178,10 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
     // qualifier makes the model more willing to return nothing than a list it isn't
     // fully confident clears that bar). Telling it plainly that empty is invalid and
     // some real answer is required fixes the retry without touching the base prompt.
+    flagAnomalousUsage("matches/generate", userId);
     let forceNonEmpty = false;
     for (let attempt = 0; attempt < 2; attempt++) {
+      const t0 = Date.now();
       try {
         const response = await getAnthropic().messages.create({
           model: MODEL,
@@ -185,6 +216,7 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
           forceNonEmpty = true;
           throw new Error(`tool_use input.schools was not a populated array for category ${category}`);
         }
+        logAiUsage("matches/generate", userId, MODEL, t0, response);
         // Trust the category the call was scoped to, not the model's echo.
         // Clamp/round the model's percentage so it can't render as e.g. "73.4182%"
         // or drift outside a sane 1-99 admission-chance range.
@@ -194,6 +226,7 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
           percentage: Math.min(99, Math.max(1, Math.round(s.percentage))),
         }));
       } catch (err) {
+        logAiUsage("matches/generate", userId, MODEL, t0, err instanceof Error ? err : new Error(String(err)));
         lastErr = err;
         console.error(`generateCategory(${category}) attempt ${attempt + 1} failed:`, err);
       }
@@ -226,10 +259,10 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
     return true;
   });
 
-  await supabase.from("school_matches").update({ is_active: false }).eq("user_id", user.id);
+  await supabase.from("school_matches").update({ is_active: false }).eq("user_id", userId);
 
   const rows = schools.map((s) => ({
-    user_id: user.id,
+    user_id: userId,
     school_name: s.name,
     category: s.category,
     percentage: s.percentage,
@@ -245,7 +278,7 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
 
   await supabase
     .from("regeneration_log")
-    .upsert({ user_id: user.id, week_start_date: week, count: currentCount + 1 });
+    .upsert({ user_id: userId, week_start_date: week, count: currentCount + 1 });
 
   return NextResponse.json({ ok: true });
 }

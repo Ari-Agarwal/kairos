@@ -12,7 +12,8 @@ export default async function EssayFeedbackPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase.from("profiles").select("subscription_tier").eq("user_id", user.id).maybeSingle();
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("subscription_tier").eq("user_id", user.id).maybeSingle();
+  if (profileError) console.error("essay-feedback profile query failed:", profileError);
   if (!profile) redirect("/onboarding");
 
   const isPremium = profile.subscription_tier === "premium";

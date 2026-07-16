@@ -9,15 +9,17 @@ export default async function IntroPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("user_id")
       .eq("user_id", user.id)
       .maybeSingle();
+    if (profileError) console.error("intro profile query failed:", profileError);
     redirect(profile ? "/dashboard" : "/onboarding");
   }
 
-  const { data: studentCountData } = await supabase.rpc("get_student_count");
+  const { data: studentCountData, error: studentCountError } = await supabase.rpc("get_student_count");
+  if (studentCountError) console.error("student count rpc failed:", studentCountError);
   const studentCount = studentCountData ?? 0;
 
   return (

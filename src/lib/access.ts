@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export type FeatureKey =
   | "career_path_explorer"
   | "essay_feedback"
+  | "activity_evaluation"
   | "unlimited_regenerations"
   | "strategic_timeline_advice";
 
@@ -52,10 +53,11 @@ export async function getCounselorRecord(
   supabase: SupabaseClient,
   userId: string
 ): Promise<CounselorRecord | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("counselors")
     .select("counselor_id, school_id, name, email")
     .eq("user_id", userId)
     .maybeSingle();
+  if (error) console.error("getCounselorRecord query failed:", error);
   return data;
 }

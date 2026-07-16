@@ -1,0 +1,956 @@
+{
+  "_meta": {
+    "cycle": "2026-2027",
+    "source": "https://www.ivywise.com/blog/college-application-deadlines/",
+    "verified_date": "2026-07-15",
+    "note": "Manually curated, source-verified deadlines compiled via parallel research agents (each instructed to omit rather than fabricate unconfirmed dates). Some entries reflect the prior admissions cycle's recurring date pattern where the school had not yet republished exact 2026-27 dates at verification time -- deadlines for ED/EA/RD rounds are highly stable year-to-year at the day level for most schools, but should be re-verified each cycle. Schools not present here fall back to AI-generated general deadline patterns (explicitly labeled as general, not confirmed) in timeline generation."
+  },
+  "schools": [
+    {
+      "school_name": "American University",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Amherst College",
+      "ed_deadline": "2026-11-09",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "Auburn University",
+      "ea_deadline": "2026-12-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Bard College",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Barnard College",
+      "ed_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-11"
+    },
+    {
+      "school_name": "Bates College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-10",
+      "rd_deadline": "2027-01-10"
+    },
+    {
+      "school_name": "Baylor University",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-02-15"
+    },
+    {
+      "school_name": "Beloit College",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Bennington College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-15",
+      "ea_deadline": "2026-12-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Boston College",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-04",
+      "rd_deadline": "2027-01-04"
+    },
+    {
+      "school_name": "Boston University",
+      "ed_deadline": "2026-11-02",
+      "ed2_deadline": "2027-01-05",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "Bowdoin College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-05",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "Brandeis University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Brown University",
+      "ed_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "Bucknell University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-10",
+      "rd_deadline": "2027-01-10"
+    },
+    {
+      "school_name": "Caltech",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "Carleton College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-15",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Carnegie Mellon University",
+      "ed_deadline": "2026-11-02",
+      "rd_deadline": "2027-01-04"
+    },
+    {
+      "school_name": "Case Western Reserve University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-15",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Chapman University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-15",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Claremont McKenna College",
+      "ed_deadline": "2026-11-08",
+      "ed2_deadline": "2027-01-17",
+      "rd_deadline": "2027-01-17"
+    },
+    {
+      "school_name": "Clemson University",
+      "ea_deadline": "2026-10-15",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Colby College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-05",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "Colgate University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-15",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "College of William & Mary",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "College of Wooster",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-15",
+      "ea_deadline": "2026-11-15",
+      "rd_deadline": "2027-02-15"
+    },
+    {
+      "school_name": "Colorado College",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Columbia University",
+      "ed_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Connecticut College",
+      "ed_deadline": "2026-11-15",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Cornell University",
+      "ed_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-02"
+    },
+    {
+      "school_name": "Dartmouth College",
+      "ed_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Davidson College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-04",
+      "rd_deadline": "2027-01-11"
+    },
+    {
+      "school_name": "Denison University",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-15",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "DePaul University",
+      "ea_deadline": "2026-11-15",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Dickinson College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-15",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Drexel University",
+      "ed_deadline": "2026-11-15",
+      "ea_deadline": "2026-11-15",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Duke University",
+      "ed_deadline": "2026-11-02",
+      "rd_deadline": "2027-01-04"
+    },
+    {
+      "school_name": "Elon University",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-10"
+    },
+    {
+      "school_name": "Emory University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Fairfield University",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-15",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Florida State University",
+      "ed_deadline": "2026-10-15",
+      "ea_deadline": "2026-10-15",
+      "rd_deadline": "2026-12-01"
+    },
+    {
+      "school_name": "Fordham University",
+      "ed_deadline": "2026-11-08",
+      "ed2_deadline": "2027-01-03",
+      "ea_deadline": "2026-11-08",
+      "rd_deadline": "2027-01-03"
+    },
+    {
+      "school_name": "Franklin & Marshall College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-15",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "George Washington University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-05",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "Georgetown University",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Georgia Institute of Technology",
+      "ea_deadline": "2026-11-02",
+      "rd_deadline": "2027-01-06"
+    },
+    {
+      "school_name": "Gettysburg College",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-20",
+      "ea_deadline": "2026-11-15",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Grinnell College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-05",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Hamilton College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-04",
+      "rd_deadline": "2027-01-04"
+    },
+    {
+      "school_name": "Harvard University",
+      "rea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Harvey Mudd College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-05",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "Hobart and William Smith Colleges",
+      "ed_deadline": "2026-11-15",
+      "ea_deadline": "2026-11-15",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Hofstra University",
+      "ea_deadline": "2026-11-15"
+    },
+    {
+      "school_name": "Howard University",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Illinois Institute of Technology",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-15",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Indiana University Bloomington",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Ithaca College",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-12-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Johns Hopkins University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-02",
+      "rd_deadline": "2027-01-02"
+    },
+    {
+      "school_name": "Kalamazoo College",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01"
+    },
+    {
+      "school_name": "Kenyon College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-15",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Lafayette College",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-05",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "Lehigh University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Loyola Marymount University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-08",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Loyola University Chicago",
+      "ea_deadline": "2026-11-01"
+    },
+    {
+      "school_name": "Loyola University Maryland",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-15",
+      "ea_deadline": "2026-11-15",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Macalester College",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Marist College",
+      "ea_deadline": "2026-11-15",
+      "rd_deadline": "2027-02-15"
+    },
+    {
+      "school_name": "Marquette University",
+      "ea_deadline": "2026-11-15",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Massachusetts Institute of Technology",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "Miami University Ohio",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Michigan State University",
+      "ea_deadline": "2026-11-01"
+    },
+    {
+      "school_name": "Middlebury College",
+      "ed_deadline": "2026-11-03",
+      "ed2_deadline": "2027-01-05",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "Morehouse College",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-12-15",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Mount Holyoke College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-05",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Muhlenberg College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-02-01",
+      "ea_deadline": "2026-12-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "New York University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-01",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "North Carolina State University",
+      "ea_deadline": "2026-11-01"
+    },
+    {
+      "school_name": "Northeastern University",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Northwestern University",
+      "ed_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-04"
+    },
+    {
+      "school_name": "Oberlin College",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Occidental College",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-10",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-10"
+    },
+    {
+      "school_name": "Ohio State University",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Penn State University",
+      "ea_deadline": "2026-11-01"
+    },
+    {
+      "school_name": "Pepperdine University",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Pomona College",
+      "ed_deadline": "2026-11-08",
+      "ed2_deadline": "2027-01-08",
+      "rd_deadline": "2027-01-08"
+    },
+    {
+      "school_name": "Princeton University",
+      "rea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Providence College",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-15",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Purdue University",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Quinnipiac University",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-15",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Reed College",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Rensselaer Polytechnic Institute",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-05",
+      "ea_deadline": "2026-12-15",
+      "rd_deadline": "2027-01-29"
+    },
+    {
+      "school_name": "Rice University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-04",
+      "rd_deadline": "2027-01-04"
+    },
+    {
+      "school_name": "Rutgers University",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2026-12-01"
+    },
+    {
+      "school_name": "Santa Clara University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-07",
+      "ea_deadline": "2026-11-15",
+      "rd_deadline": "2027-01-07"
+    },
+    {
+      "school_name": "Sarah Lawrence College",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Skidmore College",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-08",
+      "rd_deadline": "2027-01-08"
+    },
+    {
+      "school_name": "Smith College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-05",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Southern Methodist University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-15",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Spelman College",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "St. John's University",
+      "ea_deadline": "2026-12-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "St. Lawrence University",
+      "ea_deadline": "2026-12-01"
+    },
+    {
+      "school_name": "St. Olaf College",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-15",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Stanford University",
+      "rea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "Stevens Institute of Technology",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-15",
+      "ea_deadline": "2026-12-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Swarthmore College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-04",
+      "rd_deadline": "2027-01-04"
+    },
+    {
+      "school_name": "Syracuse University",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-05",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Temple University",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Texas A&M University",
+      "rd_deadline": "2026-12-01"
+    },
+    {
+      "school_name": "Texas Christian University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-02-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Trinity College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-15",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Tufts University",
+      "ed_deadline": "2026-11-02",
+      "ed2_deadline": "2027-01-04",
+      "rd_deadline": "2027-01-04"
+    },
+    {
+      "school_name": "Tulane University",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-10",
+      "ed2_deadline": "2027-01-15",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "University of Alabama",
+      "rd_deadline": "2026-12-05"
+    },
+    {
+      "school_name": "University of Arizona",
+      "ea_deadline": "2026-11-01"
+    },
+    {
+      "school_name": "University of California, Berkeley",
+      "rd_deadline": "2026-11-30"
+    },
+    {
+      "school_name": "University of California, Davis",
+      "rd_deadline": "2026-11-30"
+    },
+    {
+      "school_name": "University of California, Irvine",
+      "rd_deadline": "2026-11-30"
+    },
+    {
+      "school_name": "University of California, Los Angeles",
+      "rd_deadline": "2026-11-30"
+    },
+    {
+      "school_name": "University of California, San Diego",
+      "rd_deadline": "2026-11-30"
+    },
+    {
+      "school_name": "University of California, Santa Barbara",
+      "rd_deadline": "2026-11-30"
+    },
+    {
+      "school_name": "University of California, Santa Cruz",
+      "rd_deadline": "2026-11-30"
+    },
+    {
+      "school_name": "University of Central Florida",
+      "rd_deadline": "2026-11-01"
+    },
+    {
+      "school_name": "University of Chicago",
+      "ed_deadline": "2026-11-02",
+      "ea_deadline": "2026-11-02",
+      "ed2_deadline": "2027-01-04",
+      "rd_deadline": "2027-01-04"
+    },
+    {
+      "school_name": "University of Colorado Boulder",
+      "ea_deadline": "2026-11-15",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "University of Connecticut",
+      "ed_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "University of Dayton",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "University of Delaware",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "University of Denver",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-15",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "University of Florida",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "University of Georgia",
+      "ea_deadline": "2026-10-15"
+    },
+    {
+      "school_name": "University of Illinois Urbana-Champaign",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "University of Kentucky",
+      "ea_deadline": "2026-12-01",
+      "rd_deadline": "2027-02-15"
+    },
+    {
+      "school_name": "University of Maryland",
+      "ea_deadline": "2026-11-01"
+    },
+    {
+      "school_name": "University of Massachusetts Amherst",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-15",
+      "rd_deadline": "2027-02-15"
+    },
+    {
+      "school_name": "University of Miami",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-05",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "University of Michigan",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "University of Minnesota Twin Cities",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "University of North Carolina at Chapel Hill",
+      "ea_deadline": "2026-10-15",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "University of Notre Dame",
+      "rea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-02"
+    },
+    {
+      "school_name": "University of Oregon",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "University of Pennsylvania",
+      "ed_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "University of Pittsburgh",
+      "rd_deadline": "2026-12-01"
+    },
+    {
+      "school_name": "University of Puget Sound",
+      "ea_deadline": "2026-11-01"
+    },
+    {
+      "school_name": "University of Redlands",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "University of Rhode Island",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-12-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "University of Rochester",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-05",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "University of San Diego",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "University of South Carolina",
+      "ea_deadline": "2026-10-15",
+      "rd_deadline": "2026-12-01"
+    },
+    {
+      "school_name": "University of South Florida",
+      "ea_deadline": "2026-11-02",
+      "rd_deadline": "2026-12-16"
+    },
+    {
+      "school_name": "University of Southern California",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-10"
+    },
+    {
+      "school_name": "University of Tennessee Knoxville",
+      "ea_deadline": "2026-11-01"
+    },
+    {
+      "school_name": "University of Texas at Austin",
+      "ea_deadline": "2026-10-15",
+      "rd_deadline": "2026-12-01"
+    },
+    {
+      "school_name": "University of Vermont",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-15",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "University of Virginia",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "University of Washington",
+      "rd_deadline": "2026-11-15"
+    },
+    {
+      "school_name": "University of Wisconsin-Madison",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Ursinus College",
+      "ed_deadline": "2026-12-01",
+      "ed2_deadline": "2027-02-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Vanderbilt University",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Vassar College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Villanova University",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Virginia Tech",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Wake Forest University",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Washington University in St. Louis",
+      "ed_deadline": "2026-11-02",
+      "ea_deadline": "2026-11-02",
+      "ed2_deadline": "2027-01-04",
+      "rd_deadline": "2027-01-04"
+    },
+    {
+      "school_name": "Wellesley College",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-05",
+      "rd_deadline": "2027-01-08"
+    },
+    {
+      "school_name": "Wesleyan University",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-01",
+      "rd_deadline": "2027-01-01"
+    },
+    {
+      "school_name": "Whitman College",
+      "ed_deadline": "2026-11-15",
+      "ed2_deadline": "2027-01-10",
+      "ea_deadline": "2026-12-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Willamette University",
+      "ed_deadline": "2026-11-01",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-15"
+    },
+    {
+      "school_name": "Williams College",
+      "ed_deadline": "2026-11-15",
+      "rd_deadline": "2027-01-05"
+    },
+    {
+      "school_name": "Worcester Polytechnic Institute",
+      "ed_deadline": "2026-11-01",
+      "ed2_deadline": "2027-01-05",
+      "ea_deadline": "2026-11-01",
+      "rd_deadline": "2027-02-01"
+    },
+    {
+      "school_name": "Yale University",
+      "rea_deadline": "2026-11-01",
+      "rd_deadline": "2027-01-02"
+    }
+  ]
+}

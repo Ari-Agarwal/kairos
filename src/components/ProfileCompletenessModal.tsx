@@ -3,34 +3,22 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getMissingFields, type CompletenessProfile } from "@/lib/profile-completeness";
 
 const FIELD_LABELS: Record<string, string> = {
   intended_major: "Intended Major",
   extracurriculars: "Extracurriculars",
   schools_already_considering: "Schools You're Already Considering",
   test_scores: "Test Scores",
+  career_goals: "Career Goals",
+  class_rank: "Class Rank",
+  campus_size_pref: "Campus Size Preference",
+  campus_setting_pref: "Campus Setting Preference",
 };
-
-interface Profile {
-  intended_major: string | null;
-  extracurriculars: string[] | null;
-  schools_already_considering: string | null;
-  test_scores: unknown;
-}
-
-export function getMissingFields(profile: Profile | null | undefined): string[] {
-  if (!profile) return [];
-  const missing: string[] = [];
-  if (!profile.intended_major) missing.push("intended_major");
-  if (!profile.extracurriculars || profile.extracurriculars.length === 0) missing.push("extracurriculars");
-  if (!profile.schools_already_considering) missing.push("schools_already_considering");
-  if (!profile.test_scores) missing.push("test_scores");
-  return missing;
-}
 
 const DISMISS_KEY = "telos_completeness_dismissed";
 
-export default function ProfileCompletenessModal({ profile }: { profile: Profile | null | undefined }) {
+export default function ProfileCompletenessModal({ profile }: { profile: CompletenessProfile | null | undefined }) {
   const router = useRouter();
   const [dismissed, setDismissed] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -48,7 +36,7 @@ export default function ProfileCompletenessModal({ profile }: { profile: Profile
   if (!mounted || missing.length === 0 || dismissed) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-bg/50">
       <div
         role="dialog"
         aria-modal="true"

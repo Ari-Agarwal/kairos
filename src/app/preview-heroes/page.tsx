@@ -47,7 +47,7 @@ function SplineSceneMock() {
         className="absolute inset-0 opacity-40"
         style={{
           background:
-            "radial-gradient(circle at 70% 50%, rgba(139,127,232,0.25), transparent 60%)",
+            "radial-gradient(circle at 70% 50%, var(--premium-tint), transparent 60%)",
         }}
       />
       <div className="relative z-10 max-w-5xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-10 items-center w-full">
@@ -114,7 +114,7 @@ function HeroSectionDarkMock() {
         className="absolute inset-0"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(139,127,232,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(139,127,232,0.15) 1px, transparent 1px)",
+            "linear-gradient(rgba(177,138,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(177,138,255,0.15) 1px, transparent 1px)",
           backgroundSize: "40px 40px",
           transform: "perspective(500px) rotateX(60deg) scale(2)",
           transformOrigin: "top",
@@ -124,7 +124,7 @@ function HeroSectionDarkMock() {
       <div
         className="absolute inset-0"
         style={{
-          background: "radial-gradient(circle at 50% 0%, rgba(139,127,232,0.3), transparent 50%)",
+          background: "radial-gradient(circle at 50% 0%, rgba(177,138,255,0.3), transparent 50%)",
         }}
       />
       <div className="relative z-10 text-center max-w-2xl py-20">

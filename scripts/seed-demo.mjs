@@ -51,7 +51,7 @@ const STUDENT_PASSWORD = "DemoPass123!";
 
 const FIRST_NAMES = ["Ava", "Liam", "Maya", "Noah", "Zoe", "Ethan", "Priya", "Lucas", "Nina", "Omar"];
 const MAJORS = ["Computer Science", "Biology", "Business", "Psychology", "Mechanical Engineering", "Economics", "Nursing", "English", "Political Science", "Art History"];
-const SCHOOLS = ["Stanford", "UMich", "UT Austin", "NYU", "UCLA", "Georgia Tech", "Boston University", "Purdue", "UNC Chapel Hill", "Ohio State"];
+const SCHOOLS = ["Stanford", "University of Michigan", "UT Austin", "NYU", "UCLA", "Georgia Tech", "Boston University", "Purdue", "UNC Chapel Hill", "Ohio State"];
 const GRADES = ["Freshman", "Sophomore", "Junior", "Senior"];
 
 async function main() {

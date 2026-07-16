@@ -4,8 +4,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
+import { CalendarDays } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import GenerationProgress from "@/components/GenerationProgress";
+import { buildBulkIcs, downloadIcs } from "@/lib/ics";
 
 interface TimelineItem {
   id: string;
@@ -174,6 +176,18 @@ export default function TimelineClient({
             Regenerate
           </button>
           <button
+            onClick={() => {
+              const upcoming = items.filter((i): i is TimelineItem & { due_date: string } => !!i.due_date && !i.completed);
+              if (upcoming.length === 0) return;
+              downloadIcs(buildBulkIcs(upcoming), "kairos-timeline.ics");
+            }}
+            title="Download all upcoming deadlines as a .ics file"
+            className="rounded-xl border border-border text-text-gray hover:text-text text-sm font-medium px-3 py-1.5 transition-colors flex items-center gap-1.5"
+          >
+            <CalendarDays className="size-3.5" />
+            Sync
+          </button>
+          <button
             onClick={() => setEditing((e) => !e)}
             className="rounded-xl border border-border text-text-gray hover:text-text text-sm font-medium px-3 py-1.5 transition-colors"
           >
@@ -259,13 +273,13 @@ export default function TimelineClient({
                 <>
                   {/* soft beacon halo — the lighthouse, made literal */}
                   <motion.div
-                    className="absolute -left-[41px] top-0 h-8 w-8 rounded-full bg-white/25 blur-md"
+                    className="absolute -left-[41px] top-0 h-8 w-8 rounded-full bg-primary/25 blur-md"
                     animate={reduceMotion ? undefined : { opacity: [0.5, 0.95, 0.5], scale: [0.9, 1.1, 0.9] }}
                     transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
                   />
                   <motion.div
-                    className="absolute -left-[33px] top-2 w-4 h-4 rounded-full bg-text border border-text"
-                    animate={reduceMotion ? undefined : { boxShadow: ["0 0 0 0 rgba(255,255,255,0.5)", "0 0 0 8px rgba(255,255,255,0)"] }}
+                    className="absolute -left-[33px] top-2 w-4 h-4 rounded-full bg-primary border border-primary"
+                    animate={reduceMotion ? undefined : { boxShadow: ["0 0 0 0 var(--amber-glow-ring)", "0 0 0 8px var(--amber-glow-ring-fade)"] }}
                     transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
                   />
                 </>
@@ -289,7 +303,7 @@ export default function TimelineClient({
                 href={locked ? "/upgrade" : `/timeline/${item.id}`}
                 className={`group block rounded-2xl p-5 border transition-all hover:-translate-y-0.5 ${
                   isHere
-                    ? "bg-card border-primary/40 shadow-[0_0_24px_-8px_rgba(255,255,255,0.25)]"
+                    ? "bg-card border-primary/40 shadow-[0_0_24px_-8px_var(--amber-glow-shadow)]"
                     : item.is_strategic
                     ? "bg-premium-tint border-dashed border-premium hover:border-premium"
                     : "bg-card border-border hover:border-primary/40"

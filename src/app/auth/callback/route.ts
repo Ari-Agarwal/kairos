@@ -18,11 +18,12 @@ export async function GET(request: Request) {
     if (!error) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("user_id")
           .eq("user_id", user.id)
           .maybeSingle();
+        if (profileError) console.error("auth callback profile query failed:", profileError);
         return NextResponse.redirect(`${origin}${profile ? "/dashboard" : "/onboarding"}`);
       }
     }

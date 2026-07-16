@@ -9,13 +9,14 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: item } = await supabase
+  const { data: item, error: itemError } = await supabase
     .from("timeline_items")
     .select("*")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
 
+  if (itemError) console.error("task detail item query failed:", itemError);
   if (!item) notFound();
 
   return (

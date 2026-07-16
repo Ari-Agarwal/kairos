@@ -3,8 +3,11 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import NavShell from "@/components/NavShell";
 import ProfileCompletenessModal from "@/components/ProfileCompletenessModal";
+import { getMissingFields } from "@/lib/profile-completeness";
+import LivingProfileNudge from "@/components/LivingProfileNudge";
 import CountUp from "@/components/CountUp";
 import GenerateTimelineCard from "./GenerateTimelineCard";
+import HumanReviewCard from "@/components/HumanReviewCard";
 
 const CATEGORY_STYLES: Record<string, string> = {
   reach: "bg-red-tint text-red",
@@ -22,33 +25,40 @@ export default async function DashboardPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+  if (profileError) console.error("dashboard profile query failed:", profileError);
   if (!profile) redirect("/onboarding");
 
-  const { count: activeMatchCount } = await supabase
+  const { count: activeMatchCount, error: activeMatchCountError } = await supabase
     .from("school_matches")
     .select("id", { count: "exact", head: true })
     .eq("user_id", user.id)
     .eq("is_active", true);
 
-  const { data: activeMatches } = await supabase
+  if (activeMatchCountError) console.error("dashboard active match count query failed:", activeMatchCountError);
+
+  const { data: activeMatches, error: activeMatchesError } = await supabase
     .from("school_matches")
     .select("school_name, category, percentage")
     .eq("user_id", user.id)
     .eq("is_active", true)
     .order("percentage", { ascending: false });
 
+  if (activeMatchesError) console.error("dashboard active matches query failed:", activeMatchesError);
+
   const CATEGORY_ORDER = ["reach", "target", "safety"] as const;
   const topMatches = CATEGORY_ORDER
     .map((category) => activeMatches?.find((m) => m.category === category))
     .filter((m): m is NonNullable<typeof m> => Boolean(m));
 
-  const { count: timelineItemCount } = await supabase
+  const { count: timelineItemCount, error: timelineItemCountError } = await supabase
     .from("timeline_items")
     .select("id", { count: "exact", head: true })
     .eq("user_id", user.id);
 
-  const { data: upcomingTasks } = await supabase
+  if (timelineItemCountError) console.error("dashboard timeline item count query failed:", timelineItemCountError);
+
+  const { data: upcomingTasks, error: upcomingTasksError } = await supabase
     .from("timeline_items")
     .select("id, title, due_date")
     .eq("user_id", user.id)
@@ -56,11 +66,14 @@ export default async function DashboardPage({
     .order("due_date", { ascending: true, nullsFirst: false })
     .limit(3);
 
+  if (upcomingTasksError) console.error("dashboard upcoming tasks query failed:", upcomingTasksError);
+
   const name = (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] || "there";
 
   return (
     <NavShell>
       <ProfileCompletenessModal profile={profile} />
+      {getMissingFields(profile).length === 0 && <LivingProfileNudge profile={profile} />}
       <div className="px-5 md:px-8 py-10 max-w-3xl mx-auto w-full">
         <h1 className="reveal font-serif text-3xl text-text mb-2">Welcome, {name}.</h1>
         <p className="reveal text-text-gray text-sm mb-8" style={{ ["--reveal-delay" as string]: "0.06s" }}>
@@ -167,6 +180,10 @@ export default async function DashboardPage({
             </Link>
           )}
         </div>
+        <HumanReviewCard />
+        <Link href="/mock-interview" className="text-text-gray hover:text-text text-sm underline underline-offset-2">
+          Practice a mock interview →
+        </Link>
       </div>
     </NavShell>
   );

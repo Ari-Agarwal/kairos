@@ -18,27 +18,32 @@ export default async function MatchesPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+  if (profileError) console.error("matches profile query failed:", profileError);
   if (!profile) redirect("/onboarding");
 
-  const { data: matchRows } = await supabase
+  const { data: matchRows, error: matchRowsError } = await supabase
     .from("school_matches")
     .select("*")
     .eq("user_id", user.id)
     .eq("is_active", true)
     .order("percentage", { ascending: false });
 
+  if (matchRowsError) console.error("matches school_matches query failed:", matchRowsError);
+
   const CATEGORY_ORDER: Record<string, number> = { reach: 0, target: 1, safety: 2 };
   const matches = matchRows
     ? [...matchRows].sort((a, b) => CATEGORY_ORDER[a.category] - CATEGORY_ORDER[b.category])
     : matchRows;
 
-  const { data: regenRow } = await supabase
+  const { data: regenRow, error: regenRowError } = await supabase
     .from("regeneration_log")
     .select("count")
     .eq("user_id", user.id)
     .eq("week_start_date", weekStart())
     .maybeSingle();
+
+  if (regenRowError) console.error("matches regeneration_log query failed:", regenRowError);
 
   const isPremium = profile.subscription_tier === "premium";
   const remaining = isPremium ? null : Math.max(0, 3 - (regenRow?.count ?? 0));

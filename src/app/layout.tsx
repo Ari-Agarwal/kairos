@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { MotionConfig } from "framer-motion";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kairosadmissions.vercel.app";
@@ -34,7 +35,10 @@ export default function RootLayout({
         className="min-h-full flex flex-col bg-bg text-text"
         style={{ fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" }}
       >
-        {children}
+        {/* "user" mode: every framer-motion animation in the app respects the
+            OS prefers-reduced-motion setting automatically, instead of relying
+            on each component to check useReducedMotion() itself. */}
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
         <Analytics />
         <SpeedInsights />
       </body>

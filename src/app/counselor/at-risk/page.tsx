@@ -17,16 +17,20 @@ export default async function AtRiskPage() {
   const counselor = await getCounselorRecord(supabase, user.id);
   if (!counselor) redirect("/dashboard");
 
-  const { data: school } = await supabase
+  const { data: school, error: schoolError } = await supabase
     .from("schools")
     .select("name")
     .eq("school_id", counselor.school_id)
     .maybeSingle();
 
-  const { data: profiles } = await supabase
+  if (schoolError) console.error("at-risk school query failed:", schoolError);
+
+  const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
     .select("*")
     .eq("school_id", counselor.school_id);
+
+  if (profilesError) console.error("at-risk profiles query failed:", profilesError);
 
   const studentIds = (profiles ?? []).map((p) => p.user_id);
 

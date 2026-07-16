@@ -14,33 +14,41 @@ export default async function AggregatePage() {
   const counselor = await getCounselorRecord(supabase, user.id);
   if (!counselor) redirect("/dashboard");
 
-  const { data: school } = await supabase
+  const { data: school, error: schoolError } = await supabase
     .from("schools")
     .select("name")
     .eq("school_id", counselor.school_id)
     .maybeSingle();
 
-  const { data: profiles } = await supabase
+  if (schoolError) console.error("counselor aggregate school query failed:", schoolError);
+
+  const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
     .select("*")
     .eq("school_id", counselor.school_id);
 
+  if (profilesError) console.error("counselor aggregate profiles query failed:", profilesError);
+
   const studentIds = (profiles ?? []).map((p) => p.user_id);
 
-  const { data: matches } = studentIds.length
+  const { data: matches, error: matchesError } = studentIds.length
     ? await supabase
         .from("school_matches")
         .select("user_id, school_name, category")
         .in("user_id", studentIds)
         .eq("is_active", true)
-    : { data: [] };
+    : { data: [], error: null };
 
-  const { data: timelineItems } = studentIds.length
+  if (matchesError) console.error("counselor aggregate matches query failed:", matchesError);
+
+  const { data: timelineItems, error: timelineError } = studentIds.length
     ? await supabase
         .from("timeline_items")
         .select("user_id, completed, is_strategic")
         .in("user_id", studentIds)
-    : { data: [] };
+    : { data: [], error: null };
+
+  if (timelineError) console.error("counselor aggregate timeline query failed:", timelineError);
 
   const completionByUser = new Map<string, { total: number; done: number }>();
   for (const item of timelineItems ?? []) {

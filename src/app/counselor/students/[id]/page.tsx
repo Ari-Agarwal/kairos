@@ -13,27 +13,32 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   const counselor = await getCounselorRecord(supabase, user.id);
   if (!counselor) redirect("/dashboard");
 
-  const { data: school } = await supabase
+  const { data: school, error: schoolError } = await supabase
     .from("schools")
     .select("name")
     .eq("school_id", counselor.school_id)
     .maybeSingle();
 
-  const { data: profile } = await supabase
+  if (schoolError) console.error("student detail school query failed:", schoolError);
+
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*")
     .eq("user_id", id)
     .eq("school_id", counselor.school_id)
     .maybeSingle();
 
+  if (profileError) console.error("student detail profile query failed:", profileError);
+
   if (!profile) notFound();
 
   const serviceClient = createServiceClient();
-  const { data: authUser } = await serviceClient.auth.admin.getUserById(id);
+  const { data: authUser, error: authUserError } = await serviceClient.auth.admin.getUserById(id);
+  if (authUserError) console.error("student detail auth user lookup failed:", authUserError);
   const studentName =
     (authUser.user?.user_metadata?.full_name as string | undefined) ?? authUser.user?.email ?? "Student";
 
-  const { data: matches } = await supabase
+  const { data: matches, error: matchesError } = await supabase
     .from("school_matches")
     .select("*")
     .eq("user_id", id)
@@ -41,18 +46,24 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
     .order("category", { ascending: false })
     .order("percentage", { ascending: false });
 
-  const { data: timelineItems } = await supabase
+  if (matchesError) console.error("student detail matches query failed:", matchesError);
+
+  const { data: timelineItems, error: timelineError } = await supabase
     .from("timeline_items")
     .select("*")
     .eq("user_id", id)
     .order("due_date", { ascending: true, nullsFirst: false });
 
-  const { data: note } = await supabase
+  if (timelineError) console.error("student detail timeline query failed:", timelineError);
+
+  const { data: note, error: noteError } = await supabase
     .from("counselor_notes")
     .select("*")
     .eq("counselor_id", counselor.counselor_id)
     .eq("student_user_id", id)
     .maybeSingle();
+
+  if (noteError) console.error("student detail note query failed:", noteError);
 
   return (
     <CounselorNavShell schoolName={school?.name ?? "Your School"}>

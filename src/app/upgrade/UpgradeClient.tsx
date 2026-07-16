@@ -64,10 +64,10 @@ export default function UpgradeClient({
         </div>
       ) : (
         <div className="bg-card border border-border rounded-2xl p-6 text-center mb-8">
-          <p className="text-text font-medium">Premium is on the way.</p>
+          <p className="text-text font-medium">Premium isn&apos;t open to new sign-ups yet.</p>
           <p className="text-text-gray text-sm mt-1 mb-4">
-            We&apos;re putting the finishing touches on it. Everything in the free tier is
-            yours in the meantime.
+            We&apos;re rolling it out gradually. Everything in the free tier is yours in the
+            meantime.
           </p>
           <button
             onClick={handleNotifyMe}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAnthropic, MODEL, extractJson } from "@/lib/anthropic";
+import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
 import { canAccessFeature } from "@/lib/access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
@@ -33,7 +34,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
   }
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
+  if (profileError) {
+    console.error("career-path profile query failed:", profileError);
+    return NextResponse.json({ error: "Failed to load profile" }, { status: 500 });
+  }
   if (!canAccessFeature(profile, "career_path_explorer")) {
     return NextResponse.json({ error: "Career Path is a Premium feature." }, { status: 403 });
   }
@@ -48,6 +53,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
+  flagAnomalousUsage("career-path", user.id);
+  const t0 = Date.now();
   try {
     const response = await getAnthropic().messages.create({
       model: MODEL,
@@ -61,9 +68,11 @@ export async function POST(req: Request) {
         },
       ],
     });
+    logAiUsage("career-path", user.id, MODEL, t0, response);
     const text = response.content.find((b) => b.type === "text")?.text ?? "";
     return NextResponse.json(extractJson(text));
-  } catch {
+  } catch (err) {
+    logAiUsage("career-path", user.id, MODEL, t0, err instanceof Error ? err : new Error(String(err)));
     return NextResponse.json({ error: "Failed to generate career path. Please try again." }, { status: 502 });
   }
 }
