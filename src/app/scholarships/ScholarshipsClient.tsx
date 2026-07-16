@@ -1,36 +1,68 @@
 "use client";
 
 import { useState } from "react";
-import type { Scholarship } from "@/lib/scholarships";
+import type { Scholarship, ScholarshipCategory } from "@/lib/scholarships";
+import { SCHOLARSHIP_CATEGORIES } from "@/lib/scholarships";
 
 interface ScholarshipWithMatch extends Scholarship {
   likelyMatch: boolean;
+  category: ScholarshipCategory;
 }
 
 export default function ScholarshipsClient({ scholarships }: { scholarships: ScholarshipWithMatch[] }) {
   const [showMatchesOnly, setShowMatchesOnly] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<ScholarshipCategory | "all">("all");
   const hasMatches = scholarships.some((s) => s.likelyMatch);
-  const visible = showMatchesOnly ? scholarships.filter((s) => s.likelyMatch) : scholarships;
+
+  const categoryCounts = SCHOLARSHIP_CATEGORIES.reduce<Record<string, number>>((acc, c) => {
+    acc[c] = scholarships.filter((s) => s.category === c).length;
+    return acc;
+  }, {});
+
+  let visible = showMatchesOnly ? scholarships.filter((s) => s.likelyMatch) : scholarships;
+  if (activeCategory !== "all") visible = visible.filter((s) => s.category === activeCategory);
 
   return (
     <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
       <h1 className="font-serif text-2xl text-text mb-2">Scholarships</h1>
       <p className="text-text-gray text-sm mb-4 leading-relaxed">
-        National scholarships worth applying to. Deadline windows are approximate — exact dates
-        shift a little every cycle, so confirm the current date on the official site before you rely
-        on it.
+        National scholarships worth applying to, grouped by type since there are too many to scroll
+        through one by one. Deadline windows are approximate — exact dates shift a little every
+        cycle, so confirm the current date on the official site before you rely on it.
       </p>
 
       {hasMatches && (
         <button
           onClick={() => setShowMatchesOnly((v) => !v)}
-          className={`mb-5 text-sm px-3 py-1.5 rounded-full border transition-colors ${
+          className={`mb-3 text-sm px-3 py-1.5 rounded-full border transition-colors ${
             showMatchesOnly ? "bg-primary text-bg border-primary" : "border-border text-text-gray hover:text-text"
           }`}
         >
           {showMatchesOnly ? "Showing likely matches" : "Show likely matches only"}
         </button>
       )}
+
+      <div className="flex flex-wrap gap-2 mb-5">
+        <button
+          onClick={() => setActiveCategory("all")}
+          className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+            activeCategory === "all" ? "bg-primary text-bg border-primary" : "border-border text-text-gray hover:text-text"
+          }`}
+        >
+          All ({scholarships.length})
+        </button>
+        {SCHOLARSHIP_CATEGORIES.map((c) => (
+          <button
+            key={c}
+            onClick={() => setActiveCategory(c)}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              activeCategory === c ? "bg-primary text-bg border-primary" : "border-border text-text-gray hover:text-text"
+            }`}
+          >
+            {c} ({categoryCounts[c]})
+          </button>
+        ))}
+      </div>
 
       <div className="space-y-3">
         {visible.map((s) => (
@@ -43,7 +75,7 @@ export default function ScholarshipsClient({ scholarships }: { scholarships: Sch
                 </span>
               )}
             </div>
-            <p className="text-text-gray text-xs mb-2">{s.organization}</p>
+            <p className="text-text-gray text-xs mb-2">{s.organization} · {s.category}</p>
             <p className="text-text-gray text-sm mb-3 leading-relaxed">{s.eligibility_summary}</p>
             <div className="flex flex-wrap gap-4 text-xs text-text-gray mb-3">
               {s.award_amount && <span>Award: {s.award_amount}</span>}
@@ -59,6 +91,9 @@ export default function ScholarshipsClient({ scholarships }: { scholarships: Sch
             </a>
           </div>
         ))}
+        {visible.length === 0 && (
+          <p className="text-text-gray text-sm text-center py-8">No scholarships in this category yet.</p>
+        )}
       </div>
     </div>
   );

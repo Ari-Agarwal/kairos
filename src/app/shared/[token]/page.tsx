@@ -1,6 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import ParentWarRoomThread from "./ParentWarRoomThread";
 
 const CATEGORY_STYLES: Record<string, { badge: string; label: string }> = {
   reach:  { badge: "bg-red-tint text-red",                         label: "Reach"  },
@@ -122,8 +121,7 @@ export default async function SharedView({
                         </span>
                       </div>
                     </div>
-                    <p className="text-text-gray text-sm leading-relaxed mb-3">{m.why_text}</p>
-                    <ParentWarRoomThread token={token} schoolMatchId={m.id} />
+                    <p className="text-text-gray text-sm leading-relaxed">{m.why_text}</p>
                   </div>
                 );
               })}

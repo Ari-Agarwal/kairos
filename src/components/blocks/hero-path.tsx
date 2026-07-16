@@ -61,7 +61,7 @@ const POINT_FRAGMENT = `
     // twinkle modulates the ambient brightness; the sweep/comet boost adds on top
     float ambient = 0.28 + 0.34 * vTwinkle;
     float alpha = smoothstep(0.5, 0.0, d) * vFade * (ambient + vBoost * 0.55);
-    vec3 color = mix(vec3(0.64, 0.64, 0.66), vec3(0.98, 0.98, 0.98), clamp(vBoost + vTwinkle * 0.25, 0.0, 1.0));
+    vec3 color = mix(vec3(0.55, 0.55, 0.56), vec3(0.165, 0.18, 0.188), clamp(vBoost + vTwinkle * 0.25, 0.0, 1.0));
     gl_FragColor = vec4(color, alpha);
   }
 `;
@@ -106,9 +106,9 @@ function makeGlowTexture() {
   canvas.height = size;
   const ctx = canvas.getContext("2d")!;
   const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  g.addColorStop(0, "rgba(250,250,250,1)");
-  g.addColorStop(0.25, "rgba(250,250,250,0.55)");
-  g.addColorStop(1, "rgba(250,250,250,0)");
+  g.addColorStop(0, "rgba(42,46,48,1)");
+  g.addColorStop(0.25, "rgba(42,46,48,0.55)");
+  g.addColorStop(1, "rgba(42,46,48,0)");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, size, size);
   return new THREE.CanvasTexture(canvas);
@@ -213,7 +213,7 @@ function Scene({ pointer }: { pointer: React.RefObject<{ x: number; y: number }>
       </points>
 
       <mesh ref={tubeRef} geometry={path.tube}>
-        <meshBasicMaterial color="#FAFAFA" transparent opacity={0.95} />
+        <meshBasicMaterial color="#2A2E30" transparent opacity={0.95} />
       </mesh>
 
       {/* comet riding the path tip during draw-in */}
@@ -248,15 +248,15 @@ function PathFallback() {
           [20, 30], [55, 95], [90, 20], [120, 130], [150, 55], [200, 100],
           [35, 130], [175, 25], [220, 45], [70, 60], [140, 90], [105, 75],
         ].map(([x, y], i) => (
-          <circle key={i} cx={x} cy={y} r="1.6" fill="#A3A3A3" />
+          <circle key={i} cx={x} cy={y} r="1.6" fill="#94A3B8" />
         ))}
         <path
           d="M10 140 C 60 120, 90 100, 130 85 S 200 60, 226 42"
-          stroke="#FAFAFA"
+          stroke="#2A2E30"
           strokeWidth="1.2"
         />
-        <path d="M226 42 L196 22 M226 42 L206 62" stroke="#FAFAFA" strokeWidth="0.6" opacity="0.5" />
-        <circle cx="226" cy="42" r="4" fill="#FAFAFA" />
+        <path d="M226 42 L196 22 M226 42 L206 62" stroke="#2A2E30" strokeWidth="0.6" opacity="0.5" />
+        <circle cx="226" cy="42" r="4" fill="#2A2E30" />
       </svg>
     </div>
   );
@@ -329,7 +329,7 @@ export function HeroPath() {
             }
           }}
         >
-          <color attach="background" args={["#0A0A0A"]} />
+          <color attach="background" args={["#FAF7F2"]} />
           <Scene pointer={pointer} />
         </Canvas>
       </WebGLErrorBoundary>

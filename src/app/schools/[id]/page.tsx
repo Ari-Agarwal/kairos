@@ -46,7 +46,6 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
         stats={stats}
         cohortStats={cohortStats}
         financialAidNeed={profile?.financial_aid_need ?? null}
-        currentUserId={user.id}
       />
     </NavShell>
   );

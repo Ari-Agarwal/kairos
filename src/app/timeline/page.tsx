@@ -86,7 +86,6 @@ export default async function TimelinePage() {
         isPremium={isPremium}
         youAreHereId={youAreHereId}
         remaining={remaining}
-        profile={profile}
       />
     </NavShell>
   );

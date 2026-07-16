@@ -59,6 +59,7 @@ export default function OnboardingPage() {
   const [satScore, setSatScore] = useState("");
   const [actScore, setActScore] = useState("");
   const [noTestYet, setNoTestYet] = useState(false);
+  const [financialAidNeed, setFinancialAidNeed] = useState<boolean | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -193,6 +194,7 @@ export default function OnboardingPage() {
       sat_score: satScore ? parseInt(satScore, 10) : null,
       act_score: actScore ? parseInt(actScore, 10) : null,
       career_goals: careerGoals || null,
+      financial_aid_need: financialAidNeed,
     });
 
     if (error) {
@@ -222,7 +224,7 @@ export default function OnboardingPage() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
         <div className="animate-pulse" role="status">
-          <p className="font-serif text-2xl text-text mb-2">Building your personalized list...</p>
+          <p className="font-serif text-2xl text-text mb-2">Thanks for the information! Now let&apos;s find some colleges for you.</p>
           <p className="text-text-gray text-sm">This takes a moment, we&apos;re matching you against real schools.</p>
         </div>
         <GenerationProgress />
@@ -233,9 +235,10 @@ export default function OnboardingPage() {
   const inputClass =
     "w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary transition-colors";
 
-  const rounds: { title: string; fields: React.ReactNode }[] = [
+  const rounds: { title: string; blurb: string; fields: React.ReactNode }[] = [
     {
       title: "The basics",
+      blurb: "Let's start simple — a little about you and where you're at.",
       fields: (
         <>
           <div>
@@ -310,6 +313,7 @@ export default function OnboardingPage() {
     },
     {
       title: "Major & interests",
+      blurb: "What lights you up? Even a rough guess helps.",
       fields: (
         <>
           <div>
@@ -368,6 +372,7 @@ export default function OnboardingPage() {
     },
     {
       title: "Extracurriculars",
+      blurb: "Tell us what you actually spend your time on — depth beats a long list.",
       fields: (
         <div>
           <span id="ob-activities-label" className="block text-sm text-text-gray mb-1">Your activities</span>
@@ -427,6 +432,7 @@ export default function OnboardingPage() {
     },
     {
       title: "Test scores",
+      blurb: "Almost there — this is the last stretch.",
       fields: (
         <>
           <p className="text-text-gray text-xs -mt-2">
@@ -470,6 +476,28 @@ export default function OnboardingPage() {
             />
             Haven&apos;t taken one yet
           </label>
+          <div>
+            <span className="block text-sm text-text-gray mb-1">Is tuition cost a factor in your search?</span>
+            <div className="flex gap-2">
+              {[
+                { label: "Yes", value: true },
+                { label: "No", value: false },
+              ].map((opt) => (
+                <button
+                  key={opt.label}
+                  type="button"
+                  onClick={() => setFinancialAidNeed(opt.value)}
+                  className={`flex-1 rounded-xl border px-4 py-2.5 text-sm transition-colors ${
+                    financialAidNeed === opt.value
+                      ? "bg-primary text-bg border-primary"
+                      : "border-border text-text-gray hover:text-text"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </>
       ),
     },
@@ -502,10 +530,10 @@ export default function OnboardingPage() {
         transition={{ duration: 0.4, ease: EASE }}
         className="font-serif text-3xl text-text mb-2"
       >
-        Let&apos;s get to know you
+        Let&apos;s find your people (and your schools)
       </motion.h1>
       <p className="text-text-gray text-sm mb-6">
-        A few quick rounds of questions, we want to know you well so your matches can be optimal.
+        A few quick rounds — the more we know about you, the sharper your matches get.
       </p>
 
       <motion.div
@@ -555,7 +583,10 @@ export default function OnboardingPage() {
                 className="bg-card border border-border rounded-2xl p-6 space-y-4"
               >
                 <OnboardingIllustration step={step} />
-                <p className="text-xs font-medium text-text-gray uppercase tracking-wide">{rounds[step].title}</p>
+                <div>
+                  <p className="text-xs font-medium text-text-gray uppercase tracking-wide">{rounds[step].title}</p>
+                  <p className="font-serif text-lg text-text mt-0.5">{rounds[step].blurb}</p>
+                </div>
                 {rounds[step].fields}
               </motion.div>
             </AnimatePresence>

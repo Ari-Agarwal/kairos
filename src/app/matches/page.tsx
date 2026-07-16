@@ -49,7 +49,7 @@ export default async function MatchesPage() {
 
   return (
     <NavShell>
-      <MatchListClient initialMatches={matches ?? []} remaining={remaining} isPremium={isPremium} profile={profile} />
+      <MatchListClient initialMatches={matches ?? []} remaining={remaining} isPremium={isPremium} />
     </NavShell>
   );
 }

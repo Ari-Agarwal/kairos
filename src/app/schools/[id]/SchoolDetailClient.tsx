@@ -7,9 +7,7 @@ import type { CohortStats } from "@/lib/cohort-types";
 import { MIN_COHORT_SIZE } from "@/lib/cohort-types";
 import { AnimatePresence, motion } from "framer-motion";
 import FactorCard from "./FactorCard";
-import ShareChancesCard from "@/components/ShareChancesCard";
 import { createClient } from "@/lib/supabase/client";
-import ReportBlockMenu from "@/components/ReportBlockMenu";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -75,58 +73,17 @@ export default function SchoolDetailClient({
   stats,
   cohortStats,
   financialAidNeed,
-  currentUserId,
 }: {
   match: Match;
   isPremium: boolean;
   stats: CollegeStats | null;
   cohortStats: CohortStats | null;
   financialAidNeed: boolean | null;
-  currentUserId: string;
 }) {
-  const [tab, setTab] = useState<"info" | "breakdown" | "career" | "outcomes" | "warroom">("info");
-  const [comments, setComments] = useState<{ id: string; user_id: string | null; role: string; body: string }[] | null>(null);
-  const [commentBody, setCommentBody] = useState("");
-  const [commentsLoading, setCommentsLoading] = useState(false);
-  const [commentsError, setCommentsError] = useState<string | null>(null);
-  const [sendingComment, setSendingComment] = useState(false);
-
-  async function loadComments() {
-    if (comments || commentsLoading) return;
-    setCommentsLoading(true);
-    setCommentsError(null);
-    const res = await fetch(`/api/war-room/${match.id}/comments`);
-    setCommentsLoading(false);
-    if (!res.ok) {
-      setCommentsError("Couldn't load the war room.");
-      return;
-    }
-    setComments((await res.json()).comments);
-  }
-
-  async function sendComment() {
-    if (!commentBody.trim()) return;
-    setSendingComment(true);
-    setCommentsError(null);
-    const res = await fetch(`/api/war-room/${match.id}/comments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body: commentBody }),
-    });
-    setSendingComment(false);
-    if (!res.ok) {
-      const data = await res.json().catch(() => null);
-      setCommentsError(data?.error ?? "Couldn't post your comment.");
-      return;
-    }
-    const { role } = await res.json().catch(() => ({ role: "student" }));
-    setComments((prev) => [...(prev ?? []), { id: crypto.randomUUID(), user_id: currentUserId, role, body: commentBody }]);
-    setCommentBody("");
-  }
+  const [tab, setTab] = useState<"info" | "breakdown" | "career" | "outcomes">("info");
   const [careerPath, setCareerPath] = useState<CareerPath | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sharing, setSharing] = useState(false);
   const [aidNeed, setAidNeed] = useState(financialAidNeed);
   const [aidNudgeDismissed, setAidNudgeDismissed] = useState(false);
 
@@ -158,13 +115,6 @@ export default function SchoolDetailClient({
 
   return (
     <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
-      {sharing && (
-        <ShareChancesCard
-          data={{ schoolName: match.school_name, percentage: match.percentage, category: match.category as "reach" | "target" | "safety" }}
-          onClose={() => setSharing(false)}
-        />
-      )}
-
       <Link href="/matches" className="text-text-gray text-sm hover:text-text mb-4 inline-block">
         ← Back to matches
       </Link>
@@ -175,25 +125,16 @@ export default function SchoolDetailClient({
         </div>
         <div className="flex-1 flex items-center justify-between gap-4">
           <h1 className="font-serif text-2xl text-text">{match.school_name}</h1>
-          {(match.category === "target" || match.category === "safety") && (
-            <button
-              onClick={() => setSharing(true)}
-              className="shrink-0 rounded-xl border border-border text-text-gray hover:text-text text-sm font-medium px-3 py-1.5 transition-colors"
-            >
-              Share
-            </button>
-          )}
         </div>
       </div>
 
       <div className="relative flex gap-2 mb-6 bg-card border border-border rounded-xl p-1 w-fit flex-wrap">
-        {(["info", "breakdown", "career", "outcomes", "warroom"] as const).map((t) => (
+        {(["info", "breakdown", "career", "outcomes"] as const).map((t) => (
           <button
             key={t}
             onClick={() => {
               setTab(t);
               if (t === "career" && isPremium) loadCareerPath();
-              if (t === "warroom") loadComments();
             }}
             className={`relative text-sm px-4 py-2 rounded-lg transition-colors ${
               tab === t ? "text-bg" : "text-text-gray hover:text-text"
@@ -207,7 +148,7 @@ export default function SchoolDetailClient({
               />
             )}
             <span className="relative z-10">
-              {t === "info" ? "Info" : t === "breakdown" ? "Breakdown" : t === "career" ? "Career Path" : t === "outcomes" ? "Outcomes" : "War Room"}
+              {t === "info" ? "Info" : t === "breakdown" ? "Breakdown" : t === "career" ? "Career Path" : "Outcomes"}
             </span>
           </button>
         ))}
@@ -537,55 +478,6 @@ export default function SchoolDetailClient({
           </motion.div>
         )}
 
-        {tab === "warroom" && (
-          <motion.div
-            key="warroom"
-            initial={{ opacity: 1, y: 0 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: EASE }}
-            className="bg-card border border-border rounded-2xl p-5"
-          >
-            <p className="text-text-gray text-xs mb-4">
-              Shared with anyone you&apos;ve invited via a share link, plus any mentor who&apos;s accepted a
-              request for this school and any counselor assigned to you.
-            </p>
-            {commentsLoading && <p className="text-text-gray text-sm">Loading…</p>}
-            {comments && comments.length === 0 && <p className="text-text-gray text-sm mb-3">No comments yet.</p>}
-            {comments && comments.length > 0 && (
-              <div className="space-y-3 mb-4">
-                {comments.map((c) => (
-                  <div key={c.id} className="bg-bg border border-border rounded-xl p-3">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <span className="text-text-gray text-xs capitalize">{c.role}</span>
-                      {c.user_id && c.user_id !== currentUserId && (
-                        <ReportBlockMenu targetUserId={c.user_id} contentType="war_room_comment" contentId={c.id} />
-                      )}
-                    </div>
-                    <p className="text-text text-sm">{c.body}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={commentBody}
-                onChange={(e) => setCommentBody(e.target.value)}
-                placeholder="Add a comment…"
-                className="flex-1 rounded-lg bg-bg border border-border px-3 py-2 text-text outline-none focus:border-primary text-sm"
-              />
-              <button
-                onClick={sendComment}
-                disabled={sendingComment || !commentBody.trim()}
-                className="rounded-lg bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-3 py-2 disabled:opacity-50"
-              >
-                Send
-              </button>
-            </div>
-            {commentsError && <p className="text-red text-xs mt-2">{commentsError}</p>}
-          </motion.div>
-        )}
       </AnimatePresence>
     </div>
   );

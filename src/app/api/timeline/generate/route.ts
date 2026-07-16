@@ -110,7 +110,6 @@ First-generation student: ${profile.first_gen === null ? "not specified" : profi
 Legacy school: ${profile.legacy_school ?? "none"}
 Schools already considering: ${profile.schools_already_considering ?? "not specified"}
 Internships / research experience: ${profile.internships_research ?? "not specified"}
-Achievements / awards: ${profile.achievements ?? "not specified"}
 ${feedback ? `\nThe student was asked "what would you like different in your timeline?" and said: "${feedback}" -- edit the timeline to reflect this rather than ignoring it, but don't fabricate false urgency or drop the grade-level scoping rules below just to satisfy it.\n` : ""}
 Matched schools:
 ${matches.map((m) => `- ${m.school_name} (${m.category})`).join("\n")}

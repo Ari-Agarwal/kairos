@@ -48,7 +48,6 @@ interface Profile {
   first_gen: boolean | null;
   legacy_school: string | null;
   internships_research: string | null;
-  achievements: string | null;
 }
 
 function missingFields(profile: Profile): string[] {
@@ -143,7 +142,6 @@ Annual budget ceiling: ${profile.budget_ceiling ?? "not given"}
 First-generation student: ${profile.first_gen === null ? "not given" : profile.first_gen ? "yes" : "no"}
 Legacy school: ${profile.legacy_school ?? "none"}
 Internships / research experience: ${profile.internships_research ?? "not given"}
-Achievements / awards: ${profile.achievements ?? "not given"}
 Campus size preference: ${profile.campus_size_pref ?? "no preference given"}
 Campus setting preference: ${profile.campus_setting_pref ?? "no preference given"}
 ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}

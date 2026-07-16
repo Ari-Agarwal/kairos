@@ -39,7 +39,6 @@ interface Profile {
   mentor_opt_in: boolean;
   mentor_bio: string | null;
   internships_research: string | null;
-  achievements: string | null;
 }
 
 export default function ProfileClient({
@@ -78,7 +77,6 @@ export default function ProfileClient({
     legacy_school: profile.legacy_school ?? "",
     phone_number: profile.phone_number ?? "",
     internships_research: profile.internships_research ?? "",
-    achievements: profile.achievements ?? "",
   });
   const [smsOptIn, setSmsOptIn] = useState(profile.sms_opt_in);
   const [financialAidNeed, setFinancialAidNeed] = useState<boolean | null>(profile.financial_aid_need);
@@ -154,7 +152,6 @@ export default function ProfileClient({
         first_gen: firstGen,
         legacy_school: form.legacy_school || null,
         internships_research: form.internships_research || null,
-        achievements: form.achievements || null,
         phone_number: form.phone_number || null,
         sms_opt_in: smsOptIn && !!form.phone_number,
         sms_opt_in_at: smsOptIn && form.phone_number ? new Date().toISOString() : null,
@@ -427,17 +424,6 @@ export default function ProfileClient({
               value={form.internships_research}
               onChange={(e) => setForm({ ...form, internships_research: e.target.value })}
               placeholder="e.g. summer research internship in a campus bio lab"
-              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="pf-achievements" className="block text-sm text-text-gray mb-1">Achievements / awards</label>
-            <input
-              id="pf-achievements"
-              type="text"
-              value={form.achievements}
-              onChange={(e) => setForm({ ...form, achievements: e.target.value })}
-              placeholder="e.g. regional science fair finalist, Eagle Scout"
               className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
             />
           </div>

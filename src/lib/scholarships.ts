@@ -21,6 +21,41 @@ const MAJOR_KEYWORDS: Record<string, string[]> = {
   engineering: ["engineering", "technical field"],
 };
 
+export const SCHOLARSHIP_CATEGORIES = [
+  "STEM & Major-Specific",
+  "Identity & Community",
+  "Military & Family",
+  "Need-Based",
+  "Easy Apply",
+  "Merit & Achievement",
+] as const;
+export type ScholarshipCategory = (typeof SCHOLARSHIP_CATEGORIES)[number];
+
+// Since students aren't going to read all 40+ of these, bucket each into one
+// category (priority order below) so the list can be browsed by type instead
+// of scrolled top to bottom. Heuristic on eligibility_summary/name text --
+// same "never hide, just help triage" philosophy as isLikelyMatch.
+export function getCategory(scholarship: Scholarship): ScholarshipCategory {
+  const text = `${scholarship.name} ${scholarship.eligibility_summary}`.toLowerCase();
+
+  if (/engineering|computer science|technology|technical field|journalism|media|stem\b/.test(text)) {
+    return "STEM & Major-Specific";
+  }
+  if (/hispanic|african american|black|native american|american indian|lgbtq|women\b|disability|first-generation/.test(text)) {
+    return "Identity & Community";
+  }
+  if (/rotc|military|veteran|service member|first responder/.test(text)) {
+    return "Military & Family";
+  }
+  if (/financial need|need-based|low-income|pell|household income/.test(text)) {
+    return "Need-Based";
+  }
+  if (/no essay|no gpa|sweepstakes|ongoing entry|entry period/.test(text)) {
+    return "Easy Apply";
+  }
+  return "Merit & Achievement";
+}
+
 export function getAllScholarships(): Scholarship[] {
   return scholarshipData.scholarships as Scholarship[];
 }

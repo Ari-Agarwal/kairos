@@ -6,10 +6,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { CalendarDays } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import GenerationProgress from "@/components/GenerationProgress";
 import { buildBulkIcs, downloadIcs } from "@/lib/ics";
-import { getMissingFields, type CompletenessProfile } from "@/lib/profile-completeness";
-import MissingFieldInputs, { FIELD_LABELS, INLINE_TEXT_FIELDS } from "@/components/MissingFieldInputs";
 
 interface TimelineItem {
   id: string;
@@ -42,73 +39,28 @@ export default function TimelineClient({
   isPremium,
   youAreHereId,
   remaining,
-  profile,
 }: {
   items: TimelineItem[];
   isPremium: boolean;
   youAreHereId: string | null;
   remaining: number | null;
-  profile: CompletenessProfile;
 }) {
   const router = useRouter();
   const supabase = createClient();
   const reduceMotion = useReducedMotion();
   const [items, setItems] = useState(initialItems);
-  const [generating, setGenerating] = useState(false);
   const [prevInitialItems, setPrevInitialItems] = useState(initialItems);
   if (initialItems !== prevInitialItems) {
     setPrevInitialItems(initialItems);
     setItems(initialItems);
-    setGenerating(false);
   }
-  const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDueDate, setNewDueDate] = useState("");
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
-  // Explain-then-edit: instead of a blind regenerate, ask what the student
-  // wants different and pass that through to the AI rather than starting over.
-  const [showExplain, setShowExplain] = useState(false);
-  const [explanation, setExplanation] = useState("");
-
-  // Mini-onboarding fields relevant to the timeline specifically, woven into
-  // this same pre-generate panel rather than a separate pop-up modal.
-  const missingFields = getMissingFields(profile, "timeline");
-  const inlineMissing = missingFields.filter((f) => INLINE_TEXT_FIELDS.includes(f));
-  const linkOutMissing = missingFields.filter((f) => !INLINE_TEXT_FIELDS.includes(f));
-  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
-
-  async function saveMissingFields() {
-    const patch: Record<string, string> = {};
-    for (const field of inlineMissing) {
-      if (fieldValues[field]?.trim()) patch[field] = fieldValues[field].trim();
-    }
-    if (Object.keys(patch).length === 0) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    await supabase.from("profiles").update(patch).eq("user_id", user.id);
-  }
-
   const regenDisabled = !isPremium && remaining === 0;
-
-  async function handleGenerate(feedbackText?: string) {
-    setGenerating(true);
-    setError(null);
-    const res = await fetch("/api/timeline/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ feedback: feedbackText?.trim() || undefined }),
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "Failed to generate timeline.");
-      setGenerating(false);
-      return;
-    }
-    router.refresh();
-  }
 
   async function handleDelete(id: string) {
     await supabase.from("timeline_items").delete().eq("id", id);
@@ -151,20 +103,9 @@ export default function TimelineClient({
     setAdding(false);
   }
 
-  if (generating) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center min-h-[60vh]">
-        <p role="status" className="font-serif text-2xl text-text mb-2 animate-pulse">Mapping out your timeline...</p>
-        <p className="text-text-gray text-sm">Pulling together deadlines and strategic advice.</p>
-        <GenerationProgress />
-      </div>
-    );
-  }
-
   if (items.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-6 text-center min-h-[60vh]">
-        {error && <p role="alert" className="text-red text-sm mb-3">{error}</p>}
         {/* a single dim star, waiting to light up */}
         <div className="relative mb-5 h-10 w-10">
           <motion.span
@@ -178,65 +119,13 @@ export default function TimelineClient({
         <p className="text-text-gray text-xs mb-4">
           {isPremium ? "Unlimited regenerations" : `${remaining} regeneration${remaining === 1 ? "" : "s"} left this week`}
         </p>
-        {!showExplain ? (
-          <button
-            onClick={() => setShowExplain(true)}
-            disabled={regenDisabled}
-            className="rounded-xl bg-primary hover:bg-primary-hover text-bg font-medium px-6 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Generate Timeline
-          </button>
-        ) : (
-          <div className="w-full max-w-sm rounded-xl border border-border bg-card px-4 py-3 text-left space-y-3">
-            {inlineMissing.length > 0 && (
-              <div>
-                <p className="text-xs text-text-gray mb-2">
-                  A few more details help your timeline be more precise — optional.
-                </p>
-                <MissingFieldInputs
-                  fields={inlineMissing}
-                  values={fieldValues}
-                  onChange={(field, value) => setFieldValues((v) => ({ ...v, [field]: value }))}
-                />
-              </div>
-            )}
-            {linkOutMissing.length > 0 && (
-              <p className="text-xs text-text-gray">
-                Also missing:{" "}
-                <Link href="/profile?edit=true" className="text-primary hover:underline">
-                  {linkOutMissing.map((f) => FIELD_LABELS[f]).join(", ")}
-                </Link>
-              </p>
-            )}
-            <div>
-              <label className="block text-xs text-text-gray mb-1.5">
-                What would you like different? <span className="text-text-gray/70">— optional</span>
-              </label>
-              <textarea
-                className="w-full rounded-xl bg-bg border border-border text-text text-sm px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-text-gray"
-                rows={2}
-                maxLength={1000}
-                placeholder="e.g. push the essay deadlines earlier, or focus more on financial aid prep"
-                value={explanation}
-                onChange={(e) => setExplanation(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => { setShowExplain(false); setExplanation(""); handleGenerate(); }}
-                className="rounded-xl border border-border text-text-gray hover:text-text text-sm px-3 py-1.5 transition-colors"
-              >
-                Skip
-              </button>
-              <button
-                onClick={async () => { setShowExplain(false); await saveMissingFields(); handleGenerate(explanation); }}
-                className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-3 py-1.5"
-              >
-                Generate
-              </button>
-            </div>
-          </div>
-        )}
+        <button
+          onClick={() => router.push("/timeline/prep")}
+          disabled={regenDisabled}
+          className="rounded-xl bg-primary hover:bg-primary-hover text-bg font-medium px-6 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          Generate Timeline
+        </button>
       </div>
     );
   }
@@ -252,7 +141,7 @@ export default function TimelineClient({
         <h1 className="font-serif text-2xl text-text">Your Timeline</h1>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setShowExplain((v) => !v)}
+            onClick={() => router.push("/timeline/prep")}
             disabled={regenDisabled}
             className="text-primary text-sm hover:text-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
           >
@@ -279,58 +168,6 @@ export default function TimelineClient({
         </div>
       </div>
 
-      {showExplain && (
-        <div className="mb-5 rounded-xl border border-border bg-card px-4 py-3 space-y-3">
-          {inlineMissing.length > 0 && (
-            <div>
-              <p className="text-xs text-text-gray mb-2">
-                A few more details help your timeline be more precise — optional.
-              </p>
-              <MissingFieldInputs
-                fields={inlineMissing}
-                values={fieldValues}
-                onChange={(field, value) => setFieldValues((v) => ({ ...v, [field]: value }))}
-              />
-            </div>
-          )}
-          {linkOutMissing.length > 0 && (
-            <p className="text-xs text-text-gray">
-              Also missing:{" "}
-              <Link href="/profile?edit=true" className="text-primary hover:underline">
-                {linkOutMissing.map((f) => FIELD_LABELS[f]).join(", ")}
-              </Link>
-            </p>
-          )}
-          <div>
-            <label className="block text-xs text-text-gray mb-1.5">
-              What would you like different? <span className="text-text-gray/70">— optional</span>
-            </label>
-            <textarea
-              className="w-full rounded-xl bg-bg border border-border text-text text-sm px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-text-gray"
-              rows={2}
-              maxLength={1000}
-              placeholder="e.g. push the essay deadlines earlier, or focus more on financial aid prep"
-              value={explanation}
-              onChange={(e) => setExplanation(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => { setShowExplain(false); setExplanation(""); handleGenerate(); }}
-              className="rounded-xl border border-border text-text-gray hover:text-text text-sm px-3 py-1.5 transition-colors"
-            >
-              Skip
-            </button>
-            <button
-              onClick={async () => { setShowExplain(false); await saveMissingFields(); handleGenerate(explanation); }}
-              className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-3 py-1.5"
-            >
-              Regenerate
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* journey progress: how far along the path you've traveled */}
       <div className="mb-1 flex items-center justify-between">
         <p className="text-text-gray text-xs">
@@ -348,8 +185,6 @@ export default function TimelineClient({
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
         />
       </div>
-
-      {error && <p role="alert" className="text-red text-sm mb-4">{error}</p>}
 
       {editing && (
         <div className="bg-card border border-border rounded-2xl p-4 mb-6 space-y-3">

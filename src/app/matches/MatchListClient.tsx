@@ -5,15 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
-import GenerationProgress from "@/components/GenerationProgress";
 import CountUp from "@/components/CountUp";
 import { track } from "@/lib/analytics";
-import ShareChancesCard from "@/components/ShareChancesCard";
-import OutcomeLogModal from "./OutcomeLogModal";
-import LociModal from "./LociModal";
 import AidAppealModal from "./AidAppealModal";
-import { getMissingFields, type CompletenessProfile } from "@/lib/profile-completeness";
-import MissingFieldInputs, { FIELD_LABELS, INLINE_TEXT_FIELDS } from "@/components/MissingFieldInputs";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -42,37 +36,26 @@ export default function MatchListClient({
   initialMatches,
   remaining,
   isPremium,
-  profile,
 }: {
   initialMatches: Match[];
   remaining: number | null;
   isPremium: boolean;
-  profile: CompletenessProfile;
 }) {
   const router = useRouter();
   const supabase = createClient();
   const reduceMotion = useReducedMotion();
   const [matches, setMatches] = useState(initialMatches);
-  const [regenerating, setRegenerating] = useState(false);
   const [prevInitialMatches, setPrevInitialMatches] = useState(initialMatches);
   if (initialMatches !== prevInitialMatches) {
     setPrevInitialMatches(initialMatches);
     setMatches(initialMatches);
-    setRegenerating(false);
   }
-  const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [newSchoolName, setNewSchoolName] = useState("");
   const [newSchoolCategory, setNewSchoolCategory] = useState<Category>("target");
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
-  // Share card state
-  const [shareMatch, setShareMatch] = useState<Match | null>(null);
-
-  // Outcome modal open/closed — decision is tracked here because card labels read it
-  const [outcomeMatchId, setOutcomeMatchId] = useState<string | null>(null);
-  const [outcomeSaved, setOutcomeSaved] = useState<Record<string, string>>({});
 
   // Aid offers loaded from DB (matchId → amount) — used to gate appeal button
   const [aidOffers, setAidOffers] = useState<Record<string, number>>({});
@@ -99,81 +82,27 @@ export default function MatchListClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Appeal and LOCI modal open/closed
+  // Appeal modal open/closed
   const [appealMatchId, setAppealMatchId] = useState<string | null>(null);
-  const [lociMatchId, setLociMatchId] = useState<string | null>(null);
 
-  // Optional freeform steer for regeneration ("what are you looking for") —
-  // deliberately optional, never required to regenerate.
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [feedback, setFeedback] = useState("");
-
-  // Mini-onboarding fields relevant to matches specifically, woven into this
-  // same pre-generate panel rather than a separate pop-up modal.
-  const missingFields = getMissingFields(profile, "matches");
-  const inlineMissing = missingFields.filter((f) => INLINE_TEXT_FIELDS.includes(f));
-  const linkOutMissing = missingFields.filter((f) => !INLINE_TEXT_FIELDS.includes(f));
-  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
-
-  async function saveMissingFields() {
-    const patch: Record<string, string> = {};
-    for (const field of inlineMissing) {
-      if (fieldValues[field]?.trim()) patch[field] = fieldValues[field].trim();
-    }
-    if (Object.keys(patch).length === 0) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    await supabase.from("profiles").update(patch).eq("user_id", user.id);
-  }
-
-  async function handleRegenerate(feedbackText?: string) {
-    setRegenerating(true);
-    setError(null);
-    // The server route is capped at maxDuration=60s, but that cap isn't
-    // enforced locally and an abrupt platform kill doesn't always reach the
-    // client as a clean rejection -- without a client-side bound, a hang
-    // leaves the spinner running forever with no way to recover. 65s gives
-    // the server's own cap a moment to win first under normal conditions.
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 65_000);
-    try {
-      const res = await fetch("/api/matches/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feedback: feedbackText?.trim() || undefined }),
-        signal: controller.signal,
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setError(body.error ?? "Failed to regenerate. Please try again.");
-        setRegenerating(false);
-        return;
-      }
-      router.refresh();
-    } catch (err) {
-      setError(
-        err instanceof DOMException && err.name === "AbortError"
-          ? "This is taking longer than expected. Please try again."
-          : "Failed to regenerate. Please try again."
-      );
-      setRegenerating(false);
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
+  // Two-step generate flow: a confirm prompt first ("are you ready?"); "yes"
+  // navigates to the dedicated /matches/prep flow (mini-onboarding fields +
+  // optional feedback, full-screen like the primary onboarding) rather than
+  // dropping the questions inline on this page.
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Onboarding kicks off generation itself, but that call can take up to ~50s
   // and is abandoned if the user closes the tab before it finishes — leaving
   // a saved profile with zero matches. Rather than making the user notice
-  // that and hunt for "Regenerate List", auto-open the pre-generate panel the
-  // moment they land here with an empty list (rather than silently auto-firing
+  // that and hunt for "Generate List", auto-open the confirm step the moment
+  // they land here with an empty list (rather than silently auto-firing
   // generation, which skipped the mini-onboarding step entirely).
   const autoTriggered = useRef(false);
   const wasEmptyOnFirstLoad = useRef(matches.length === 0);
   useEffect(() => {
     if (matches.length === 0 && !autoTriggered.current && (isPremium || remaining !== 0)) {
       autoTriggered.current = true;
-      setShowFeedback(true);
+      setShowConfirm(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -236,16 +165,6 @@ export default function MatchListClient({
     setAdding(false);
   }
 
-  if (regenerating) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center min-h-[60vh]">
-        <p role="status" className="font-serif text-2xl text-text mb-2 animate-pulse">Building your personalized list...</p>
-        <p className="text-text-gray text-sm">Hang tight while we re-match you against real schools.</p>
-        <GenerationProgress />
-      </div>
-    );
-  }
-
   return (
     <div className="px-5 md:px-8 py-8 max-w-3xl mx-auto w-full">
       <p className="text-text-gray text-xs mb-3">
@@ -255,7 +174,7 @@ export default function MatchListClient({
       <div className="flex items-center justify-between mb-3 mt-3">
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowFeedback((v) => !v)}
+            onClick={() => setShowConfirm((v) => !v)}
             disabled={!isPremium && remaining === 0}
             className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
@@ -273,79 +192,24 @@ export default function MatchListClient({
         </span>
       </div>
 
-      {showFeedback && (
-        <div className="mb-6 rounded-xl border border-border bg-card px-4 py-3 space-y-3">
-          {inlineMissing.length > 0 && (
-            <div>
-              <p className="text-xs text-text-gray mb-2">
-                A few more details help your matches be more accurate — optional.
-              </p>
-              <MissingFieldInputs
-                fields={inlineMissing}
-                values={fieldValues}
-                onChange={(field, value) => setFieldValues((v) => ({ ...v, [field]: value }))}
-              />
-            </div>
-          )}
-          {linkOutMissing.length > 0 && (
-            <p className="text-xs text-text-gray">
-              Also missing:{" "}
-              <Link href="/profile?edit=true" className="text-primary hover:underline">
-                {linkOutMissing.map((f) => FIELD_LABELS[f]).join(", ")}
-              </Link>
-            </p>
-          )}
-          <div>
-            <label className="block text-xs text-text-gray mb-1.5">
-              What are you looking for? <span className="text-text-gray/70">— optional</span>
-            </label>
-            <textarea
-              className="w-full rounded-xl bg-bg border border-border text-text text-sm px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-text-gray"
-              rows={2}
-              maxLength={1000}
-              placeholder="e.g. more schools on the West Coast, or a bigger reach list"
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-            />
-          </div>
+      {showConfirm && (
+        <div className="mb-6 rounded-xl border border-border bg-card px-4 py-3">
+          <p className="text-text text-sm mb-3">Are you ready to generate accurate college matches?</p>
           <div className="flex gap-2">
             <button
-              onClick={() => { setShowFeedback(false); setFeedback(""); handleRegenerate(); }}
+              onClick={() => setShowConfirm(false)}
               className="rounded-xl border border-border text-text-gray hover:text-text text-sm px-3 py-1.5 transition-colors"
             >
-              Skip
+              Not yet
             </button>
             <button
-              onClick={async () => { setShowFeedback(false); await saveMissingFields(); handleRegenerate(feedback); }}
+              onClick={() => router.push("/matches/prep")}
               className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-3 py-1.5"
             >
-              Regenerate
+              Yes, let&apos;s go
             </button>
           </div>
         </div>
-      )}
-
-      {error && <p role="alert" className="text-red text-sm mb-4">{error}</p>}
-
-      {shareMatch && (
-        <ShareChancesCard
-          data={{ schoolName: shareMatch.school_name, percentage: shareMatch.percentage, category: shareMatch.category }}
-          onClose={() => setShareMatch(null)}
-        />
-      )}
-
-      {outcomeMatchId && (
-        <OutcomeLogModal
-          matchId={outcomeMatchId}
-          onClose={() => setOutcomeMatchId(null)}
-          onSaved={(id, decision, aidAmount) => {
-            setOutcomeSaved((prev) => ({ ...prev, [id]: decision }));
-            if (aidAmount !== "") {
-              setAidOffers((prev) => ({ ...prev, [id]: parseFloat(aidAmount) }));
-            }
-            setOutcomeMatchId(null);
-          }}
-        />
       )}
 
       {appealMatchId && (
@@ -354,13 +218,6 @@ export default function MatchListClient({
           matches={matches}
           aidOffers={aidOffers}
           onClose={() => setAppealMatchId(null)}
-        />
-      )}
-
-      {lociMatchId && (
-        <LociModal
-          matchId={lociMatchId}
-          onClose={() => setLociMatchId(null)}
         />
       )}
 
@@ -463,22 +320,6 @@ export default function MatchListClient({
                 </button>
               ) : (
                 <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-1">
-                  <button
-                    onClick={() => setOutcomeMatchId(m.id)}
-                    className="text-text-gray hover:text-text text-xs px-2.5 py-2 rounded-lg border border-transparent hover:border-border transition-colors"
-                    aria-label={`Log decision for ${m.school_name}`}
-                  >
-                    {outcomeSaved[m.id] ? `✓ ${outcomeSaved[m.id]}` : "Log decision"}
-                  </button>
-                  {(outcomeSaved[m.id] === "waitlist" || outcomeSaved[m.id] === "defer") && (
-                    <button
-                      onClick={() => setLociMatchId(m.id)}
-                      className="text-primary hover:text-primary-hover text-xs px-2.5 py-1.5 rounded-lg border border-primary/30 hover:border-primary/60 transition-colors whitespace-nowrap"
-                      aria-label={`Draft letter of continued interest for ${m.school_name}`}
-                    >
-                      Draft LOCI
-                    </button>
-                  )}
                   {aidOffers[m.id] !== undefined && Object.keys(aidOffers).length >= 2 && (
                     <button
                       onClick={() => setAppealMatchId(m.id)}
@@ -486,15 +327,6 @@ export default function MatchListClient({
                       aria-label={`Draft aid appeal letter for ${m.school_name}`}
                     >
                       Appeal aid
-                    </button>
-                  )}
-                  {(m.category === "target" || m.category === "safety") && (
-                    <button
-                      onClick={() => setShareMatch(m)}
-                      className="text-text-gray hover:text-text text-xs px-2.5 py-1.5 rounded-lg border border-transparent hover:border-border transition-colors whitespace-nowrap"
-                      aria-label={`Share chances card for ${m.school_name}`}
-                    >
-                      Share
                     </button>
                   )}
                 </div>
