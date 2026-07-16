@@ -1,8 +1,8 @@
 // Plain data shared by MissingFieldInputs.tsx (a "use client" component) and
-// by Server Components that need the same field metadata (e.g. matches/prep,
-// timeline/prep). Kept in a non-client module deliberately -- importing a
-// named export from a "use client" file into a Server Component breaks under
-// this project's bundler (surfaced as "X.includes is not a function").
+// by Server Components that need the same field metadata (e.g. matches/prep).
+// Kept in a non-client module deliberately -- importing a named export from a
+// "use client" file into a Server Component breaks under this project's
+// bundler (surfaced as "X.includes is not a function").
 export const FIELD_LABELS: Record<string, string> = {
   intended_major: "Intended Major",
   extracurriculars: "Extracurriculars",

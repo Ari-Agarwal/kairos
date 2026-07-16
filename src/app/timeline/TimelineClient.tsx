@@ -59,8 +59,33 @@ export default function TimelineClient({
   const [newDueDate, setNewDueDate] = useState("");
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
   const regenDisabled = !isPremium && remaining === 0;
+
+  async function handleGenerate() {
+    setGenerating(true);
+    setGenerateError(null);
+    try {
+      const res = await fetch("/api/timeline/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setGenerateError(body.error ?? "Failed to generate timeline. Please try again.");
+        setGenerating(false);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setGenerateError("Failed to generate timeline. Please try again.");
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   async function handleDelete(id: string) {
     await supabase.from("timeline_items").delete().eq("id", id);
@@ -120,12 +145,13 @@ export default function TimelineClient({
           {isPremium ? "Unlimited regenerations" : `${remaining} regeneration${remaining === 1 ? "" : "s"} left this week`}
         </p>
         <button
-          onClick={() => router.push("/timeline/prep")}
-          disabled={regenDisabled}
+          onClick={handleGenerate}
+          disabled={regenDisabled || generating}
           className="rounded-xl bg-primary hover:bg-primary-hover text-bg font-medium px-6 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          Generate Timeline
+          {generating ? "Mapping out your timeline..." : "Generate Timeline"}
         </button>
+        {generateError && <p role="alert" className="text-red text-sm mt-3">{generateError}</p>}
       </div>
     );
   }
@@ -137,15 +163,16 @@ export default function TimelineClient({
 
   return (
     <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
+      {generateError && <p role="alert" className="text-red text-sm mb-3">{generateError}</p>}
       <div className="flex items-center justify-between mb-1">
         <h1 className="font-serif text-2xl text-text">Your Timeline</h1>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push("/timeline/prep")}
-            disabled={regenDisabled}
+            onClick={handleGenerate}
+            disabled={regenDisabled || generating}
             className="text-primary text-sm hover:text-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Regenerate
+            {generating ? "Regenerating..." : "Regenerate"}
           </button>
           <button
             onClick={() => {

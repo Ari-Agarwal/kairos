@@ -241,7 +241,7 @@ export default function MatchListClient({
               <span className="text-text-gray text-lg leading-none mt-0.5">!</span>
               <p className="text-text-gray text-sm">
                 <span className="text-text font-medium">Your list has no reach schools.</span>{" "}
-                Consider adding 1–2 selective schools — a strong application deserves at least a few ambitious choices.
+                Consider adding 1-2 selective schools: a strong application deserves at least a few ambitious choices.
               </p>
             </div>
           );

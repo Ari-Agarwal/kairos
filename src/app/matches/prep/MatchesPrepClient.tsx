@@ -19,11 +19,19 @@ export default function MatchesPrepClient({
     for (const field of inlineFields) {
       if (values[field]?.trim()) patch[field] = values[field].trim();
     }
+    // Leaving any of these fields blank is valid (they're optional) -- this
+    // block only runs when at least one was filled in, but it still needs
+    // its own try/catch so a flaky auth/update call surfaces as an error
+    // instead of hanging the flow in its "submitting" state forever.
     if (Object.keys(patch).length > 0) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return { error: "Not signed in." };
-      const { error: updateError } = await supabase.from("profiles").update(patch).eq("user_id", user.id);
-      if (updateError) return { error: updateError.message };
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { error: "Not signed in." };
+        const { error: updateError } = await supabase.from("profiles").update(patch).eq("user_id", user.id);
+        if (updateError) return { error: updateError.message };
+      } catch {
+        return { error: "Failed to save your answers. Please try again." };
+      }
     }
 
     const controller = new AbortController();
@@ -56,7 +64,7 @@ export default function MatchesPrepClient({
   return (
     <FeaturePrepFlow
       backHref="/matches"
-      heading="Let's sharpen your matches"
+      heading="Let's refine your matches"
       subheading="A few quick questions, then we'll generate your list."
       inlineFields={inlineFields}
       linkOutFields={linkOutFields}

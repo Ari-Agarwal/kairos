@@ -59,15 +59,23 @@ export default function FeaturePrepFlow({
   async function submit(skippedFeedback?: boolean) {
     setSubmitting(true);
     setError(null);
-    const result = await onComplete(values, skippedFeedback ? "" : feedback);
-    if (result.error) {
-      setError(result.error);
+    try {
+      const result = await onComplete(values, skippedFeedback ? "" : feedback);
+      if (result.error) {
+        setError(result.error);
+        setSubmitting(false);
+        return;
+      }
+      // On success, onComplete is responsible for navigating away (this is a
+      // dedicated pre-generate route, not an in-place panel) -- stay in the
+      // "submitting" state until that navigation actually happens.
+    } catch {
+      // Any unhandled field left blank shouldn't be able to hang this in the
+      // "submitting" spinner forever with no feedback -- always surface a
+      // recoverable error instead.
+      setError("Something went wrong. Please try again.");
       setSubmitting(false);
-      return;
     }
-    // On success, onComplete is responsible for navigating away (this is a
-    // dedicated pre-generate route, not an in-place panel) -- stay in the
-    // "submitting" state until that navigation actually happens.
   }
 
   if (submitting) {
@@ -140,7 +148,7 @@ export default function FeaturePrepFlow({
               <p className="text-xs font-medium text-text-gray uppercase tracking-wide">Last thing</p>
               <div>
                 <label className="block text-sm text-text-gray mb-1">
-                  {feedbackQuestion} <span className="text-text-gray/70">— optional</span>
+                  {feedbackQuestion} <span className="text-text-gray/70">(optional)</span>
                 </label>
                 <textarea
                   className="w-full rounded-xl bg-bg border border-border text-text text-sm px-3 py-2.5 resize-none focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-text-gray"
