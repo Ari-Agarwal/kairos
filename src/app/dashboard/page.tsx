@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import NavShell from "@/components/NavShell";
-import ProfileCompletenessModal from "@/components/ProfileCompletenessModal";
 import { getMissingFields } from "@/lib/profile-completeness";
 import LivingProfileNudge from "@/components/LivingProfileNudge";
 import CountUp from "@/components/CountUp";
@@ -72,7 +71,6 @@ export default async function DashboardPage({
 
   return (
     <NavShell>
-      <ProfileCompletenessModal profile={profile} />
       {getMissingFields(profile).length === 0 && <LivingProfileNudge profile={profile} />}
       <div className="px-5 md:px-8 py-10 max-w-3xl mx-auto w-full">
         <h1 className="reveal font-serif text-3xl text-text mb-2">Welcome, {name}.</h1>

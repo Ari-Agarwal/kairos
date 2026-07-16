@@ -12,6 +12,8 @@ import ShareChancesCard from "@/components/ShareChancesCard";
 import OutcomeLogModal from "./OutcomeLogModal";
 import LociModal from "./LociModal";
 import AidAppealModal from "./AidAppealModal";
+import { getMissingFields, type CompletenessProfile } from "@/lib/profile-completeness";
+import MissingFieldInputs, { FIELD_LABELS, INLINE_TEXT_FIELDS } from "@/components/MissingFieldInputs";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -40,10 +42,12 @@ export default function MatchListClient({
   initialMatches,
   remaining,
   isPremium,
+  profile,
 }: {
   initialMatches: Match[];
   remaining: number | null;
   isPremium: boolean;
+  profile: CompletenessProfile;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -99,7 +103,30 @@ export default function MatchListClient({
   const [appealMatchId, setAppealMatchId] = useState<string | null>(null);
   const [lociMatchId, setLociMatchId] = useState<string | null>(null);
 
-  async function handleRegenerate() {
+  // Optional freeform steer for regeneration ("what are you looking for") —
+  // deliberately optional, never required to regenerate.
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedback, setFeedback] = useState("");
+
+  // Mini-onboarding fields relevant to matches specifically, woven into this
+  // same pre-generate panel rather than a separate pop-up modal.
+  const missingFields = getMissingFields(profile, "matches");
+  const inlineMissing = missingFields.filter((f) => INLINE_TEXT_FIELDS.includes(f));
+  const linkOutMissing = missingFields.filter((f) => !INLINE_TEXT_FIELDS.includes(f));
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+
+  async function saveMissingFields() {
+    const patch: Record<string, string> = {};
+    for (const field of inlineMissing) {
+      if (fieldValues[field]?.trim()) patch[field] = fieldValues[field].trim();
+    }
+    if (Object.keys(patch).length === 0) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("profiles").update(patch).eq("user_id", user.id);
+  }
+
+  async function handleRegenerate(feedbackText?: string) {
     setRegenerating(true);
     setError(null);
     // The server route is capped at maxDuration=60s, but that cap isn't
@@ -110,7 +137,12 @@ export default function MatchListClient({
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 65_000);
     try {
-      const res = await fetch("/api/matches/generate", { method: "POST", signal: controller.signal });
+      const res = await fetch("/api/matches/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedback: feedbackText?.trim() || undefined }),
+        signal: controller.signal,
+      });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         setError(body.error ?? "Failed to regenerate. Please try again.");
@@ -133,14 +165,15 @@ export default function MatchListClient({
   // Onboarding kicks off generation itself, but that call can take up to ~50s
   // and is abandoned if the user closes the tab before it finishes — leaving
   // a saved profile with zero matches. Rather than making the user notice
-  // that and hunt for "Regenerate List", auto-fire the first generation the
-  // moment they land here with an empty list.
+  // that and hunt for "Regenerate List", auto-open the pre-generate panel the
+  // moment they land here with an empty list (rather than silently auto-firing
+  // generation, which skipped the mini-onboarding step entirely).
   const autoTriggered = useRef(false);
   const wasEmptyOnFirstLoad = useRef(matches.length === 0);
   useEffect(() => {
     if (matches.length === 0 && !autoTriggered.current && (isPremium || remaining !== 0)) {
       autoTriggered.current = true;
-      handleRegenerate();
+      setShowFeedback(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -219,14 +252,14 @@ export default function MatchListClient({
         Tap any card to see the school&apos;s info, percentage breakdown, and career path.
       </p>
 
-      <div className="flex items-center justify-between mb-6 mt-3">
+      <div className="flex items-center justify-between mb-3 mt-3">
         <div className="flex items-center gap-2">
           <button
-            onClick={handleRegenerate}
+            onClick={() => setShowFeedback((v) => !v)}
             disabled={!isPremium && remaining === 0}
             className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Regenerate List
+            {matches.length === 0 ? "Generate List" : "Regenerate List"}
           </button>
           <button
             onClick={() => setEditing((e) => !e)}
@@ -239,6 +272,58 @@ export default function MatchListClient({
           {isPremium ? "Unlimited regenerations" : `${remaining} regeneration${remaining === 1 ? "" : "s"} left this week`}
         </span>
       </div>
+
+      {showFeedback && (
+        <div className="mb-6 rounded-xl border border-border bg-card px-4 py-3 space-y-3">
+          {inlineMissing.length > 0 && (
+            <div>
+              <p className="text-xs text-text-gray mb-2">
+                A few more details help your matches be more accurate — optional.
+              </p>
+              <MissingFieldInputs
+                fields={inlineMissing}
+                values={fieldValues}
+                onChange={(field, value) => setFieldValues((v) => ({ ...v, [field]: value }))}
+              />
+            </div>
+          )}
+          {linkOutMissing.length > 0 && (
+            <p className="text-xs text-text-gray">
+              Also missing:{" "}
+              <Link href="/profile?edit=true" className="text-primary hover:underline">
+                {linkOutMissing.map((f) => FIELD_LABELS[f]).join(", ")}
+              </Link>
+            </p>
+          )}
+          <div>
+            <label className="block text-xs text-text-gray mb-1.5">
+              What are you looking for? <span className="text-text-gray/70">— optional</span>
+            </label>
+            <textarea
+              className="w-full rounded-xl bg-bg border border-border text-text text-sm px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-text-gray"
+              rows={2}
+              maxLength={1000}
+              placeholder="e.g. more schools on the West Coast, or a bigger reach list"
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setShowFeedback(false); setFeedback(""); handleRegenerate(); }}
+              className="rounded-xl border border-border text-text-gray hover:text-text text-sm px-3 py-1.5 transition-colors"
+            >
+              Skip
+            </button>
+            <button
+              onClick={async () => { setShowFeedback(false); await saveMissingFields(); handleRegenerate(feedback); }}
+              className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-3 py-1.5"
+            >
+              Regenerate
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && <p role="alert" className="text-red text-sm mb-4">{error}</p>}
 

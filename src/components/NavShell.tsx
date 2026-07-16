@@ -17,9 +17,16 @@ import {
   User as UserIcon,
   Settings,
   LogOut,
+  Award,
+  Mic,
+  FileSignature,
+  UserCheck,
+  ClipboardCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
+// Mobile bottom-tab bar is icon-space-constrained, so it keeps a smaller
+// curated set rather than the full desktop order below.
 const TABS = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/matches", label: "Matches", icon: Target },
@@ -27,6 +34,43 @@ const TABS = [
   { href: "/essay-feedback", label: "Essay", icon: PenLine },
   { href: "/upgrade", label: "Upgrade", icon: Crown },
   { href: "/about", label: "About", icon: Info },
+];
+
+// Full desktop sidebar order (decision Jul 16), grouped once the flat list
+// grew past 10 items. Mentor loop deliberately excluded — feature stays
+// built (code/migrations untouched) but its nav entry point is pulled for now.
+const DESKTOP_NAV_GROUPS: { label: string | null; items: typeof TABS }[] = [
+  {
+    label: null,
+    items: [
+      { href: "/dashboard", label: "Home", icon: Home },
+      { href: "/matches", label: "Matches", icon: Target },
+      { href: "/timeline", label: "Timeline", icon: CalendarClock },
+    ],
+  },
+  {
+    label: "Support",
+    items: [
+      { href: "/review", label: "Human Review", icon: UserCheck },
+      { href: "/scholarships", label: "Scholarships", icon: Award },
+      { href: "/recommenders", label: "Recommendations", icon: FileSignature },
+    ],
+  },
+  {
+    label: "Prep",
+    items: [
+      { href: "/essay-feedback", label: "Essay", icon: PenLine },
+      { href: "/activities/evaluate", label: "Activity Evaluation", icon: ClipboardCheck },
+      { href: "/mock-interview", label: "Mock Interview", icon: Mic },
+    ],
+  },
+  {
+    label: null,
+    items: [
+      { href: "/upgrade", label: "Upgrade", icon: Crown },
+      { href: "/about", label: "About", icon: Info },
+    ],
+  },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = "telos_sidebar_collapsed";
@@ -169,42 +213,63 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
           </AnimatePresence>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {TABS.map((tab) => {
-            const active = pathname?.startsWith(tab.href);
-            const Icon = tab.icon;
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                aria-current={active ? "page" : undefined}
-                className={`relative flex items-center gap-3 rounded-xl px-2.5 py-2 transition-colors ${
-                  active ? "text-text font-bold" : "text-text-gray hover:text-text hover:bg-secondary-tint"
-                }`}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="nav-active-pill"
-                    className="absolute inset-0 rounded-xl bg-active-tint"
-                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                  />
-                )}
-                <Icon className="relative w-4 h-4 shrink-0" />
+        <nav className="flex-1 px-3 py-4">
+          {DESKTOP_NAV_GROUPS.map((group, groupIdx) => (
+            <div key={group.label ?? `group-${groupIdx}`} className={groupIdx > 0 ? "mt-4 pt-4 border-t border-border" : ""}>
+              {group.label && (
                 <AnimatePresence>
                   {!collapsed && (
-                    <motion.span
+                    <motion.p
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="relative text-sm truncate"
+                      className="px-2.5 mb-1.5 text-[11px] font-medium uppercase tracking-wide text-text-gray/70"
                     >
-                      {tab.label}
-                    </motion.span>
+                      {group.label}
+                    </motion.p>
                   )}
                 </AnimatePresence>
-              </Link>
-            );
-          })}
+              )}
+              <div className="space-y-1">
+                {group.items.map((tab) => {
+                  const active = pathname?.startsWith(tab.href);
+                  const Icon = tab.icon;
+                  return (
+                    <Link
+                      key={tab.href}
+                      href={tab.href}
+                      aria-current={active ? "page" : undefined}
+                      title={collapsed ? tab.label : undefined}
+                      className={`relative flex items-center gap-3 rounded-xl px-2.5 py-2 transition-colors ${
+                        active ? "text-text font-bold" : "text-text-gray hover:text-text hover:bg-secondary-tint"
+                      }`}
+                    >
+                      {active && (
+                        <motion.span
+                          layoutId="nav-active-pill"
+                          className="absolute inset-0 rounded-xl bg-active-tint"
+                          transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                        />
+                      )}
+                      <Icon className="relative w-4 h-4 shrink-0" />
+                      <AnimatePresence>
+                        {!collapsed && (
+                          <motion.span
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="relative text-sm truncate"
+                          >
+                            {tab.label}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
       </motion.aside>
 

@@ -5,6 +5,7 @@ import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
 import { canRegenerate, weekStart } from "@/lib/access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isTrustedOrigin } from "@/lib/origin-check";
+import { rejectScriptTags, ValidationError } from "@/lib/validate";
 
 // Extended thinking at "high" effort has been observed taking 20-50s per
 // category call on real requests -- Vercel's default function duration (10s
@@ -46,6 +47,8 @@ interface Profile {
   budget_ceiling: number | null;
   first_gen: boolean | null;
   legacy_school: string | null;
+  internships_research: string | null;
+  achievements: string | null;
 }
 
 function missingFields(profile: Profile): string[] {
@@ -64,6 +67,24 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = user.id;
+
+  // Optional freeform steer ("what am I looking for") from the matches page —
+  // unlike every other free-text field in the app this one is allowed to be
+  // empty, so it's validated by hand rather than via requireString.
+  let feedback: string | null = null;
+  try {
+    const body = await req.json().catch(() => ({}));
+    if (typeof body?.feedback === "string" && body.feedback.trim().length > 0) {
+      if (body.feedback.length > 1000) {
+        return NextResponse.json({ error: "Feedback must be 1000 characters or fewer." }, { status: 400 });
+      }
+      rejectScriptTags(body.feedback, "feedback");
+      feedback = body.feedback.trim();
+    }
+  } catch (err) {
+    if (err instanceof ValidationError) return NextResponse.json({ error: err.message }, { status: 400 });
+    throw err;
+  }
 
   if (!(await checkRateLimit(supabase, `matches:${userId}`, 5, 60_000)).ok) {
     return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
@@ -121,9 +142,12 @@ Financial aid need: ${profile.financial_aid_need === null ? "not given" : profil
 Annual budget ceiling: ${profile.budget_ceiling ?? "not given"}
 First-generation student: ${profile.first_gen === null ? "not given" : profile.first_gen ? "yes" : "no"}
 Legacy school: ${profile.legacy_school ?? "none"}
+Internships / research experience: ${profile.internships_research ?? "not given"}
+Achievements / awards: ${profile.achievements ?? "not given"}
 Campus size preference: ${profile.campus_size_pref ?? "no preference given"}
 Campus setting preference: ${profile.campus_setting_pref ?? "no preference given"}
-${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
+${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}
+${feedback ? `\nThe student was asked "what are you looking for in your matches?" and said: "${feedback}" — weigh this alongside the profile above; don't let it override hard constraints like GPA/test-score realism, but do let it steer emphasis (e.g. toward a specific region, school size, or program strength).` : ""}`;
 
   const CATEGORIES = ["reach", "target", "safety"] as const;
 

@@ -28,13 +28,6 @@ const MAJORS = [
   "Sociology", "Visual/Performing Arts", "Other",
 ];
 
-const HIGH_SCHOOLS = [
-  "Stuyvesant High School", "Thomas Jefferson High School for Science and Technology",
-  "Lowell High School", "Boston Latin School", "Bronx High School of Science",
-  "Phillips Exeter Academy", "Phillips Academy Andover", "Lincoln High School",
-  "Central High School", "Washington High School", "Jefferson High School",
-];
-
 interface Activity {
   idea: string;
   length: string;
@@ -306,17 +299,11 @@ export default function OnboardingPage() {
             <input
               id="ob-current-school"
               type="text"
-              list="ob-high-schools"
               placeholder="e.g. Lincoln High School"
               value={currentSchool}
               onChange={(e) => setCurrentSchool(e.target.value)}
               className={inputClass}
             />
-            <datalist id="ob-high-schools">
-              {HIGH_SCHOOLS.map((s) => (
-                <option key={s} value={s} />
-              ))}
-            </datalist>
           </div>
         </>
       ),

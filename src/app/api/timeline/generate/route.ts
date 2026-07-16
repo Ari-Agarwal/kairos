@@ -6,6 +6,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { isTrustedOrigin } from "@/lib/origin-check";
 import { canRegenerate, weekStart } from "@/lib/access";
 import { getSchoolDeadline } from "@/lib/school-deadlines";
+import { rejectScriptTags, ValidationError } from "@/lib/validate";
 
 // Extended thinking at "high" effort takes 20-30s per section call on real
 // requests -- Vercel's default function duration (10s on Hobby) isn't enough,
@@ -30,6 +31,23 @@ export async function POST(req: Request) {
 
   if (!(await checkRateLimit(supabase, `timeline:${userId}`, 5, 60_000)).ok) {
     return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
+  }
+
+  // Optional "what would you like different" explanation from the timeline
+  // page's regenerate flow -- edits the timeline rather than a blind redo.
+  let feedback: string | null = null;
+  try {
+    const body = await req.json().catch(() => ({}));
+    if (typeof body?.feedback === "string" && body.feedback.trim().length > 0) {
+      if (body.feedback.length > 1000) {
+        return NextResponse.json({ error: "Feedback must be 1000 characters or fewer." }, { status: 400 });
+      }
+      rejectScriptTags(body.feedback, "feedback");
+      feedback = body.feedback.trim();
+    }
+  } catch (err) {
+    if (err instanceof ValidationError) return NextResponse.json({ error: err.message }, { status: 400 });
+    throw err;
   }
 
   const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("user_id", userId).single();
@@ -91,7 +109,9 @@ Annual budget ceiling: ${profile.budget_ceiling ?? "not specified"}
 First-generation student: ${profile.first_gen === null ? "not specified" : profile.first_gen ? "yes" : "no"}
 Legacy school: ${profile.legacy_school ?? "none"}
 Schools already considering: ${profile.schools_already_considering ?? "not specified"}
-
+Internships / research experience: ${profile.internships_research ?? "not specified"}
+Achievements / awards: ${profile.achievements ?? "not specified"}
+${feedback ? `\nThe student was asked "what would you like different in your timeline?" and said: "${feedback}" -- edit the timeline to reflect this rather than ignoring it, but don't fabricate false urgency or drop the grade-level scoping rules below just to satisfy it.\n` : ""}
 Matched schools:
 ${matches.map((m) => `- ${m.school_name} (${m.category})`).join("\n")}
 

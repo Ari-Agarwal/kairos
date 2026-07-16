@@ -8,7 +8,6 @@ import { createClient } from "@/lib/supabase/client";
 import CountUp from "@/components/CountUp";
 import { checkFeeWaiverEligibility } from "@/lib/fee-waiver";
 import ShareLinksManager from "@/components/ShareLinksManager";
-import MentorOptInCard from "@/components/MentorOptInCard";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const CAMPUS_SIZES = ["Small", "Medium", "Large", "No preference"];
@@ -39,6 +38,8 @@ interface Profile {
   sms_opt_in: boolean;
   mentor_opt_in: boolean;
   mentor_bio: string | null;
+  internships_research: string | null;
+  achievements: string | null;
 }
 
 export default function ProfileClient({
@@ -76,6 +77,8 @@ export default function ProfileClient({
     budget_ceiling: profile.budget_ceiling !== null ? String(profile.budget_ceiling) : "",
     legacy_school: profile.legacy_school ?? "",
     phone_number: profile.phone_number ?? "",
+    internships_research: profile.internships_research ?? "",
+    achievements: profile.achievements ?? "",
   });
   const [smsOptIn, setSmsOptIn] = useState(profile.sms_opt_in);
   const [financialAidNeed, setFinancialAidNeed] = useState<boolean | null>(profile.financial_aid_need);
@@ -150,6 +153,8 @@ export default function ProfileClient({
         budget_ceiling: form.budget_ceiling ? parseFloat(form.budget_ceiling) : null,
         first_gen: firstGen,
         legacy_school: form.legacy_school || null,
+        internships_research: form.internships_research || null,
+        achievements: form.achievements || null,
         phone_number: form.phone_number || null,
         sms_opt_in: smsOptIn && !!form.phone_number,
         sms_opt_in_at: smsOptIn && form.phone_number ? new Date().toISOString() : null,
@@ -415,6 +420,28 @@ export default function ProfileClient({
             />
           </div>
           <div>
+            <label htmlFor="pf-internships-research" className="block text-sm text-text-gray mb-1">Internships / research experience</label>
+            <input
+              id="pf-internships-research"
+              type="text"
+              value={form.internships_research}
+              onChange={(e) => setForm({ ...form, internships_research: e.target.value })}
+              placeholder="e.g. summer research internship in a campus bio lab"
+              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label htmlFor="pf-achievements" className="block text-sm text-text-gray mb-1">Achievements / awards</label>
+            <input
+              id="pf-achievements"
+              type="text"
+              value={form.achievements}
+              onChange={(e) => setForm({ ...form, achievements: e.target.value })}
+              placeholder="e.g. regional science fair finalist, Eagle Scout"
+              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
+            />
+          </div>
+          <div>
             <label htmlFor="pf-phone-number" className="block text-sm text-text-gray mb-1">Phone number (for SMS reminders, optional)</label>
             <input
               id="pf-phone-number"
@@ -638,7 +665,8 @@ export default function ProfileClient({
       </p>
 
       <div className="mt-8 pt-6 border-t border-border">
-        <MentorOptInCard initialOptIn={profile.mentor_opt_in} initialBio={profile.mentor_bio} />
+        {/* Mentor loop entry point pulled Jul 16 (decision, not a removal of the
+            feature) — code/migrations/API untouched, just no longer surfaced. */}
         <div className="bg-card border border-border rounded-2xl p-5 mb-6">
           <ShareLinksManager />
         </div>

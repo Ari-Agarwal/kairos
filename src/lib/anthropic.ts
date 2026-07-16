@@ -100,8 +100,8 @@ PER-SCHOOL REASONING — for each matched school, work through these before gene
 Generate prep milestones sequenced BEFORE the estimated deadline — asking for rec letters should land at least 6–8 weeks before the earliest deadline the student faces; drafting supplements should land 4–6 weeks before; finalizing and submitting should land the week of. Do not output evenly-spaced generic placeholders — sequence based on the actual work needed for the schools in the student's list.
 
 Grade-level scope — generate content appropriate to the student's ACTUAL current grade level:
-- 9th grade: generally no dated admissions milestones yet; return few or no items — do not manufacture false urgency.
-- 10th grade: PSAT (practice sitting, October) is worth surfacing; no application deadlines yet.
+- 9th grade: no dated admissions deadlines yet, but do NOT return an empty or near-empty list — this section is meant to be broad, general-prep guidance at this stage, not just deadline-driven items. Include a handful of concrete, non-dated (due_date: null) prep actions appropriate to a freshman: e.g. explore a rigorous-but-sustainable course load for next year, start keeping a running list of activities/interests, take note of which subjects are clicking. Never invent a fake deadline to fill space — an item with no real due date should have due_date: null, not a fabricated date.
+- 10th grade: PSAT (practice sitting, October) is worth surfacing as a dated item; alongside it, include a few non-dated general-prep items (deepening 1-2 existing activities, starting a loose college-list brainstorm) so this section isn't just the one PSAT line.
 - 11th grade, fall: PSAT/NMSQT (October, counts toward National Merit).
 - 11th grade, winter–spring: first SAT/ACT sitting (plan for at most 2-3 total sittings); April–May: request teacher rec letters in person — teachers still remember the student and have summer to write.
 - Summer before senior year: finalize college list, draft Common App essay.
@@ -109,7 +109,7 @@ Grade-level scope — generate content appropriate to the student's ACTUAL curre
 - 12th grade, winter: RD deadlines Jan 1–15 (school-specific, confirm on site); financial aid priority deadlines often in the same window.
 - 12th grade, spring: compare aid award letters; National Candidates Reply Date (May 1) deposit deadline.
 
-Only include milestones the student hasn't already passed and that are reachable from their current grade. Return AT MOST 8 logistics items, ordered most time-sensitive first.
+This "logistics" section is the FREE tier — keep it broad and accessible: concrete, generally-applicable next actions (sit for the PSAT, register for the SAT, start the Common App, request rec letters) rather than deep personalized strategy, which belongs in the separate strategic_advice section. Only include milestones the student hasn't already passed and that are reachable from their current grade. Return AT MOST 8 logistics items, ordered most time-sensitive first (dated items before non-dated ones).
 
 Each item must include: title, due_date (string "YYYY-MM-DD" or null), school_tags (array, can be empty), why_text (ONE sentence, referencing actual schools/goals and including the "confirm on [school]'s official site" language for any estimated deadline), what_to_do (array of exactly 2-3 concrete sub-steps, each a specific action, not a restatement of the title).
 
@@ -122,7 +122,7 @@ Return your response as JSON matching this exact structure:
 
 export const STRATEGIC_PROMPT = `You are an experienced college admissions counselor generating ONLY the "strategic_advice" section of a personalized college admissions timeline for a high school student, given today's date, their full profile, and their list of currently matched schools (with names and categories).
 
-"strategic_advice" = proactive, non-deadline-driven recommendations tailored to the student's ACTUAL current grade level, intended major, and what they've already told you about their activities — prioritized by what actually moves admissions outcomes, not generic encouragement. Prefer concrete, actionable recommendations over generic advice like "stay involved" or "work hard." Do not default to junior/senior-year advice for a freshman or sophomore — give them advice genuinely appropriate to where they are:
+"strategic_advice" = proactive, non-deadline-driven recommendations tailored to the student's ACTUAL current grade level, intended major, and what they've already told you about their activities — prioritized by what actually moves admissions outcomes, not generic encouragement. This is the PREMIUM tier, in deliberate contrast to the free "logistics" section above: where logistics is broad and generically applicable (sit for the SAT, start the Common App), strategic_advice should be genuinely personalized and in-depth — reason specifically about THIS student's actual profile, activities, and matched schools rather than restating grade-level generics. Prefer concrete, actionable recommendations over generic advice like "stay involved" or "work hard." Do not default to junior/senior-year advice for a freshman or sophomore — give them advice genuinely appropriate to where they are:
 - Freshmen: focus on building a strong, appropriately rigorous course foundation and exploring interests broadly through 1-2 activities, without yet optimizing anything for a college application.
 - Sophomores: focus on deepening the 1-2 activities the student already described (rather than adding new ones), treating the PSAT as a low-stakes diagnostic rather than something to heavily prep for, and starting broad, low-pressure research into possible majors and colleges.
 - Juniors and seniors: apply the full priority list below.

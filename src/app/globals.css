@@ -3,15 +3,18 @@
 :root {
   --bg: #0A0A0A;
   --card: #171717;
-  /* Brand accent (amber) — the one color repeated everywhere the brand shows
-     up: CTAs, active states, progress bars, links, and the target-tier label.
-     Deliberately not diluted into a per-category rainbow — see CLAUDE.md. */
-  --primary: #FFB020;
-  --primary-hover: #E69D1A;
+  /* Brand accent (gold, re-retuned Jul 16 round 2 — the first retune to
+     #C2A46B read as too dim/muted; landed here on a genuine gold that's
+     still less saturated/orange than the original #FFB020) — the one color
+     repeated everywhere the brand shows up: CTAs, active states, progress
+     bars, links, and the target-tier label. Deliberately not diluted into a
+     per-category rainbow — see CLAUDE.md. */
+  --primary: #D9A63C;
+  --primary-hover: #C2911F;
   /* target schools / "you are here" marker — same brand accent, not a separate hue */
-  --amber: #FFB020;
-  --amber-tint: rgba(255, 176, 32, 0.14);
-  --amber-text-on-tint: #FFC862;
+  --amber: #D9A63C;
+  --amber-tint: rgba(217, 166, 60, 0.14);
+  --amber-text-on-tint: #E8C878;
   /* safety schools / on-track / completed — calmest, most muted; stays neutral
      on purpose so tier distinction reads by shade/label, not by competing hue */
   --green: #9C9789;
@@ -37,9 +40,9 @@
   --border: #2A2A2A;
   /* brand-accent glow, tokenized so timeline's pulse/shadow effects don't
      hardcode the amber rgb triplet outside this file */
-  --amber-glow-ring: rgba(255, 176, 32, 0.5);
-  --amber-glow-ring-fade: rgba(255, 176, 32, 0);
-  --amber-glow-shadow: rgba(255, 176, 32, 0.35);
+  --amber-glow-ring: rgba(217, 166, 60, 0.5);
+  --amber-glow-ring-fade: rgba(217, 166, 60, 0);
+  --amber-glow-shadow: rgba(217, 166, 60, 0.35);
 }
 
 @theme inline {

@@ -5,6 +5,7 @@ import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
 import { isTrustedOrigin } from "@/lib/origin-check";
+import { canAccessFeature } from "@/lib/access";
 
 interface InterviewFeedback {
   score: number;
@@ -24,6 +25,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
   }
 
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("subscription_tier").eq("user_id", user.id).single();
+  if (profileError) {
+    console.error("interview feedback profile query failed:", profileError);
+    return NextResponse.json({ error: "Failed to load profile" }, { status: 500 });
+  }
+  if (!canAccessFeature(profile, "mock_interview")) {
+    return NextResponse.json({ error: "Mock Interview is a Premium feature." }, { status: 403 });
+  }
+
   let question: string;
   let answer: string;
   try {
@@ -38,32 +48,39 @@ export async function POST(req: Request) {
   }
 
   flagAnomalousUsage("interview-feedback", user.id);
-  const t0 = Date.now();
-  try {
-    const response = await getAnthropic().messages.create({
-      model: MODEL,
-      max_tokens: 1024,
-      thinking: { type: "disabled" },
-      system: INTERVIEW_FEEDBACK_PROMPT,
-      messages: [{ role: "user", content: `Question: ${question}\n\nStudent's answer (transcribed from speech): ${answer}` }],
-    });
-    logAiUsage("interview-feedback", user.id, MODEL, t0, response);
-    const text = response.content.find((b) => b.type === "text")?.text ?? "";
-    const feedback = extractJson<InterviewFeedback>(text);
+  // Two attempts, same rationale as interview/question -- a single transient
+  // Anthropic 5xx shouldn't read as a broken feature.
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const t0 = Date.now();
+    try {
+      const response = await getAnthropic().messages.create({
+        model: MODEL,
+        max_tokens: 1024,
+        thinking: { type: "disabled" },
+        system: INTERVIEW_FEEDBACK_PROMPT,
+        messages: [{ role: "user", content: `Question: ${question}\n\nStudent's answer (transcribed from speech): ${answer}` }],
+      });
+      logAiUsage("interview-feedback", user.id, MODEL, t0, response);
+      const text = response.content.find((b) => b.type === "text")?.text ?? "";
+      const feedback = extractJson<InterviewFeedback>(text);
 
-    await supabase.from("interview_sessions").insert({
-      user_id: user.id,
-      question,
-      answer_transcript: answer,
-      score: feedback.score,
-      strengths: feedback.strengths,
-      improvements: feedback.improvements,
-      summary: feedback.one_line_summary,
-    });
+      await supabase.from("interview_sessions").insert({
+        user_id: user.id,
+        question,
+        answer_transcript: answer,
+        score: feedback.score,
+        strengths: feedback.strengths,
+        improvements: feedback.improvements,
+        summary: feedback.one_line_summary,
+      });
 
-    return NextResponse.json(feedback);
-  } catch (err) {
-    logAiUsage("interview-feedback", user.id, MODEL, t0, err instanceof Error ? err : new Error(String(err)));
-    return NextResponse.json({ error: "Failed to generate feedback. Please try again." }, { status: 502 });
+      return NextResponse.json(feedback);
+    } catch (err) {
+      logAiUsage("interview-feedback", user.id, MODEL, t0, err instanceof Error ? err : new Error(String(err)));
+      lastErr = err;
+    }
   }
+  console.error("interview/feedback failed after retry:", lastErr);
+  return NextResponse.json({ error: "Failed to generate feedback. Please try again." }, { status: 502 });
 }

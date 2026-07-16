@@ -2,7 +2,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import NavShell from "@/components/NavShell";
-import ProfileCompletenessModal from "@/components/ProfileCompletenessModal";
 import MatchListClient from "./MatchListClient";
 
 function weekStart(): string {
@@ -50,8 +49,7 @@ export default async function MatchesPage() {
 
   return (
     <NavShell>
-      <ProfileCompletenessModal profile={profile} />
-      <MatchListClient initialMatches={matches ?? []} remaining={remaining} isPremium={isPremium} />
+      <MatchListClient initialMatches={matches ?? []} remaining={remaining} isPremium={isPremium} profile={profile} />
     </NavShell>
   );
 }

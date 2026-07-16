@@ -5,7 +5,8 @@ export type FeatureKey =
   | "essay_feedback"
   | "activity_evaluation"
   | "unlimited_regenerations"
-  | "strategic_timeline_advice";
+  | "strategic_timeline_advice"
+  | "mock_interview";
 
 export interface AccessUser {
   subscription_tier: "free" | "premium";

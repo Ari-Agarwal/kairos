@@ -2,7 +2,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import NavShell from "@/components/NavShell";
-import ProfileCompletenessModal from "@/components/ProfileCompletenessModal";
 import TimelineClient from "./TimelineClient";
 
 interface TimelineItem {
@@ -82,12 +81,12 @@ export default async function TimelinePage() {
 
   return (
     <NavShell>
-      <ProfileCompletenessModal profile={profile} />
       <TimelineClient
         items={items ?? []}
         isPremium={isPremium}
         youAreHereId={youAreHereId}
         remaining={remaining}
+        profile={profile}
       />
     </NavShell>
   );
