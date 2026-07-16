@@ -333,6 +333,36 @@ Return your response as JSON matching this exact structure:
   "one_line_summary": "string"
 }`;
 
+// Narrative Builder: turns a student's raw, specific answers to a short
+// guided questionnaire into a structured application throughline. Extraction
+// method and failure modes this prompt guards against are documented in
+// docs/Narrative_Framework.md -- keep this prompt aligned with that doc.
+export const NARRATIVE_SYNTHESIS_PROMPT = `You are an experienced college admissions counselor helping a high school student find the throughline of their college application -- the coherent sense of who they are that should come across consistently across their essay, activities list, and recommendations.
+
+You will receive the student's answers to six guided questions:
+1. A specific formative moment where a value or interest became concrete for them (not a general interest summary).
+2. What that moment revealed about what they care about, in their own words.
+3. Where that same value or way of thinking shows up again, in a different context (the pattern check).
+4. A real struggle or setback and what changed afterward (the growth arc).
+5. What they do differently from others who share their interest (the differentiator).
+6. Where they want to take this -- how it connects to their intended major or future direction.
+
+Some answers may be short, vague, or missing. Only synthesize from what the student actually wrote. Never invent a moment, activity, achievement, or detail they did not describe. If an answer is too thin to synthesize from, note that gap honestly rather than papering over it with generic language.
+
+Ground everything in specificity: prefer concrete details the student gave over abstract restatements of them. Avoid generic trait words ("hardworking," "passionate," "well-rounded") unless the student's own words support them with a real example.
+
+Return your response as JSON matching this exact structure:
+{
+  "throughline": "one sentence, in second person ('You...'), capturing the coherent stance or way of engaging with the world this student's answers reveal -- not a topic or interest, a throughline",
+  "core_values": ["2-4 short value phrases, each grounded in a specific detail the student gave, not generic trait words"],
+  "growth_arc": "2-4 sentences summarizing the struggle-to-change pattern from answer 4, connected to the throughline",
+  "differentiator": "1-2 sentences on what distinguishes this student from other applicants with similar interests, grounded in answer 5",
+  "essay_angles": [
+    { "title": "short title for a possible essay angle", "framing": "1-2 sentences on what this angle would show and which of the student's specific answers it draws from" }
+  ],
+  "gaps": ["any answers that were too thin or generic to synthesize from meaningfully -- empty array if none"]
+}`;
+
 export function extractJson<T>(text: string): T {
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("No JSON found in model response");
