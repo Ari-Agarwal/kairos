@@ -9,14 +9,16 @@ export default async function ProfilePage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+  if (profileError) console.error("profile: failed to fetch profile", profileError);
   if (!profile) redirect("/onboarding");
 
-  const { count: activeSchoolCount } = await supabase
+  const { count: activeSchoolCount, error: activeSchoolCountError } = await supabase
     .from("school_matches")
     .select("id", { count: "exact", head: true })
     .eq("user_id", user.id)
     .eq("is_active", true);
+  if (activeSchoolCountError) console.error("profile: failed to count school_matches", activeSchoolCountError);
 
   const fullName = (user.user_metadata?.full_name as string | undefined) ?? "";
 

@@ -29,16 +29,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
   }
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
+  if (profileError) console.error("timeline/generate: failed to fetch profile", profileError);
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   const week = weekStart(new Date());
-  const { data: regenRow } = await supabase
+  const { data: regenRow, error: regenError } = await supabase
     .from("regeneration_log")
     .select("timeline_count")
     .eq("user_id", user.id)
     .eq("week_start_date", week)
     .maybeSingle();
+  if (regenError) console.error("timeline/generate: failed to fetch regeneration_log", regenError);
 
   const currentCount = regenRow?.timeline_count ?? 0;
   if (!canRegenerate(profile, currentCount)) {
@@ -48,12 +50,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const { data: matches } = await supabase
+  const { data: matches, error: matchesError } = await supabase
     .from("school_matches")
     .select("school_name, category")
     .eq("user_id", user.id)
     .eq("is_active", true);
 
+  if (matchesError) console.error("timeline/generate: failed to fetch school_matches", matchesError);
   if (!matches || matches.length === 0) {
     return NextResponse.json({ error: "Generate your school matches first." }, { status: 400 });
   }
@@ -124,7 +127,8 @@ ${matches.map((m) => `- ${m.school_name} (${m.category})`).join("\n")}`;
   const logistics: TimelineEntry[] = logisticsResult.status === "fulfilled" ? logisticsResult.value : [];
   const strategic_advice: TimelineEntry[] = strategicResult.status === "fulfilled" ? strategicResult.value : [];
 
-  await supabase.from("timeline_items").delete().eq("user_id", user.id);
+  const { error: deleteError } = await supabase.from("timeline_items").delete().eq("user_id", user.id);
+  if (deleteError) console.error("timeline/generate: failed to delete previous timeline_items", deleteError);
 
   const rows = [
     ...logistics.map((i) => ({
@@ -152,9 +156,10 @@ ${matches.map((m) => `- ${m.school_name} (${m.category})`).join("\n")}`;
   const { error } = await supabase.from("timeline_items").insert(rows);
   if (error) return NextResponse.json({ error: "Failed to save timeline." }, { status: 500 });
 
-  await supabase
+  const { error: upsertError } = await supabase
     .from("regeneration_log")
     .upsert({ user_id: user.id, week_start_date: week, timeline_count: currentCount + 1 });
+  if (upsertError) console.error("timeline/generate: failed to upsert regeneration_log", upsertError);
 
   return NextResponse.json({ ok: true });
 }

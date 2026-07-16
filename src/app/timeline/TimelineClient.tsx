@@ -78,7 +78,11 @@ export default function TimelineClient({
   }
 
   async function handleDelete(id: string) {
-    await supabase.from("timeline_items").delete().eq("id", id);
+    const { error } = await supabase.from("timeline_items").delete().eq("id", id);
+    if (error) {
+      console.error("TimelineClient: failed to delete item", error);
+      return;
+    }
     setItems((prev) => prev.filter((i) => i.id !== id));
   }
 

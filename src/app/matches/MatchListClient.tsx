@@ -104,7 +104,11 @@ export default function MatchListClient({
   }, []);
 
   async function handleRemove(id: string) {
-    await supabase.from("school_matches").update({ is_active: false }).eq("id", id);
+    const { error } = await supabase.from("school_matches").update({ is_active: false }).eq("id", id);
+    if (error) {
+      console.error("MatchListClient: failed to remove match", error);
+      return;
+    }
     setMatches((prev) => prev.filter((m) => m.id !== id));
   }
 

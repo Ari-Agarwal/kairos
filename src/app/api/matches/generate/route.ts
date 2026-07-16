@@ -56,21 +56,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*")
     .eq("user_id", user.id)
     .single();
 
+  if (profileError) console.error("matches/generate: failed to fetch profile", profileError);
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   const week = weekStart(new Date());
-  const { data: regenRow } = await supabase
+  const { data: regenRow, error: regenError } = await supabase
     .from("regeneration_log")
     .select("count")
     .eq("user_id", user.id)
     .eq("week_start_date", week)
     .maybeSingle();
+  if (regenError) console.error("matches/generate: failed to fetch regeneration_log", regenError);
 
   const currentCount = regenRow?.count ?? 0;
 
@@ -226,7 +228,8 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
     return true;
   });
 
-  await supabase.from("school_matches").update({ is_active: false }).eq("user_id", user.id);
+  const { error: deactivateError } = await supabase.from("school_matches").update({ is_active: false }).eq("user_id", user.id);
+  if (deactivateError) console.error("matches/generate: failed to deactivate previous matches", deactivateError);
 
   const rows = schools.map((s) => ({
     user_id: user.id,
@@ -243,9 +246,10 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}`;
     return NextResponse.json({ error: "Failed to save matches." }, { status: 500 });
   }
 
-  await supabase
+  const { error: upsertError } = await supabase
     .from("regeneration_log")
     .upsert({ user_id: user.id, week_start_date: week, count: currentCount + 1 });
+  if (upsertError) console.error("matches/generate: failed to upsert regeneration_log", upsertError);
 
   return NextResponse.json({ ok: true });
 }

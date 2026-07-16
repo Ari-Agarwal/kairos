@@ -22,39 +22,44 @@ export default async function DashboardPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+  if (profileError) console.error("dashboard: failed to fetch profile", profileError);
   if (!profile) redirect("/onboarding");
 
-  const { count: activeMatchCount } = await supabase
+  const { count: activeMatchCount, error: activeMatchCountError } = await supabase
     .from("school_matches")
     .select("id", { count: "exact", head: true })
     .eq("user_id", user.id)
     .eq("is_active", true);
+  if (activeMatchCountError) console.error("dashboard: failed to count school_matches", activeMatchCountError);
 
-  const { data: activeMatches } = await supabase
+  const { data: activeMatches, error: activeMatchesError } = await supabase
     .from("school_matches")
     .select("school_name, category, percentage")
     .eq("user_id", user.id)
     .eq("is_active", true)
     .order("percentage", { ascending: false });
+  if (activeMatchesError) console.error("dashboard: failed to fetch school_matches", activeMatchesError);
 
   const CATEGORY_ORDER = ["reach", "target", "safety"] as const;
   const topMatches = CATEGORY_ORDER
     .map((category) => activeMatches?.find((m) => m.category === category))
     .filter((m): m is NonNullable<typeof m> => Boolean(m));
 
-  const { count: timelineItemCount } = await supabase
+  const { count: timelineItemCount, error: timelineItemCountError } = await supabase
     .from("timeline_items")
     .select("id", { count: "exact", head: true })
     .eq("user_id", user.id);
+  if (timelineItemCountError) console.error("dashboard: failed to count timeline_items", timelineItemCountError);
 
-  const { data: upcomingTasks } = await supabase
+  const { data: upcomingTasks, error: upcomingTasksError } = await supabase
     .from("timeline_items")
     .select("id, title, due_date")
     .eq("user_id", user.id)
     .eq("completed", false)
     .order("due_date", { ascending: true, nullsFirst: false })
     .limit(3);
+  if (upcomingTasksError) console.error("dashboard: failed to fetch upcoming timeline_items", upcomingTasksError);
 
   const name = (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] || "there";
 

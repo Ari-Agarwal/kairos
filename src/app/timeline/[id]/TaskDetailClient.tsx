@@ -27,15 +27,17 @@ export default function TaskDetailClient({ item }: { item: TimelineItem }) {
 
   async function handleComplete() {
     setSaving(true);
-    await supabase.from("timeline_items").update({ completed: true }).eq("id", item.id);
+    const { error } = await supabase.from("timeline_items").update({ completed: true }).eq("id", item.id);
+    if (error) console.error("TaskDetailClient: failed to mark item complete", error);
 
     if (item.profile_sync_field) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase
+        const { error: syncError } = await supabase
           .from("profiles")
           .update({ [item.profile_sync_field]: true })
           .eq("user_id", user.id);
+        if (syncError) console.error("TaskDetailClient: failed to sync profile field", syncError);
       }
     }
 
@@ -46,7 +48,8 @@ export default function TaskDetailClient({ item }: { item: TimelineItem }) {
 
   async function handleMarkIncomplete() {
     setSaving(true);
-    await supabase.from("timeline_items").update({ completed: false }).eq("id", item.id);
+    const { error } = await supabase.from("timeline_items").update({ completed: false }).eq("id", item.id);
+    if (error) console.error("TaskDetailClient: failed to mark item incomplete", error);
     setCompleted(false);
     setSaving(false);
     router.refresh();

@@ -11,16 +11,18 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: match } = await supabase
+  const { data: match, error: matchError } = await supabase
     .from("school_matches")
     .select("*")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
 
+  if (matchError) console.error("schools/[id]: failed to fetch school_match", matchError);
   if (!match) notFound();
 
-  const { data: profile } = await supabase.from("profiles").select("subscription_tier").eq("user_id", user.id).single();
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("subscription_tier").eq("user_id", user.id).single();
+  if (profileError) console.error("schools/[id]: failed to fetch profile", profileError);
   const isPremium = profile?.subscription_tier === "premium";
   const stats = await getCollegeStats(match.school_name);
 

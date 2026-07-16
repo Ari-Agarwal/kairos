@@ -17,16 +17,18 @@ export default async function AtRiskPage() {
   const counselor = await getCounselorRecord(supabase, user.id);
   if (!counselor) redirect("/dashboard");
 
-  const { data: school } = await supabase
+  const { data: school, error: schoolError } = await supabase
     .from("schools")
     .select("name")
     .eq("school_id", counselor.school_id)
     .maybeSingle();
+  if (schoolError) console.error("counselor/at-risk: failed to fetch school", schoolError);
 
-  const { data: profiles } = await supabase
+  const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
     .select("*")
     .eq("school_id", counselor.school_id);
+  if (profilesError) console.error("counselor/at-risk: failed to fetch profiles", profilesError);
 
   const studentIds = (profiles ?? []).map((p) => p.user_id);
 
@@ -42,16 +44,18 @@ export default async function AtRiskPage() {
     });
   }
 
-  const { data: matches } = studentIds.length
+  const { data: matches, error: matchesError } = studentIds.length
     ? await supabase.from("school_matches").select("user_id").in("user_id", studentIds).eq("is_active", true)
-    : { data: [] };
+    : { data: [], error: null };
+  if (matchesError) console.error("counselor/at-risk: failed to fetch school_matches", matchesError);
 
-  const { data: timelineItems } = studentIds.length
+  const { data: timelineItems, error: timelineItemsError } = studentIds.length
     ? await supabase
         .from("timeline_items")
         .select("user_id, due_date, completed, is_strategic")
         .in("user_id", studentIds)
-    : { data: [] };
+    : { data: [], error: null };
+  if (timelineItemsError) console.error("counselor/at-risk: failed to fetch timeline_items", timelineItemsError);
 
   const matchCountByUser = new Map<string, number>();
   for (const m of matches ?? []) {

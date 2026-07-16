@@ -33,7 +33,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
   }
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
+  if (profileError) console.error("career-path: failed to fetch profile", profileError);
   if (!canAccessFeature(profile, "career_path_explorer")) {
     return NextResponse.json({ error: "Career Path is a Premium feature." }, { status: 403 });
   }

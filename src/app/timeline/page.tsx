@@ -55,21 +55,24 @@ export default async function TimelinePage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+  if (profileError) console.error("timeline: failed to fetch profile", profileError);
   if (!profile) redirect("/onboarding");
 
-  const { data: items } = await supabase
+  const { data: items, error: itemsError } = await supabase
     .from("timeline_items")
     .select("*")
     .eq("user_id", user.id)
     .order("due_date", { ascending: true, nullsFirst: false });
+  if (itemsError) console.error("timeline: failed to fetch timeline_items", itemsError);
 
-  const { data: regenRow } = await supabase
+  const { data: regenRow, error: regenError } = await supabase
     .from("regeneration_log")
     .select("timeline_count")
     .eq("user_id", user.id)
     .eq("week_start_date", weekStart())
     .maybeSingle();
+  if (regenError) console.error("timeline: failed to fetch regeneration_log", regenError);
 
   const isPremium = profile.subscription_tier === "premium";
   const remaining = isPremium ? null : Math.max(0, 3 - (regenRow?.timeline_count ?? 0));

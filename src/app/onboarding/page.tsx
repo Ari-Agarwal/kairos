@@ -138,11 +138,12 @@ export default function OnboardingPage() {
       const existing = user.user_metadata?.full_name as string | undefined;
       if (existing) setFullName(existing);
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("user_id")
         .eq("user_id", user.id)
         .maybeSingle();
+      if (profileError) console.error("onboarding: failed to check for existing profile", profileError);
       if (profile) router.push("/dashboard");
     });
   }, [supabase, router]);
