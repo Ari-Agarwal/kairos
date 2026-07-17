@@ -14,10 +14,15 @@ export default function TimelinePrepClient({
   const router = useRouter();
   const supabase = createClient();
 
-  async function handleComplete(values: Record<string, string>, feedback: string) {
-    const patch: Record<string, string> = {};
+  async function handleComplete(values: Record<string, string | string[]>, feedback: string) {
+    const patch: Record<string, string | string[]> = {};
     for (const field of inlineFields) {
-      if (values[field]?.trim()) patch[field] = values[field].trim();
+      const value = values[field];
+      if (Array.isArray(value)) {
+        if (value.length > 0) patch[field] = value;
+      } else if (value?.trim()) {
+        patch[field] = value.trim();
+      }
     }
     if (Object.keys(patch).length > 0) {
       try {

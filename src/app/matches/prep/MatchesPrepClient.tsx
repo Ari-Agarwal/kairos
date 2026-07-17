@@ -14,15 +14,19 @@ export default function MatchesPrepClient({
   const router = useRouter();
   const supabase = createClient();
 
-  async function handleComplete(values: Record<string, string>, feedback: string) {
-    const patch: Record<string, string> = {};
+  async function handleComplete(values: Record<string, string | string[]>, feedback: string) {
+    const patch: Record<string, string | string[]> = {};
     for (const field of inlineFields) {
-      if (values[field]?.trim()) patch[field] = values[field].trim();
+      const value = values[field];
+      if (Array.isArray(value)) {
+        if (value.length > 0) patch[field] = value;
+      } else if (value?.trim()) {
+        patch[field] = value.trim();
+      }
     }
-    // Leaving any of these fields blank is valid (they're optional) -- this
-    // block only runs when at least one was filled in, but it still needs
-    // its own try/catch so a flaky auth/update call surfaces as an error
-    // instead of hanging the flow in its "submitting" state forever.
+    // This block only runs when at least one field was filled in, but it
+    // still needs its own try/catch so a flaky auth/update call surfaces as
+    // an error instead of hanging the flow in its "submitting" state forever.
     if (Object.keys(patch).length > 0) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -73,6 +77,7 @@ export default function MatchesPrepClient({
       completeLabel="Generate Matches"
       generatingLabel="Building your personalized list..."
       onComplete={handleComplete}
+      required
     />
   );
 }

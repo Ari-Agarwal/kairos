@@ -22,8 +22,8 @@ interface Profile {
   extracurriculars: string[] | null;
   schools_already_considering: string | null;
   subscription_tier: string;
-  campus_size_pref: string;
-  campus_setting_pref: string;
+  campus_size_pref: string[] | null;
+  campus_setting_pref: string[] | null;
   sat_score: number | null;
   act_score: number | null;
   class_rank: string | null;
@@ -65,8 +65,6 @@ export default function ProfileClient({
     intended_major: profile.intended_major ?? "",
     current_school: profile.current_school ?? "",
     schools_already_considering: profile.schools_already_considering ?? "",
-    campus_size_pref: profile.campus_size_pref ?? "",
-    campus_setting_pref: profile.campus_setting_pref ?? "",
     sat_score: profile.sat_score !== null ? String(profile.sat_score) : "",
     act_score: profile.act_score !== null ? String(profile.act_score) : "",
     class_rank: profile.class_rank ?? "",
@@ -78,6 +76,8 @@ export default function ProfileClient({
     phone_number: profile.phone_number ?? "",
     internships_research: profile.internships_research ?? "",
   });
+  const [campusSizePrefs, setCampusSizePrefs] = useState<string[]>(profile.campus_size_pref ?? []);
+  const [campusSettingPrefs, setCampusSettingPrefs] = useState<string[]>(profile.campus_setting_pref ?? []);
   const [smsOptIn, setSmsOptIn] = useState(profile.sms_opt_in);
   const [financialAidNeed, setFinancialAidNeed] = useState<boolean | null>(profile.financial_aid_need);
   const [firstGen, setFirstGen] = useState<boolean | null>(profile.first_gen);
@@ -120,8 +120,8 @@ export default function ProfileClient({
 
   async function handleSave() {
     setSaveError(null);
-    if (!form.campus_size_pref || !form.campus_setting_pref) {
-      setSaveError("Please select a campus size and setting preference (pick \"No preference\" if you're not sure).");
+    if (campusSizePrefs.length === 0 || campusSettingPrefs.length === 0) {
+      setSaveError("Please select at least one campus size and setting preference (pick \"No preference\" if you're not sure).");
       return;
     }
     setSaving(true);
@@ -139,8 +139,8 @@ export default function ProfileClient({
         current_school: form.current_school,
         extracurriculars: ecArray.length > 0 ? ecArray : null,
         schools_already_considering: form.schools_already_considering,
-        campus_size_pref: form.campus_size_pref,
-        campus_setting_pref: form.campus_setting_pref,
+        campus_size_pref: campusSizePrefs,
+        campus_setting_pref: campusSettingPrefs,
         sat_score: form.sat_score ? parseInt(form.sat_score, 10) : null,
         act_score: form.act_score ? parseInt(form.act_score, 10) : null,
         class_rank: form.class_rank || null,
@@ -457,18 +457,20 @@ export default function ProfileClient({
             </label>
           </div>
           <div>
-            <span id="pf-campus-size-label" className="block text-sm text-text-gray mb-2">Campus size preference *</span>
+            <span id="pf-campus-size-label" className="block text-sm text-text-gray mb-2">Campus size preference * <span className="text-text-gray/70 font-normal">(select all that apply)</span></span>
             <div className="flex flex-wrap gap-2" role="group" aria-labelledby="pf-campus-size-label">
               {CAMPUS_SIZES.map((size) => (
                 <button
                   key={size}
                   type="button"
-                  aria-pressed={form.campus_size_pref === size}
+                  aria-pressed={campusSizePrefs.includes(size)}
                   onClick={() =>
-                    setForm({ ...form, campus_size_pref: form.campus_size_pref === size ? "" : size })
+                    setCampusSizePrefs((prev) =>
+                      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
+                    )
                   }
                   className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
-                    form.campus_size_pref === size
+                    campusSizePrefs.includes(size)
                       ? "bg-primary text-bg border-primary"
                       : "border-border text-text-gray hover:text-text"
                   }`}
@@ -479,21 +481,20 @@ export default function ProfileClient({
             </div>
           </div>
           <div>
-            <span id="pf-campus-setting-label" className="block text-sm text-text-gray mb-2">Campus setting preference *</span>
+            <span id="pf-campus-setting-label" className="block text-sm text-text-gray mb-2">Campus setting preference * <span className="text-text-gray/70 font-normal">(select all that apply)</span></span>
             <div className="flex flex-wrap gap-2" role="group" aria-labelledby="pf-campus-setting-label">
               {CAMPUS_SETTINGS.map((setting) => (
                 <button
                   key={setting}
                   type="button"
-                  aria-pressed={form.campus_setting_pref === setting}
+                  aria-pressed={campusSettingPrefs.includes(setting)}
                   onClick={() =>
-                    setForm({
-                      ...form,
-                      campus_setting_pref: form.campus_setting_pref === setting ? "" : setting,
-                    })
+                    setCampusSettingPrefs((prev) =>
+                      prev.includes(setting) ? prev.filter((s) => s !== setting) : [...prev, setting]
+                    )
                   }
                   className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
-                    form.campus_setting_pref === setting
+                    campusSettingPrefs.includes(setting)
                       ? "bg-primary text-bg border-primary"
                       : "border-border text-text-gray hover:text-text"
                   }`}

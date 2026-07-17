@@ -12,6 +12,11 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 // Full-screen pre-generate flow for Matches/Timeline, matching the primary
 // onboarding's chrome (progress bar, one-round-at-a-time card, Back/Continue)
 // rather than an inline panel dropped onto the feature page itself.
+function hasValue(value: string | string[] | undefined): boolean {
+  if (Array.isArray(value)) return value.length > 0;
+  return !!value?.trim();
+}
+
 export default function FeaturePrepFlow({
   backHref,
   heading,
@@ -23,6 +28,7 @@ export default function FeaturePrepFlow({
   completeLabel,
   generatingLabel,
   onComplete,
+  required = false,
 }: {
   backHref: string;
   heading: string;
@@ -33,11 +39,17 @@ export default function FeaturePrepFlow({
   feedbackPlaceholder: string;
   completeLabel: string;
   generatingLabel: string;
-  onComplete: (values: Record<string, string>, feedback: string) => Promise<{ error?: string }>;
+  onComplete: (values: Record<string, string | string[]>, feedback: string) => Promise<{ error?: string }>;
+  // When true, every inline-field round must be filled before advancing and
+  // the "Skip these questions" escape hatch is removed entirely -- used for
+  // the matches mini-onboarding, where the added profile detail measurably
+  // improves match accuracy. Defaults to false so other callers (e.g. the
+  // timeline prep flow) keep the original skippable behavior.
+  required?: boolean;
 }) {
   const reduceMotion = useReducedMotion();
   const [step, setStep] = useState(0);
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string | string[]>>({});
   const [feedback, setFeedback] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +60,7 @@ export default function FeaturePrepFlow({
   const isFeedbackRound = step === inlineFields.length;
   const isLastRound = step === totalRounds - 1;
   const progressPercent = Math.round(((step + 1) / totalRounds) * 100);
+  const currentRoundFilled = isFeedbackRound || !required || hasValue(values[inlineFields[step]]);
 
   function goNext() {
     setStep((s) => Math.min(totalRounds - 1, s + 1));
@@ -197,20 +210,23 @@ export default function FeaturePrepFlow({
           <button
             type="button"
             onClick={() => (isLastRound ? submit() : goNext())}
-            className="flex-1 rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium py-3"
+            disabled={!currentRoundFilled}
+            className="flex-1 rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium py-3 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLastRound ? completeLabel : "Continue"}
           </button>
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => submit(true)}
-        className="text-text-gray hover:text-text text-xs underline underline-offset-2 mt-5 block mx-auto"
-      >
-        Skip these questions
-      </button>
+      {!required && (
+        <button
+          type="button"
+          onClick={() => submit(true)}
+          className="text-text-gray hover:text-text text-xs underline underline-offset-2 mt-5 block mx-auto"
+        >
+          Skip these questions
+        </button>
+      )}
     </div>
   );
 }

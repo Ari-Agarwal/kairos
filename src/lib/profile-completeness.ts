@@ -7,8 +7,8 @@ export interface CompletenessProfile {
   act_score?: number | null;
   career_goals?: string | null;
   class_rank?: string | null;
-  campus_size_pref?: string | null;
-  campus_setting_pref?: string | null;
+  campus_size_pref?: string[] | null;
+  campus_setting_pref?: string[] | null;
   legacy_school?: string | null;
   internships_research?: string | null;
 }
@@ -63,9 +63,9 @@ function isMissing(profile: CompletenessProfile, field: string): boolean {
     case "class_rank":
       return !profile.class_rank;
     case "campus_size_pref":
-      return !profile.campus_size_pref;
+      return !profile.campus_size_pref || profile.campus_size_pref.length === 0;
     case "campus_setting_pref":
-      return !profile.campus_setting_pref;
+      return !profile.campus_setting_pref || profile.campus_setting_pref.length === 0;
     case "legacy_school":
       return !profile.legacy_school;
     case "internships_research":

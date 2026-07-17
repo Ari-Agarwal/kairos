@@ -5,6 +5,7 @@ import {
   CAMPUS_SIZES,
   CAMPUS_SETTINGS,
   FIELD_PLACEHOLDERS,
+  MULTI_SELECT_FIELDS,
 } from "@/lib/mini-onboarding-fields";
 
 // Pure inline fields — no card, no title, no buttons. Embedded directly into
@@ -16,33 +17,46 @@ export default function MissingFieldInputs({
   onChange,
 }: {
   fields: string[];
-  values: Record<string, string>;
-  onChange: (field: string, value: string) => void;
+  values: Record<string, string | string[]>;
+  onChange: (field: string, value: string | string[]) => void;
 }) {
   if (fields.length === 0) return null;
   return (
     <div className="space-y-3">
       {fields.map((field) => {
-        const isSelect = field === "campus_size_pref" || field === "campus_setting_pref";
+        const isMultiSelect = MULTI_SELECT_FIELDS.includes(field);
         const options = field === "campus_size_pref" ? CAMPUS_SIZES : CAMPUS_SETTINGS;
+        const selected = isMultiSelect ? ((values[field] as string[] | undefined) ?? []) : [];
         return (
           <div key={field}>
             <label className="block text-xs text-text-gray mb-1">{FIELD_LABELS[field]}</label>
-            {isSelect ? (
-              <select
-                value={values[field] ?? ""}
-                onChange={(e) => onChange(field, e.target.value)}
-                className="w-full rounded-xl bg-bg border border-border px-3 py-2 text-sm text-text outline-none focus:border-primary transition-colors"
-              >
-                <option value="" disabled>Select</option>
+            {isMultiSelect ? (
+              <div className="flex flex-wrap gap-2" role="group" aria-label={FIELD_LABELS[field]}>
                 {options.map((o) => (
-                  <option key={o} value={o}>{o}</option>
+                  <button
+                    key={o}
+                    type="button"
+                    aria-pressed={selected.includes(o)}
+                    onClick={() =>
+                      onChange(
+                        field,
+                        selected.includes(o) ? selected.filter((v) => v !== o) : [...selected, o]
+                      )
+                    }
+                    className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                      selected.includes(o)
+                        ? "bg-primary text-bg border-primary"
+                        : "border-border text-text-gray hover:text-text"
+                    }`}
+                  >
+                    {o}
+                  </button>
                 ))}
-              </select>
+              </div>
             ) : (
               <input
                 type="text"
-                value={values[field] ?? ""}
+                value={(values[field] as string | undefined) ?? ""}
                 onChange={(e) => onChange(field, e.target.value)}
                 placeholder={FIELD_PLACEHOLDERS[field]}
                 className="w-full rounded-xl bg-bg border border-border px-3 py-2 text-sm text-text outline-none focus:border-primary transition-colors"

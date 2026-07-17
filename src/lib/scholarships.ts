@@ -21,8 +21,14 @@ const MAJOR_KEYWORDS: Record<string, string[]> = {
   engineering: ["engineering", "technical field"],
 };
 
+// "STEM & Technical" (not "& Major-Specific") -- of the scholarships in this
+// dataset, only STEM/engineering/CS majors currently have anything
+// major-specific to bucket here. Naming it "Major-Specific" implied coverage
+// for every major (humanities, business, arts, etc.) that doesn't exist yet --
+// see Software_Timeline.md Section 3 for the follow-up to actually add those.
 export const SCHOLARSHIP_CATEGORIES = [
-  "STEM & Major-Specific",
+  "STEM & Technical",
+  "Humanities & Arts",
   "Identity & Community",
   "Military & Family",
   "Need-Based",
@@ -38,8 +44,14 @@ export type ScholarshipCategory = (typeof SCHOLARSHIP_CATEGORIES)[number];
 export function getCategory(scholarship: Scholarship): ScholarshipCategory {
   const text = `${scholarship.name} ${scholarship.eligibility_summary}`.toLowerCase();
 
-  if (/engineering|computer science|technology|technical field|journalism|media|stem\b/.test(text)) {
-    return "STEM & Major-Specific";
+  if (/engineering|computer science|technology|technical field|stem\b/.test(text)) {
+    return "STEM & Technical";
+  }
+  // Journalism/media/literature/arts majors were previously caught by the STEM
+  // regex above (a "technology/media" keyword collision), which buried the one
+  // non-STEM major-specific scholarship in this dataset (NABJ) inside "STEM."
+  if (/journalism|media\b|literature|creative writing|\bart\b|\barts\b|music\b/.test(text)) {
+    return "Humanities & Arts";
   }
   if (/hispanic|african american|black|native american|american indian|lgbtq|women\b|disability|first-generation/.test(text)) {
     return "Identity & Community";

@@ -37,8 +37,8 @@ interface Profile {
   test_scores: unknown;
   sat_score: number | null;
   act_score: number | null;
-  campus_size_pref: string | null;
-  campus_setting_pref: string | null;
+  campus_size_pref: string[] | null;
+  campus_setting_pref: string[] | null;
   class_rank: string | null;
   ap_ib_count: number | null;
   career_goals: string | null;
@@ -55,7 +55,7 @@ function missingFields(profile: Profile): string[] {
   if (!profile.intended_major) missing.push("intended major");
   if (!profile.extracurriculars || profile.extracurriculars.length === 0) missing.push("extracurriculars");
   if (!profile.test_scores && !profile.sat_score && !profile.act_score) missing.push("test scores");
-  if (!profile.campus_size_pref || !profile.campus_setting_pref) missing.push("campus preferences");
+  if (!profile.campus_size_pref?.length || !profile.campus_setting_pref?.length) missing.push("campus preferences");
   return missing;
 }
 
@@ -142,8 +142,8 @@ Annual budget ceiling: ${profile.budget_ceiling ?? "not given"}
 First-generation student: ${profile.first_gen === null ? "not given" : profile.first_gen ? "yes" : "no"}
 Legacy school: ${profile.legacy_school ?? "none"}
 Internships / research experience: ${profile.internships_research ?? "not given"}
-Campus size preference: ${profile.campus_size_pref ?? "no preference given"}
-Campus setting preference: ${profile.campus_setting_pref ?? "no preference given"}
+Campus size preference: ${profile.campus_size_pref?.length ? profile.campus_size_pref.join(" or ") : "no preference given"}
+Campus setting preference: ${profile.campus_setting_pref?.length ? profile.campus_setting_pref.join(" or ") : "no preference given"}
 ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}
 ${feedback ? `\nThe student was asked "what are you looking for in your matches?" and said: "${feedback}" — weigh this alongside the profile above; don't let it override hard constraints like GPA/test-score realism, but do let it steer emphasis (e.g. toward a specific region, school size, or program strength).` : ""}`;
 

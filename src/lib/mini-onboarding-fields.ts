@@ -32,6 +32,11 @@ export const INLINE_TEXT_FIELDS = [
 export const CAMPUS_SIZES = ["Small", "Medium", "Large", "No preference"];
 export const CAMPUS_SETTINGS = ["Urban", "Suburban", "Rural", "No preference"];
 
+// Fields collected as text[] rather than a single string -- rendered as a
+// multi-select checkbox group everywhere they appear (profile edit, mini
+// onboarding) rather than a single select/toggle.
+export const MULTI_SELECT_FIELDS = ["campus_size_pref", "campus_setting_pref"];
+
 export const FIELD_PLACEHOLDERS: Record<string, string> = {
   schools_already_considering: "e.g. University of Michigan, Duke",
   career_goals: "e.g. software engineering, then eventually product management",
