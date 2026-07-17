@@ -19,15 +19,19 @@ export interface ScholarshipProfile {
 const MAJOR_KEYWORDS: Record<string, string[]> = {
   "computer science": ["computer science", "computer engineering", "technical field", "technology"],
   engineering: ["engineering", "technical field"],
+  business: ["business", "marketing", "finance", "entrepreneurship", "deca", "fbla"],
+  education: ["education", "teacher", "teaching", "educator"],
+  "visual/performing arts": ["art", "arts", "writing", "visual", "performing"],
 };
 
-// "STEM & Technical" (not "& Major-Specific") -- of the scholarships in this
-// dataset, only STEM/engineering/CS majors currently have anything
-// major-specific to bucket here. Naming it "Major-Specific" implied coverage
-// for every major (humanities, business, arts, etc.) that doesn't exist yet --
-// see Software_Timeline.md Section 3 for the follow-up to actually add those.
+// Business/Education/Humanities & Arts added (Jul 17, follow-up to the
+// original "STEM & Major-Specific" naming fix) -- previously only STEM had
+// any major-specific scholarships in this dataset, so sorting by major left
+// every other major with an empty or near-empty list.
 export const SCHOLARSHIP_CATEGORIES = [
   "STEM & Technical",
+  "Business & Professional",
+  "Education",
   "Humanities & Arts",
   "Identity & Community",
   "Military & Family",
@@ -46,6 +50,16 @@ export function getCategory(scholarship: Scholarship): ScholarshipCategory {
 
   if (/engineering|computer science|technology|technical field|stem\b/.test(text)) {
     return "STEM & Technical";
+  }
+  // Deliberately excludes "entrepreneurship" alone -- it previously caught the
+  // Ron Brown Scholar Program (a general public-service scholarship) purely
+  // because its eligibility text lists entrepreneurship as one of several
+  // interest areas, not because it's actually a business-major scholarship.
+  if (/\bdeca\b|\bfbla\b|\bbusiness\b|\bmarketing\b|\bfinance\b/.test(text)) {
+    return "Business & Professional";
+  }
+  if (/\beducation\b|\bteacher\b|\bteaching\b|educator/.test(text)) {
+    return "Education";
   }
   // Journalism/media/literature/arts majors were previously caught by the STEM
   // regex above (a "technology/media" keyword collision), which buried the one
