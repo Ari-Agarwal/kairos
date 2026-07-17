@@ -22,7 +22,7 @@ export default async function ScholarshipsPage() {
   const scholarshipProfile = {
     first_gen: profile?.first_gen ?? null,
     financial_aid_need: profile?.financial_aid_need ?? null,
-    intended_major: profile?.intended_major ?? null,
+    intended_major: (profile?.intended_major as string[] | null) ?? null,
     extracurriculars: (profile?.extracurriculars as string[] | null) ?? null,
   };
 

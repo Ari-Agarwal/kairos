@@ -7,7 +7,9 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
 import { isTrustedOrigin } from "@/lib/origin-check";
 
-const CAREER_PATH_PROMPT = `You are describing typical post-graduation career patterns for a student with a given intended major considering a specific school. Ground your answer in general, real-world patterns for that major, not specifics about named individuals, and avoid naming specific employers unless they are broadly, publicly known as common hirers for that major (e.g. "large public accounting firms" rather than a specific invented company). Salary ranges should reflect realistic national early-career figures for that major, not the most extreme outcomes.
+const CAREER_PATH_PROMPT = `You are describing typical post-graduation career patterns for a student with one or more given intended majors considering a specific school. Ground your answer in general, real-world patterns for that major (or majors), not specifics about named individuals, and avoid naming specific employers unless they are broadly, publicly known as common hirers for that major (e.g. "large public accounting firms" rather than a specific invented company). Salary ranges should reflect realistic national early-career figures for that major, not the most extreme outcomes.
+
+If more than one major is given, address the combination genuinely — e.g. a real interdisciplinary path some students in that combination pursue — rather than picking just one and ignoring the rest; if the majors don't have an obvious combined path, briefly cover each rather than silently dropping one.
 
 If the major is "Undecided," do not default to a single arbitrary field — instead describe the general shape of outcomes for an undecided student at this school (e.g. common first-declared majors, the range of paths available, how much time students typically have before declaring), rather than fabricating a specific career track.
 
@@ -64,7 +66,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "user",
-          content: `Major: ${profile.intended_major ?? "Undecided"}\nSchool: ${schoolName}`,
+          content: `Major: ${profile.intended_major?.length ? profile.intended_major.join(", ") : "Undecided"}\nSchool: ${schoolName}`,
         },
       ],
     });

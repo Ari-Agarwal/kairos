@@ -96,7 +96,7 @@ export default async function SharedView({
           <p className="text-text-gray text-xs uppercase tracking-widest mb-2">Read-only · Shared by student</p>
           <h1 className="font-serif text-3xl text-text mb-1">{student.display_name}&apos;s College List</h1>
           <p className="text-text-gray text-sm">
-            {[student.grade_level, student.current_school, student.intended_major ? `Applying for ${student.intended_major}` : null]
+            {[student.grade_level, student.current_school, student.intended_major?.length ? `Applying for ${student.intended_major.join(", ")}` : null]
               .filter(Boolean)
               .join(" · ")}
           </p>

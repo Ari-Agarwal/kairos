@@ -45,13 +45,13 @@ describe("RLS student-table isolation", () => {
   it("student A cannot write student B's profile", async () => {
     const { data: studentBRows } = await studentB.from("profiles").select("user_id").limit(1);
     const studentBId = studentBRows?.[0]?.user_id;
-    await studentA.from("profiles").update({ intended_major: "forged update" }).eq("user_id", studentBId);
+    await studentA.from("profiles").update({ intended_major: ["forged update"] }).eq("user_id", studentBId);
     const { data: check } = await studentB
       .from("profiles")
       .select("intended_major")
       .eq("user_id", studentBId)
       .single();
-    expect(check?.intended_major).not.toBe("forged update");
+    expect(check?.intended_major).not.toEqual(["forged update"]);
   });
 
   it("student A cannot read student B's school_matches", async () => {

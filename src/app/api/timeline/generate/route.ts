@@ -96,7 +96,7 @@ Student profile:
 Grade level: ${profile.grade_level}
 Unweighted GPA: ${profile.unweighted_gpa}
 Weighted GPA: ${profile.weighted_gpa}
-Intended major: ${profile.intended_major ?? "not specified"}
+Intended major: ${profile.intended_major?.length ? profile.intended_major.join(", ") : "not specified"}
 Extracurriculars: ${(profile.extracurriculars as string[] | null)?.join("; ") || "not specified"}
 SAT score: ${profile.sat_score ?? "not specified"}
 ACT score: ${profile.act_score ?? "not specified"}

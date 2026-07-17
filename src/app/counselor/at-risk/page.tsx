@@ -78,7 +78,7 @@ export default async function AtRiskPage() {
     const activeMatchCount = matchCountByUser.get(p.user_id) ?? 0;
     const loginAge = daysSince(p.last_login_at);
     const incompleteProfile = !(
-      p.intended_major &&
+      p.intended_major?.length > 0 &&
       p.extracurriculars?.length > 0 &&
       p.schools_already_considering &&
       p.test_scores

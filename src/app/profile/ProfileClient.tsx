@@ -8,16 +8,27 @@ import { createClient } from "@/lib/supabase/client";
 import CountUp from "@/components/CountUp";
 import { checkFeeWaiverEligibility } from "@/lib/fee-waiver";
 import ShareLinksManager from "@/components/ShareLinksManager";
+import { MAJORS } from "@/lib/mini-onboarding-fields";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const CAMPUS_SIZES = ["Small", "Medium", "Large", "No preference"];
 const CAMPUS_SETTINGS = ["Urban", "Suburban", "Rural", "No preference"];
+const STANDARD_MAJORS = new Set(MAJORS.filter((m) => m !== "Other"));
+
+// Saved majors may include a custom (non-standard) value typed via "Other" --
+// split those back out so the toggle grid and the free-text field can each
+// show the right thing on load.
+function splitMajors(saved: string[]): { selected: string[]; other: string } {
+  const standard = saved.filter((m) => STANDARD_MAJORS.has(m));
+  const custom = saved.filter((m) => !STANDARD_MAJORS.has(m));
+  return custom.length > 0 ? { selected: [...standard, "Other"], other: custom.join(", ") } : { selected: standard, other: "" };
+}
 
 interface Profile {
   grade_level: string;
   unweighted_gpa: number;
   weighted_gpa: number;
-  intended_major: string | null;
+  intended_major: string[] | null;
   current_school: string;
   extracurriculars: string[] | null;
   schools_already_considering: string | null;
@@ -62,7 +73,6 @@ export default function ProfileClient({
     grade_level: profile.grade_level,
     unweighted_gpa: String(profile.unweighted_gpa),
     weighted_gpa: String(profile.weighted_gpa),
-    intended_major: profile.intended_major ?? "",
     current_school: profile.current_school ?? "",
     schools_already_considering: profile.schools_already_considering ?? "",
     sat_score: profile.sat_score !== null ? String(profile.sat_score) : "",
@@ -78,6 +88,9 @@ export default function ProfileClient({
   });
   const [campusSizePrefs, setCampusSizePrefs] = useState<string[]>(profile.campus_size_pref ?? []);
   const [campusSettingPrefs, setCampusSettingPrefs] = useState<string[]>(profile.campus_setting_pref ?? []);
+  const initialMajors = splitMajors(profile.intended_major ?? []);
+  const [majors, setMajors] = useState<string[]>(initialMajors.selected);
+  const [majorOther, setMajorOther] = useState(initialMajors.other);
   const [smsOptIn, setSmsOptIn] = useState(profile.sms_opt_in);
   const [financialAidNeed, setFinancialAidNeed] = useState<boolean | null>(profile.financial_aid_need);
   const [firstGen, setFirstGen] = useState<boolean | null>(profile.first_gen);
@@ -118,10 +131,22 @@ export default function ProfileClient({
   const ecCount = profile.extracurriculars?.length ?? 0;
   const displayName = fullName || email || "Student";
 
+  const resolvedMajors = [
+    ...new Set(
+      majors
+        .flatMap((m) => (m === "Other" ? majorOther.split(",").map((s) => s.trim()) : [m]))
+        .filter(Boolean)
+    ),
+  ];
+
   async function handleSave() {
     setSaveError(null);
     if (campusSizePrefs.length === 0 || campusSettingPrefs.length === 0) {
       setSaveError("Please select at least one campus size and setting preference (pick \"No preference\" if you're not sure).");
+      return;
+    }
+    if (resolvedMajors.length === 0) {
+      setSaveError("Please select at least one intended major.");
       return;
     }
     setSaving(true);
@@ -135,7 +160,7 @@ export default function ProfileClient({
         grade_level: form.grade_level,
         unweighted_gpa: parseFloat(form.unweighted_gpa),
         weighted_gpa: parseFloat(form.weighted_gpa),
-        intended_major: form.intended_major,
+        intended_major: resolvedMajors,
         current_school: form.current_school,
         extracurriculars: ecArray.length > 0 ? ecArray : null,
         schools_already_considering: form.schools_already_considering,
@@ -221,14 +246,37 @@ export default function ProfileClient({
             />
           </div>
           <div>
-            <label htmlFor="pf-intended-major" className="block text-sm text-text-gray mb-1">Intended Major</label>
-            <input
-              id="pf-intended-major"
-              type="text"
-              value={form.intended_major}
-              onChange={(e) => setForm({ ...form, intended_major: e.target.value })}
-              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
-            />
+            <span id="pf-intended-major-label" className="block text-sm text-text-gray mb-2">
+              Intended Major <span className="text-text-gray/70">(select all that apply)</span>
+            </span>
+            <div className="flex flex-wrap gap-2" role="group" aria-labelledby="pf-intended-major-label">
+              {MAJORS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  aria-pressed={majors.includes(m)}
+                  onClick={() =>
+                    setMajors((prev) => (prev.includes(m) ? prev.filter((v) => v !== m) : [...prev, m]))
+                  }
+                  className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                    majors.includes(m)
+                      ? "bg-primary text-bg border-primary"
+                      : "border-border text-text-gray hover:text-text"
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+            {majors.includes("Other") && (
+              <input
+                type="text"
+                placeholder="Tell us your intended major(s)"
+                value={majorOther}
+                onChange={(e) => setMajorOther(e.target.value)}
+                className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary mt-2"
+              />
+            )}
           </div>
           <div>
             <label htmlFor="pf-current-school" className="block text-sm text-text-gray mb-1">Current School</label>
@@ -576,7 +624,7 @@ export default function ProfileClient({
         <div>
           <h1 className="font-serif text-2xl text-text">{displayName}</h1>
           <p className="text-text-gray text-sm">
-            {profile.grade_level} · {profile.current_school} · {profile.intended_major || "Major undecided"}
+            {profile.grade_level} · {profile.current_school} · {profile.intended_major?.length ? profile.intended_major.join(", ") : "Major undecided"}
           </p>
         </div>
         <button

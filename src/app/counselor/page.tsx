@@ -19,13 +19,13 @@ export interface RosterStudent {
 }
 
 function isProfileComplete(profile: {
-  intended_major: string | null;
+  intended_major: string[] | null;
   extracurriculars: string[] | null;
   schools_already_considering: string | null;
   test_scores: unknown;
 }): boolean {
   return Boolean(
-    profile.intended_major &&
+    profile.intended_major && profile.intended_major.length > 0 &&
       profile.extracurriculars &&
       profile.extracurriculars.length > 0 &&
       profile.schools_already_considering &&

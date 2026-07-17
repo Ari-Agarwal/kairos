@@ -12,7 +12,7 @@ export interface Scholarship {
 export interface ScholarshipProfile {
   first_gen: boolean | null;
   financial_aid_need: boolean | null;
-  intended_major: string | null;
+  intended_major: string[] | null;
   extracurriculars: string[] | null;
 }
 
@@ -84,11 +84,13 @@ export function isLikelyMatch(scholarship: Scholarship, profile: ScholarshipProf
   if (profile.financial_aid_need === true && (text.includes("financial need") || text.includes("need-based") || text.includes("low-income") || text.includes("pell"))) {
     return true;
   }
-  if (profile.intended_major) {
-    const major = profile.intended_major.toLowerCase();
-    for (const [key, keywords] of Object.entries(MAJOR_KEYWORDS)) {
-      if (major.includes(key) && keywords.some((k) => text.includes(k))) return true;
-    }
+  if (profile.intended_major?.some((m) => {
+    const major = m.toLowerCase();
+    return Object.entries(MAJOR_KEYWORDS).some(
+      ([key, keywords]) => major.includes(key) && keywords.some((k) => text.includes(k))
+    );
+  })) {
+    return true;
   }
   if (profile.extracurriculars?.some((ec) => text.includes("rotc") && ec.toLowerCase().includes("rotc"))) {
     return true;

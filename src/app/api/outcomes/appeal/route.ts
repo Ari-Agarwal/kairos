@@ -104,7 +104,7 @@ export async function POST(req: Request) {
       `Appeal school aid offer: $${appealAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       `Comparison school: ${compareSchool}`,
       `Comparison school aid offer: $${compareAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      `Intended major: ${profile.intended_major ?? "not provided"}`,
+      `Intended major: ${profile.intended_major?.length ? profile.intended_major.join(", ") : "not provided"}`,
       `Unweighted GPA: ${profile.unweighted_gpa ?? "not provided"}`,
       profile.weighted_gpa ? `Weighted GPA: ${profile.weighted_gpa}` : null,
       `Extracurriculars: ${Array.isArray(profile.extracurriculars) && profile.extracurriculars.length > 0 ? (profile.extracurriculars as string[]).join("; ") : "not provided"}`,

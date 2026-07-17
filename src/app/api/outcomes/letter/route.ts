@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     const schoolName = matchRow.school_name as string;
     const profileSummary = [
       `School: ${schoolName}`,
-      `Intended major: ${profile.intended_major ?? "not provided"}`,
+      `Intended major: ${profile.intended_major?.length ? profile.intended_major.join(", ") : "not provided"}`,
       `Unweighted GPA: ${profile.unweighted_gpa ?? "not provided"}`,
       profile.weighted_gpa ? `Weighted GPA: ${profile.weighted_gpa}` : null,
       `Extracurriculars: ${Array.isArray(profile.extracurriculars) && profile.extracurriculars.length > 0 ? (profile.extracurriculars as string[]).join("; ") : "not provided"}`,

@@ -12,6 +12,7 @@ import { track, identify } from "@/lib/analytics";
 import CareerQuiz from "@/components/CareerQuiz";
 import OnboardingChat from "@/components/OnboardingChat";
 import OnboardingIllustration, { ChatIntakeArt } from "@/components/OnboardingIllustration";
+import { MAJORS } from "@/lib/mini-onboarding-fields";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -19,14 +20,6 @@ const ROUND_TITLES = ["Getting to know you", "The basics", "Major", "Extracurric
 
 const GRADE_LEVELS = ["Freshman", "Sophomore", "Junior", "Senior"];
 const EC_LENGTHS = ["Less than 1 year", "1 year", "2 years", "3 years", "4+ years"];
-
-const MAJORS = [
-  "Undecided", "Biology", "Business", "Chemistry", "Computer Science", "Economics",
-  "Education", "Engineering (general)", "English", "Environmental Science", "Finance",
-  "History", "International Relations", "Journalism", "Mathematics", "Medicine / Pre-Med",
-  "Nursing", "Philosophy", "Physics", "Political Science", "Psychology", "Public Health",
-  "Sociology", "Visual/Performing Arts", "Other",
-];
 
 interface Activity {
   idea: string;
@@ -47,7 +40,7 @@ export default function OnboardingPage() {
   const [weightedGpa, setWeightedGpa] = useState("");
   const [currentSchool, setCurrentSchool] = useState("");
 
-  const [intendedMajor, setIntendedMajor] = useState("");
+  const [intendedMajors, setIntendedMajors] = useState<string[]>([]);
   const [majorOther, setMajorOther] = useState("");
   const [interests, setInterests] = useState("");
   const [mattersToYou, setMattersToYou] = useState("");
@@ -84,7 +77,13 @@ export default function OnboardingPage() {
     setActivities((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  const resolvedMajor = intendedMajor === "Other" ? majorOther : intendedMajor;
+  const resolvedMajors = [
+    ...new Set(
+      intendedMajors
+        .map((m) => (m === "Other" ? majorOther.trim() : m))
+        .filter((m): m is string => !!m)
+    ),
+  ];
 
   const progressChecks = [
     !!fullName,
@@ -92,7 +91,7 @@ export default function OnboardingPage() {
     !!unweightedGpa,
     !!weightedGpa,
     !!currentSchool,
-    !!resolvedMajor,
+    resolvedMajors.length > 0,
     activities.some((a) => a.idea.trim()),
     noTestYet || !!satScore || !!actScore,
   ];
@@ -131,7 +130,7 @@ export default function OnboardingPage() {
       }
     }
     if (idx === 2) {
-      if (!resolvedMajor) return "Please select (or describe) your intended major.";
+      if (resolvedMajors.length === 0) return "Please select (or describe) your intended major.";
     }
     if (idx === 3) {
       if (!activities.some((a) => a.idea.trim())) return "Add at least one activity.";
@@ -205,7 +204,7 @@ export default function OnboardingPage() {
       grade_level: gradeLevel,
       unweighted_gpa: parseFloat(unweightedGpa),
       weighted_gpa: parseFloat(weightedGpa),
-      intended_major: resolvedMajor,
+      intended_major: resolvedMajors,
       interests: combinedInterests || null,
       current_school: currentSchool,
       extracurriculars: ecArray.length > 0 ? ecArray : null,
@@ -386,23 +385,31 @@ export default function OnboardingPage() {
       fields: (
         <>
           <div>
-            <label htmlFor="ob-intended-major" className="block text-sm text-text-gray mb-1">Intended Major</label>
-            <select
-              id="ob-intended-major"
-              value={intendedMajor}
-              onChange={(e) => setIntendedMajor(e.target.value)}
-              className={inputClass}
-            >
-              <option value="" disabled>
-                Select
-              </option>
+            <span id="ob-intended-major-label" className="block text-sm text-text-gray mb-1">
+              Intended Major <span className="text-text-gray/70">(select all that apply)</span>
+            </span>
+            <div className="flex flex-wrap gap-2" role="group" aria-labelledby="ob-intended-major-label">
               {MAJORS.map((m) => (
-                <option key={m} value={m}>
+                <button
+                  key={m}
+                  type="button"
+                  aria-pressed={intendedMajors.includes(m)}
+                  onClick={() =>
+                    setIntendedMajors((prev) =>
+                      prev.includes(m) ? prev.filter((v) => v !== m) : [...prev, m]
+                    )
+                  }
+                  className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                    intendedMajors.includes(m)
+                      ? "bg-primary text-bg border-primary"
+                      : "border-border text-text-gray hover:text-text"
+                  }`}
+                >
                   {m}
-                </option>
+                </button>
               ))}
-            </select>
-            {intendedMajor === "Other" && (
+            </div>
+            {intendedMajors.includes("Other") && (
               <input
                 type="text"
                 placeholder="Tell us your intended major"
@@ -411,7 +418,7 @@ export default function OnboardingPage() {
                 className={`${inputClass} mt-2`}
               />
             )}
-            {intendedMajor === "Undecided" && (
+            {intendedMajors.includes("Undecided") && (
               <button
                 type="button"
                 onClick={() => setShowCareerQuiz(true)}
@@ -565,7 +572,7 @@ export default function OnboardingPage() {
         <CareerQuiz
           onClose={() => setShowCareerQuiz(false)}
           onSelectMajor={(major, rationale) => {
-            setIntendedMajor(major);
+            setIntendedMajors([major]);
             setCareerGoals(rationale);
             setShowCareerQuiz(false);
           }}

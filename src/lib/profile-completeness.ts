@@ -1,5 +1,5 @@
 export interface CompletenessProfile {
-  intended_major: string | null;
+  intended_major: string[] | null;
   extracurriculars: string[] | null;
   schools_already_considering: string | null;
   test_scores: unknown;
@@ -51,7 +51,7 @@ const SURFACE_FIELDS: Record<CompletenessSurface, string[]> = {
 function isMissing(profile: CompletenessProfile, field: string): boolean {
   switch (field) {
     case "intended_major":
-      return !profile.intended_major;
+      return !profile.intended_major || profile.intended_major.length === 0;
     case "extracurriculars":
       return !profile.extracurriculars || profile.extracurriculars.length === 0;
     case "schools_already_considering":

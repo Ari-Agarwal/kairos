@@ -34,7 +34,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
   const cohortStats: CohortStats | null = await getCohortStats(
     match.school_name,
     profile?.unweighted_gpa ?? null,
-    profile?.intended_major ?? null,
+    (profile?.intended_major as string[] | null) ?? null,
   );
 
   return (

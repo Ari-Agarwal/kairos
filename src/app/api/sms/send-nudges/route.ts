@@ -81,7 +81,7 @@ export async function GET(req: Request) {
       const scholarshipProfile = {
         first_gen: row.first_gen as boolean | null,
         financial_aid_need: row.financial_aid_need as boolean | null,
-        intended_major: row.intended_major as string | null,
+        intended_major: row.intended_major as string[] | null,
         extracurriculars: row.extracurriculars as string[] | null,
       };
       const newMatch = getAllScholarships()

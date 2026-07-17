@@ -26,7 +26,7 @@ export { MIN_COHORT_SIZE, type CohortStats } from "@/lib/cohort-types";
 export async function getCohortStats(
   schoolName: string,
   userGpa: number | null,
-  userMajor: string | null,
+  userMajors: string[] | null,
 ): Promise<CohortStats | null> {
   const supabase = createServiceClient();
 
@@ -62,7 +62,7 @@ export async function getCohortStats(
     (profileRows ?? []).map((p) => [p.user_id, { unweighted_gpa: p.unweighted_gpa, intended_major: p.intended_major }])
   );
 
-  type Row = { decision_type: string; profile: { unweighted_gpa: number | null; intended_major: string | null } | undefined };
+  type Row = { decision_type: string; profile: { unweighted_gpa: number | null; intended_major: string[] | null } | undefined };
   const rows: Row[] = outcomes.map((r) => ({
     decision_type: r.decision_type,
     profile: profileByUserId.get(r.school_matches.user_id),
@@ -82,13 +82,17 @@ export async function getCohortStats(
     };
   }
 
-  // Try narrowest filter first: GPA band + major
-  if (userGpa !== null && userMajor) {
+  // Try narrowest filter first: GPA band + major. "Same major" now means any
+  // overlap between the two students' major lists, not an exact single-value
+  // match -- a student who selected multiple majors should still cohort-match
+  // another student who shares just one of them.
+  const userMajorSet = new Set((userMajors ?? []).map((m) => m.toLowerCase().trim()));
+  if (userGpa !== null && userMajorSet.size > 0) {
     const narrow = rows.filter((r) => {
       const p = r.profile;
-      if (!p || p.unweighted_gpa == null || !p.intended_major) return false;
+      if (!p || p.unweighted_gpa == null || !p.intended_major?.length) return false;
       const inBand = Math.abs(p.unweighted_gpa - userGpa) <= 0.5;
-      const sameMajor = p.intended_major.toLowerCase().trim() === userMajor.toLowerCase().trim();
+      const sameMajor = p.intended_major.some((m) => userMajorSet.has(m.toLowerCase().trim()));
       return inBand && sameMajor;
     });
     if (narrow.length >= MIN_COHORT_SIZE) {

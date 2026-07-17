@@ -32,6 +32,17 @@ export const INLINE_TEXT_FIELDS = [
 export const CAMPUS_SIZES = ["Small", "Medium", "Large", "No preference"];
 export const CAMPUS_SETTINGS = ["Urban", "Suburban", "Rural", "No preference"];
 
+// Shared between onboarding and profile edit so both offer the exact same
+// major list. "Other" is handled specially by both callers (reveals a free
+// text input rather than being a selectable value on its own).
+export const MAJORS = [
+  "Undecided", "Biology", "Business", "Chemistry", "Computer Science", "Economics",
+  "Education", "Engineering (general)", "English", "Environmental Science", "Finance",
+  "History", "International Relations", "Journalism", "Mathematics", "Medicine / Pre-Med",
+  "Nursing", "Philosophy", "Physics", "Political Science", "Psychology", "Public Health",
+  "Sociology", "Visual/Performing Arts", "Other",
+];
+
 // Fields collected as text[] rather than a single string -- rendered as a
 // multi-select checkbox group everywhere they appear (profile edit, mini
 // onboarding) rather than a single select/toggle.

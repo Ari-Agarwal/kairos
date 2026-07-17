@@ -52,7 +52,7 @@ export async function POST(req: Request) {
   const profileSummary = [
     profile?.grade_level ? `Grade: ${profile.grade_level}` : null,
     profile?.unweighted_gpa ? `Unweighted GPA: ${profile.unweighted_gpa}` : null,
-    profile?.intended_major ? `Intended major: ${profile.intended_major}` : null,
+    profile?.intended_major?.length ? `Intended major: ${profile.intended_major.join(", ")}` : null,
     profile?.interests ? `Interests: ${profile.interests}` : null,
     profile?.extracurriculars?.length
       ? `Extracurriculars: ${(profile.extracurriculars as string[]).join("; ")}`

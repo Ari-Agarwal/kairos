@@ -75,7 +75,7 @@ export default async function DashboardPage({
       <div className="px-5 md:px-8 py-10 max-w-3xl mx-auto w-full">
         <h1 className="reveal font-serif text-3xl text-text mb-2">Welcome, {name}.</h1>
         <p className="reveal text-text-gray text-sm mb-8" style={{ ["--reveal-delay" as string]: "0.06s" }}>
-          {profile.grade_level} · {profile.current_school} · {profile.intended_major || "Major undecided"}
+          {profile.grade_level} · {profile.current_school} · {profile.intended_major?.length ? profile.intended_major.join(", ") : "Major undecided"}
           {" · "}
           {profile.unweighted_gpa} UW / {profile.weighted_gpa} W GPA
         </p>

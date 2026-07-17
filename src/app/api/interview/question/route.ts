@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Intended major: ${profile.intended_major ?? "Undecided"}\nCareer goals: ${profile.career_goals ?? "not specified"}`,
+            content: `Intended major: ${profile.intended_major?.length ? profile.intended_major.join(", ") : "Undecided"}\nCareer goals: ${profile.career_goals ?? "not specified"}`,
           },
         ],
       });

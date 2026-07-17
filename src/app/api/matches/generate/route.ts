@@ -29,7 +29,7 @@ interface SchoolResult {
 }
 
 interface Profile {
-  intended_major: string | null;
+  intended_major: string[] | null;
   interests: string | null;
   current_school: string | null;
   extracurriculars: string[] | null;
@@ -52,7 +52,7 @@ interface Profile {
 
 function missingFields(profile: Profile): string[] {
   const missing: string[] = [];
-  if (!profile.intended_major) missing.push("intended major");
+  if (!profile.intended_major?.length) missing.push("intended major");
   if (!profile.extracurriculars || profile.extracurriculars.length === 0) missing.push("extracurriculars");
   if (!profile.test_scores && !profile.sat_score && !profile.act_score) missing.push("test scores");
   if (!profile.campus_size_pref?.length || !profile.campus_setting_pref?.length) missing.push("campus preferences");
@@ -126,7 +126,7 @@ export async function POST(req: Request) {
 Grade level: ${profile.grade_level}
 Unweighted GPA: ${profile.unweighted_gpa}
 Weighted GPA: ${profile.weighted_gpa}
-Intended major: ${profile.intended_major ?? "missing"}
+Intended major: ${profile.intended_major?.length ? profile.intended_major.join(", ") : "missing"}
 Interests: ${profile.interests ?? "none given"}
 Current school: ${profile.current_school ?? "missing"}
 Extracurriculars: ${profile.extracurriculars?.join("; ") ?? "missing"}

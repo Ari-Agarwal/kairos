@@ -6,7 +6,7 @@ import Link from "next/link";
 interface EligibleMentor {
   user_id: string;
   mentor_bio: string | null;
-  intended_major: string | null;
+  intended_major: string[] | null;
 }
 
 interface SentRequest {
@@ -126,7 +126,7 @@ export default function MentorsClient({
             {mentors.length === 0 && <p className="text-text-gray text-sm">No mentors found for this school yet.</p>}
             {mentors.map((m) => (
               <div key={m.user_id} className="bg-bg border border-border rounded-xl p-3">
-                {m.intended_major && <p className="text-text-gray text-xs mb-1">{m.intended_major}</p>}
+                {m.intended_major?.length ? <p className="text-text-gray text-xs mb-1">{m.intended_major.join(", ")}</p> : null}
                 <p className="text-text text-sm mb-2">{m.mentor_bio}</p>
                 {sent[m.user_id] ? (
                   <p className="text-text-gray text-xs">Request sent.</p>

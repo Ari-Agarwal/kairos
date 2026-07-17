@@ -30,7 +30,11 @@ const EXTRACT_TOOL = {
           unweighted_gpa: { type: "number" as const },
           weighted_gpa: { type: "number" as const },
           current_school: { type: "string" as const },
-          intended_major: { type: "string" as const },
+          intended_major: {
+            type: "array" as const,
+            items: { type: "string" as const },
+            description: "One or more intended majors the student mentioned -- most students name just one, but capture all if they name several.",
+          },
           interests: { type: "string" as const },
           extracurriculars: { type: "array" as const, items: { type: "string" as const } },
           sat_score: { type: "number" as const },

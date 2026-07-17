@@ -23,7 +23,7 @@ export default function CareerPathClient({
   preselectedSchool,
 }: {
   matches: Match[];
-  intendedMajor: string | null;
+  intendedMajor: string[] | null;
   preselectedSchool: string | null;
 }) {
   const reduceMotion = useReducedMotion();
@@ -62,7 +62,7 @@ export default function CareerPathClient({
   return (
     <div>
       <p className="text-text-gray text-xs mb-4">
-        Major: <span className="text-text">{intendedMajor ?? "Undecided"}</span>
+        Major: <span className="text-text">{intendedMajor?.length ? intendedMajor.join(", ") : "Undecided"}</span>
       </p>
 
       <div className="bg-card border border-border rounded-2xl p-5 mb-6 space-y-3">

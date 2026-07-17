@@ -592,6 +592,21 @@ alter table profiles
   alter column campus_size_pref type text[]
   using (case when campus_size_pref is null then null else array[campus_size_pref] end);
 
+-- ============================================================
+-- migration_026_multiselect_intended_major.sql
+-- ============================================================
+-- Ari's direct follow-up, part 2: intended_major selectable as multiple
+-- choices too. Deferred from migration_025 deliberately -- this column
+-- touches 28 files (counselor dashboards, mentor matching, cohort analytics,
+-- outcome-appeal letters, interview-question generation, an RLS integration
+-- test), so it's its own migration/pass rather than bundled with the lower-
+-- risk campus size/setting change. No check constraint exists on this column
+-- (only `not null`, from migration_002), so there's no constraint-drop
+-- landmine like campus prefs had.
+alter table profiles
+  alter column intended_major type text[]
+  using (case when intended_major is null then null else array[intended_major] end);
+
 alter table profiles
   alter column campus_setting_pref type text[]
   using (case when campus_setting_pref is null then null else array[campus_setting_pref] end);

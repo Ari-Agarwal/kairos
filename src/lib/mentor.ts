@@ -4,7 +4,7 @@ import { isBlocked } from "@/lib/safety";
 export interface EligibleMentor {
   user_id: string;
   mentor_bio: string | null;
-  intended_major: string | null;
+  intended_major: string[] | null;
 }
 
 // Eligible mentor = opted in AND has a logged "accept" outcome for this exact
@@ -34,7 +34,7 @@ export async function findEligibleMentors(
 
   type Row = {
     school_matches: {
-      profiles: { user_id: string; mentor_opt_in: boolean; mentor_bio: string | null; intended_major: string | null } | null;
+      profiles: { user_id: string; mentor_opt_in: boolean; mentor_bio: string | null; intended_major: string[] | null } | null;
     };
   };
 

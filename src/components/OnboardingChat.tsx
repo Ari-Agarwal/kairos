@@ -11,7 +11,7 @@ interface DraftFields {
   unweighted_gpa?: number;
   weighted_gpa?: number;
   current_school?: string;
-  intended_major?: string;
+  intended_major?: string[];
   interests?: string;
   extracurriculars?: string[];
   sat_score?: number;
@@ -32,7 +32,7 @@ function isDraftComplete(d: DraftFields): boolean {
     GRADE_LEVELS.includes(d.grade_level) &&
     d.unweighted_gpa !== undefined &&
     d.current_school &&
-    d.intended_major &&
+    d.intended_major && d.intended_major.length > 0 &&
     d.extracurriculars && d.extracurriculars.length > 0 &&
     (d.no_test_yet || d.sat_score !== undefined || d.act_score !== undefined)
   );
