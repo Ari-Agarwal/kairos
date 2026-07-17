@@ -592,6 +592,11 @@ alter table profiles
   alter column campus_size_pref type text[]
   using (case when campus_size_pref is null then null else array[campus_size_pref] end);
 
+alter table profiles
+  alter column campus_setting_pref type text[]
+  using (case when campus_setting_pref is null then null else array[campus_setting_pref] end);
+
+
 -- ============================================================
 -- migration_026_multiselect_intended_major.sql
 -- ============================================================
@@ -607,8 +612,31 @@ alter table profiles
   alter column intended_major type text[]
   using (case when intended_major is null then null else array[intended_major] end);
 
-alter table profiles
-  alter column campus_setting_pref type text[]
-  using (case when campus_setting_pref is null then null else array[campus_setting_pref] end);
 
+-- ============================================================
+-- migration_027_college_photo_cache.sql
+-- ============================================================
+-- Software_Timeline.md Section 3 follow-up: a real photo of each college,
+-- visible in that school's info tab. Source is the Wikipedia REST API
+-- (free, no key, no billing account) -- researched Jul 17 as the best option
+-- over Google Places Photos ($7/1,000 requests) and generic stock photo APIs
+-- (not the actual named school). Mirrors college_stats_cache's pattern
+-- exactly: keyed by normalized school name, shared across all students, so
+-- repeated page views don't re-hit Wikipedia every time.
+
+create table college_photo_cache (
+  school_name       text        primary key,
+  image_url         text,
+  width             integer,
+  height            integer,
+  attribution_text  text,
+  attribution_url   text,
+  found             boolean     not null default true,
+  fetched_at        timestamptz default now() not null
+);
+
+alter table college_photo_cache enable row level security;
+
+create policy "authenticated users can read college photo cache" on college_photo_cache
+  for select using (auth.role() = 'authenticated');
 

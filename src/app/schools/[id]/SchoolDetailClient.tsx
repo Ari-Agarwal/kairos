@@ -59,14 +59,24 @@ interface CollegeStats {
   medianEarnings10yr: number | null;
 }
 
+interface CollegePhoto {
+  imageUrl: string;
+  width: number | null;
+  height: number | null;
+  attributionText: string;
+  attributionUrl: string;
+}
+
 export default function SchoolDetailClient({
   match,
   stats,
+  photo,
   cohortStats,
   financialAidNeed,
 }: {
   match: Match;
   stats: CollegeStats | null;
+  photo: CollegePhoto | null;
   cohortStats: CohortStats | null;
   financialAidNeed: boolean | null;
 }) {
@@ -88,10 +98,28 @@ export default function SchoolDetailClient({
         ← Back to matches
       </Link>
 
-      <div className="flex items-center gap-4 mb-6">
-        <div className="size-14 rounded-2xl bg-card border border-border flex items-center justify-center shrink-0">
-          <span className="font-serif text-xl text-text">{match.school_name.charAt(0)}</span>
+      {photo ? (
+        <div className="mb-4">
+          <img
+            src={photo.imageUrl}
+            alt={match.school_name}
+            className="w-full max-h-56 object-cover rounded-2xl border border-border"
+            loading="lazy"
+          />
+          <p className="text-text-gray/70 text-xs mt-1.5">
+            <a href={photo.attributionUrl} target="_blank" rel="noreferrer" className="hover:text-text-gray underline underline-offset-2">
+              {photo.attributionText}
+            </a>
+          </p>
         </div>
+      ) : null}
+
+      <div className="flex items-center gap-4 mb-6">
+        {!photo && (
+          <div className="size-14 rounded-2xl bg-card border border-border flex items-center justify-center shrink-0">
+            <span className="font-serif text-xl text-text">{match.school_name.charAt(0)}</span>
+          </div>
+        )}
         <div className="flex-1 flex items-center justify-between gap-4">
           <h1 className="font-serif text-2xl text-text">{match.school_name}</h1>
         </div>

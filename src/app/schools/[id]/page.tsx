@@ -4,6 +4,7 @@ import { redirect, notFound } from "next/navigation";
 import NavShell from "@/components/NavShell";
 import SchoolDetailClient from "./SchoolDetailClient";
 import { getCollegeStats } from "@/lib/college-scorecard";
+import { getCollegePhoto } from "@/lib/college-photo";
 import { getCohortStats } from "@/lib/cohort";
 import type { CohortStats } from "@/lib/cohort-types";
 
@@ -31,6 +32,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
 
   if (profileError) console.error("school detail profile query failed:", profileError);
   const stats = await getCollegeStats(match.school_name);
+  const photo = await getCollegePhoto(match.school_name);
   const cohortStats: CohortStats | null = await getCohortStats(
     match.school_name,
     profile?.unweighted_gpa ?? null,
@@ -42,6 +44,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
       <SchoolDetailClient
         match={match}
         stats={stats}
+        photo={photo}
         cohortStats={cohortStats}
         financialAidNeed={profile?.financial_aid_need ?? null}
       />
