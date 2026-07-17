@@ -59,6 +59,40 @@ export default function TimelineClient({
   const [newDueDate, setNewDueDate] = useState("");
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDueDate, setEditDueDate] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  function startEdit(item: TimelineItem) {
+    setEditingId(item.id);
+    setEditTitle(item.title);
+    setEditDueDate(item.due_date ?? "");
+    setEditError(null);
+  }
+
+  async function handleSaveEdit(id: string) {
+    if (!editTitle.trim()) return;
+    setSavingEdit(true);
+    setEditError(null);
+    const { error: updateError } = await supabase
+      .from("timeline_items")
+      .update({ title: editTitle.trim(), due_date: editDueDate || null })
+      .eq("id", id);
+    if (updateError) {
+      setEditError("Failed to save changes. Please try again.");
+      setSavingEdit(false);
+      return;
+    }
+    setItems((prev) =>
+      sortItems(
+        prev.map((i) => (i.id === id ? { ...i, title: editTitle.trim(), due_date: editDueDate || null } : i))
+      )
+    );
+    setEditingId(null);
+    setSavingEdit(false);
+  }
 
   const regenDisabled = !isPremium && remaining === 0;
 
@@ -264,14 +298,23 @@ export default function TimelineClient({
                   }`}
                 />
               )}
-              {editing && (
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  className="absolute top-3 right-3 z-10 text-text-gray hover:text-red text-xs px-2.5 py-2 rounded-lg transition-colors"
-                  aria-label="Remove item"
-                >
-                  Remove
-                </button>
+              {editing && editingId !== item.id && (
+                <div className="absolute top-3 right-3 z-10 flex gap-1">
+                  <button
+                    onClick={() => startEdit(item)}
+                    className="text-text-gray hover:text-text text-xs px-2.5 py-2 rounded-lg transition-colors"
+                    aria-label="Edit item"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="text-text-gray hover:text-red text-xs px-2.5 py-2 rounded-lg transition-colors"
+                    aria-label="Remove item"
+                  >
+                    Remove
+                  </button>
+                </div>
               )}
               <div
                 className={`group relative rounded-2xl p-5 border transition-all hover:-translate-y-0.5 ${
@@ -282,13 +325,50 @@ export default function TimelineClient({
                     : "bg-card border-border hover:border-primary/40"
                 }`}
               >
-                <Link
-                  href={locked ? "/upgrade" : `/timeline/${item.id}`}
-                  className="absolute inset-0 rounded-2xl"
-                  aria-label={`View ${item.title} details`}
-                />
+                {editingId !== item.id && (
+                  <Link
+                    href={locked ? "/upgrade" : `/timeline/${item.id}`}
+                    className="absolute inset-0 rounded-2xl"
+                    aria-label={`View ${item.title} details`}
+                  />
+                )}
+                {editingId === item.id ? (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      aria-label="Edit item title"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="w-full rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary"
+                    />
+                    <input
+                      type="date"
+                      aria-label="Edit due date"
+                      value={editDueDate}
+                      onChange={(e) => setEditDueDate(e.target.value)}
+                      className="w-full rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary"
+                    />
+                    {editError && <p role="alert" className="text-red text-xs">{editError}</p>}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleSaveEdit(item.id)}
+                        disabled={savingEdit || !editTitle.trim()}
+                        className="rounded-lg bg-primary hover:bg-primary-hover transition-colors text-bg text-xs font-medium px-3 py-1.5 disabled:opacity-50"
+                      >
+                        {savingEdit ? "Saving..." : "Save"}
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        disabled={savingEdit}
+                        className="rounded-lg border border-border text-text-gray hover:text-text text-xs px-3 py-1.5 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
                 <div className="pointer-events-none">
-                  <div className={`flex items-center justify-between mb-1.5 ${editing ? "pr-14" : ""}`}>
+                  <div className={`flex items-center justify-between mb-1.5 ${editing ? "pr-24" : ""}`}>
                     <p className={`font-medium text-[15px] ${item.completed ? "text-text-gray line-through" : "text-text"}`}>
                       {item.title}
                     </p>
@@ -334,6 +414,7 @@ export default function TimelineClient({
                     </>
                   )}
                 </div>
+                )}
               </div>
             </motion.div>
           );
