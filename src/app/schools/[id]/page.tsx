@@ -25,12 +25,11 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("subscription_tier, unweighted_gpa, intended_major, financial_aid_need")
+    .select("unweighted_gpa, intended_major, financial_aid_need")
     .eq("user_id", user.id)
     .single();
 
   if (profileError) console.error("school detail profile query failed:", profileError);
-  const isPremium = profile?.subscription_tier === "premium";
   const stats = await getCollegeStats(match.school_name);
   const cohortStats: CohortStats | null = await getCohortStats(
     match.school_name,
@@ -42,7 +41,6 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
     <NavShell>
       <SchoolDetailClient
         match={match}
-        isPremium={isPremium}
         stats={stats}
         cohortStats={cohortStats}
         financialAidNeed={profile?.financial_aid_need ?? null}

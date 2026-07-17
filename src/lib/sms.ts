@@ -47,3 +47,7 @@ export function weeklyEssayPromptBody(): string {
 export function oddsUpdateBody(schoolName: string, category: string): string {
   return `Kairos: your odds for ${schoolName} are now categorized as ${category}. Reply STOP to opt out.`;
 }
+
+export function scholarshipAlertBody(scholarshipName: string): string {
+  return `Kairos: we found a scholarship that fits your profile — "${scholarshipName}". Check it out in your Scholarships tab. Reply STOP to opt out.`;
+}

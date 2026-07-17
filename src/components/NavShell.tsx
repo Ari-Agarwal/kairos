@@ -23,6 +23,7 @@ import {
   UserCheck,
   ClipboardCheck,
   BookOpen,
+  Briefcase,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -55,6 +56,7 @@ const DESKTOP_NAV_GROUPS: { label: string | null; items: typeof TABS }[] = [
       { href: "/review", label: "Human Review", icon: UserCheck },
       { href: "/scholarships", label: "Scholarships", icon: Award },
       { href: "/recommenders", label: "Recommendations", icon: FileSignature },
+      { href: "/career-path", label: "Career Path", icon: Briefcase },
     ],
   },
   {

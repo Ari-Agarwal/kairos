@@ -185,6 +185,10 @@ export default function NarrativeBuilderClient({ initial }: { initial: Narrative
 
   return (
     <div>
+      <p className="text-text-gray text-xs bg-secondary-tint border border-border rounded-xl px-4 py-2.5 mb-5">
+        Kairos helps you brainstorm and critique — you write the essay.
+      </p>
+
       <div className="mb-6">
         <div className="h-1.5 rounded-full bg-secondary-tint overflow-hidden">
           <motion.div

@@ -59,32 +59,11 @@ export default function TimelineClient({
   const [newDueDate, setNewDueDate] = useState("");
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
-  const [generateError, setGenerateError] = useState<string | null>(null);
 
   const regenDisabled = !isPremium && remaining === 0;
 
-  async function handleGenerate() {
-    setGenerating(true);
-    setGenerateError(null);
-    try {
-      const res = await fetch("/api/timeline/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setGenerateError(body.error ?? "Failed to generate timeline. Please try again.");
-        setGenerating(false);
-        return;
-      }
-      router.refresh();
-    } catch {
-      setGenerateError("Failed to generate timeline. Please try again.");
-    } finally {
-      setGenerating(false);
-    }
+  function handleGenerate() {
+    router.push("/timeline/prep");
   }
 
   async function handleDelete(id: string) {
@@ -146,12 +125,11 @@ export default function TimelineClient({
         </p>
         <button
           onClick={handleGenerate}
-          disabled={regenDisabled || generating}
+          disabled={regenDisabled}
           className="rounded-xl bg-primary hover:bg-primary-hover text-bg font-medium px-6 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          {generating ? "Mapping out your timeline..." : "Generate Timeline"}
+          Generate Timeline
         </button>
-        {generateError && <p role="alert" className="text-red text-sm mt-3">{generateError}</p>}
       </div>
     );
   }
@@ -163,16 +141,15 @@ export default function TimelineClient({
 
   return (
     <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
-      {generateError && <p role="alert" className="text-red text-sm mb-3">{generateError}</p>}
       <div className="flex items-center justify-between mb-1">
         <h1 className="font-serif text-2xl text-text">Your Timeline</h1>
         <div className="flex items-center gap-3">
           <button
             onClick={handleGenerate}
-            disabled={regenDisabled || generating}
+            disabled={regenDisabled}
             className="text-primary text-sm hover:text-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {generating ? "Regenerating..." : "Regenerate"}
+            Regenerate
           </button>
           <button
             onClick={() => {
@@ -296,9 +273,8 @@ export default function TimelineClient({
                   Remove
                 </button>
               )}
-              <Link
-                href={locked ? "/upgrade" : `/timeline/${item.id}`}
-                className={`group block rounded-2xl p-5 border transition-all hover:-translate-y-0.5 ${
+              <div
+                className={`group relative rounded-2xl p-5 border transition-all hover:-translate-y-0.5 ${
                   isHere
                     ? "bg-card border-primary/40 shadow-[0_0_24px_-8px_var(--amber-glow-shadow)]"
                     : item.is_strategic
@@ -306,39 +282,59 @@ export default function TimelineClient({
                     : "bg-card border-border hover:border-primary/40"
                 }`}
               >
-                <div className={`flex items-center justify-between mb-1.5 ${editing ? "pr-14" : ""}`}>
-                  <p className={`font-medium text-[15px] ${item.completed ? "text-text-gray line-through" : "text-text"}`}>
-                    {item.title}
-                  </p>
-                  {item.is_strategic && (
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-premium text-bg shrink-0 ml-2">
-                      PREMIUM
-                    </span>
+                <Link
+                  href={locked ? "/upgrade" : `/timeline/${item.id}`}
+                  className="absolute inset-0 rounded-2xl"
+                  aria-label={`View ${item.title} details`}
+                />
+                <div className="pointer-events-none">
+                  <div className={`flex items-center justify-between mb-1.5 ${editing ? "pr-14" : ""}`}>
+                    <p className={`font-medium text-[15px] ${item.completed ? "text-text-gray line-through" : "text-text"}`}>
+                      {item.title}
+                    </p>
+                    {item.is_strategic && (
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-premium text-bg shrink-0 ml-2">
+                        PREMIUM
+                      </span>
+                    )}
+                  </div>
+                  {item.due_date && (
+                    <p className="text-text-gray text-xs mb-1.5">Due {formatDue(item.due_date)}</p>
+                  )}
+                  {isHere && (
+                    <p className="text-text text-xs font-medium mb-1.5 flex items-center gap-1.5">
+                      <span className="inline-block w-1 h-1 rounded-full bg-text" />
+                      You are here
+                    </p>
+                  )}
+                  {locked ? (
+                    <>
+                      <p className="text-text-gray text-sm leading-relaxed">
+                        <span>{item.why_text.split(" ").slice(0, 6).join(" ")} </span>
+                        <span className="blur-[3px] select-none">
+                          {item.why_text.split(" ").slice(6).join(" ")}
+                        </span>
+                      </p>
+                      <p className="text-premium text-xs italic mt-1.5">Unlock Premium to see the rest</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-text-gray text-sm">{item.why_text}</p>
+                      {item.why_text !== "Added manually by you." && (
+                        <p className="text-text-gray/70 text-xs mt-1.5">
+                          Based on your saved schools &amp; deadline data —{" "}
+                          <Link
+                            href="/methodology"
+                            className="underline underline-offset-2 hover:text-text-gray pointer-events-auto"
+                          >
+                            how this is calculated
+                          </Link>
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
-                {item.due_date && (
-                  <p className="text-text-gray text-xs mb-1.5">Due {formatDue(item.due_date)}</p>
-                )}
-                {isHere && (
-                  <p className="text-text text-xs font-medium mb-1.5 flex items-center gap-1.5">
-                    <span className="inline-block w-1 h-1 rounded-full bg-text" />
-                    You are here
-                  </p>
-                )}
-                {locked ? (
-                  <>
-                    <p className="text-text-gray text-sm leading-relaxed">
-                      <span>{item.why_text.split(" ").slice(0, 6).join(" ")} </span>
-                      <span className="blur-[3px] select-none">
-                        {item.why_text.split(" ").slice(6).join(" ")}
-                      </span>
-                    </p>
-                    <p className="text-premium text-xs italic mt-1.5">Unlock Premium to see the rest</p>
-                  </>
-                ) : (
-                  <p className="text-text-gray text-sm">{item.why_text}</p>
-                )}
-              </Link>
+              </div>
             </motion.div>
           );
         })}

@@ -15,7 +15,7 @@ import OnboardingIllustration, { ChatIntakeArt } from "@/components/OnboardingIl
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-const ROUND_TITLES = ["The basics", "Major & interests", "Extracurriculars", "Test scores"];
+const ROUND_TITLES = ["Getting to know you", "The basics", "Major", "Extracurriculars", "Test scores"];
 
 const GRADE_LEVELS = ["Freshman", "Sophomore", "Junior", "Senior"];
 const EC_LENGTHS = ["Less than 1 year", "1 year", "2 years", "3 years", "4+ years"];
@@ -50,6 +50,8 @@ export default function OnboardingPage() {
   const [intendedMajor, setIntendedMajor] = useState("");
   const [majorOther, setMajorOther] = useState("");
   const [interests, setInterests] = useState("");
+  const [mattersToYou, setMattersToYou] = useState("");
+  const [beyondTranscript, setBeyondTranscript] = useState("");
   const [careerGoals, setCareerGoals] = useState("");
   const [showCareerQuiz, setShowCareerQuiz] = useState(false);
   const [useChatIntake, setUseChatIntake] = useState(false);
@@ -121,17 +123,20 @@ export default function OnboardingPage() {
 
   function validateStep(idx: number): string | null {
     if (idx === 0) {
-      if (!fullName || !gradeLevel || !unweightedGpa || !weightedGpa || !currentSchool) {
+      if (!fullName) return "Please tell us your name to continue.";
+    }
+    if (idx === 1) {
+      if (!gradeLevel || !unweightedGpa || !weightedGpa || !currentSchool) {
         return "Please fill out every field to continue.";
       }
     }
-    if (idx === 1) {
+    if (idx === 2) {
       if (!resolvedMajor) return "Please select (or describe) your intended major.";
     }
-    if (idx === 2) {
+    if (idx === 3) {
       if (!activities.some((a) => a.idea.trim())) return "Add at least one activity.";
     }
-    if (idx === 3) {
+    if (idx === 4) {
       if (!noTestYet && !satScore && !actScore) {
         return "Enter a score, or let us know you haven't tested yet.";
       }
@@ -177,6 +182,19 @@ export default function OnboardingPage() {
       .map((a) => (a.idea.trim() ? `${a.idea.trim()}${a.length ? ` (${a.length})` : ""}` : ""))
       .filter(Boolean);
 
+    // The two open-ended "get to know you" prompts aren't separate DB columns
+    // -- they fold into the existing free-text `interests` field (already fed
+    // verbatim into the matches-generation prompt), so the counselor-style
+    // discovery questions translate directly into sharper matches rather than
+    // sitting unused.
+    const combinedInterests = [
+      interests.trim(),
+      mattersToYou.trim() && `What matters to them in a college: ${mattersToYou.trim()}`,
+      beyondTranscript.trim() && `Beyond the transcript: ${beyondTranscript.trim()}`,
+    ]
+      .filter(Boolean)
+      .join(" | ");
+
     // Schools-already-considering, campus preferences, and the deeper context
     // fields (financial aid, class rank, career goals, etc.) are intentionally
     // left null here -- they're not needed for a first real match, and are
@@ -188,7 +206,7 @@ export default function OnboardingPage() {
       unweighted_gpa: parseFloat(unweightedGpa),
       weighted_gpa: parseFloat(weightedGpa),
       intended_major: resolvedMajor,
-      interests: interests || null,
+      interests: combinedInterests || null,
       current_school: currentSchool,
       extracurriculars: ecArray.length > 0 ? ecArray : null,
       sat_score: satScore ? parseInt(satScore, 10) : null,
@@ -237,8 +255,8 @@ export default function OnboardingPage() {
 
   const rounds: { title: string; blurb: string; fields: React.ReactNode }[] = [
     {
-      title: "The basics",
-      blurb: "Let's start simple — a little about you and where you're at.",
+      title: "Getting to know you",
+      blurb: "Before we talk numbers, tell us a bit about who you are — like a counselor would.",
       fields: (
         <>
           <div>
@@ -251,6 +269,57 @@ export default function OnboardingPage() {
               className={inputClass}
             />
           </div>
+          <div>
+            <label htmlFor="ob-interests" className="block text-sm text-text-gray mb-1">
+              Interests <span className="text-text-gray/70">— optional</span>
+            </label>
+            <p className="text-text-gray text-xs mb-2">
+              Anything you&apos;re into that doesn&apos;t fit neatly into a major, e.g. &quot;robotics, creative writing, climate policy.&quot;
+            </p>
+            <input
+              id="ob-interests"
+              type="text"
+              value={interests}
+              onChange={(e) => setInterests(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="ob-matters" className="block text-sm text-text-gray mb-1">
+              What matters to you in choosing a college? <span className="text-text-gray/70">— optional</span>
+            </label>
+            <textarea
+              id="ob-matters"
+              rows={2}
+              maxLength={500}
+              placeholder="e.g. being close to home, a strong pre-med track, a real sense of community"
+              value={mattersToYou}
+              onChange={(e) => setMattersToYou(e.target.value)}
+              className={`${inputClass} resize-none`}
+            />
+          </div>
+          <div>
+            <label htmlFor="ob-beyond-transcript" className="block text-sm text-text-gray mb-1">
+              What&apos;s something about you a transcript wouldn&apos;t show? <span className="text-text-gray/70">— optional</span>
+            </label>
+            <textarea
+              id="ob-beyond-transcript"
+              rows={2}
+              maxLength={500}
+              placeholder="e.g. I run a small Etsy shop, or I've been the primary caregiver for a sibling"
+              value={beyondTranscript}
+              onChange={(e) => setBeyondTranscript(e.target.value)}
+              className={`${inputClass} resize-none`}
+            />
+          </div>
+        </>
+      ),
+    },
+    {
+      title: "The basics",
+      blurb: "Now the numbers — grade, GPA, and where you go to school.",
+      fields: (
+        <>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="ob-grade-level" className="block text-sm text-text-gray mb-1">Grade Level</label>
@@ -312,7 +381,7 @@ export default function OnboardingPage() {
       ),
     },
     {
-      title: "Major & interests",
+      title: "Major",
       blurb: "What lights you up? Even a rough guess helps.",
       fields: (
         <>
@@ -351,21 +420,6 @@ export default function OnboardingPage() {
                 Not sure? Take a 2-minute quiz
               </button>
             )}
-          </div>
-          <div>
-            <label htmlFor="ob-interests" className="block text-sm text-text-gray mb-1">
-              Interests <span className="text-text-gray/70">— optional</span>
-            </label>
-            <p className="text-text-gray text-xs mb-2">
-              Anything you&apos;re into that doesn&apos;t fit neatly into a major, e.g. &quot;robotics, creative writing, climate policy.&quot;
-            </p>
-            <input
-              id="ob-interests"
-              type="text"
-              value={interests}
-              onChange={(e) => setInterests(e.target.value)}
-              className={inputClass}
-            />
           </div>
         </>
       ),

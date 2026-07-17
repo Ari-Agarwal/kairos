@@ -346,6 +346,14 @@ export default function MatchListClient({
                 </div>
 
                 <p className="text-text-gray text-sm">{m.why_text}</p>
+                {m.why_text !== "Added manually by you." && (
+                  <p className="text-text-gray/70 text-xs mt-2">
+                    Based on your GPA, course rigor, ECs, major &amp; social fit —{" "}
+                    <Link href="/methodology" className="underline underline-offset-2 hover:text-text-gray pointer-events-auto">
+                      how this is calculated
+                    </Link>
+                  </p>
+                )}
               </div>
             </motion.div>
           ))}

@@ -9,6 +9,30 @@ const STROKE = "var(--border)";
 const ACCENT = "var(--primary)";
 const DIM = "var(--text-gray)";
 
+function DiscoveryArt() {
+  // Two overlapping speech-bubble hearts -- the get-to-know-you round is a
+  // conversation about who the student is, not a form field, so it gets a
+  // warmer, more personal mark than the compass/checklist rounds that follow.
+  return (
+    <svg viewBox="0 0 160 100" className="w-full h-24" fill="none" aria-hidden="true">
+      <path
+        d="M56 34 C56 24 44 24 44 34 C44 24 32 24 32 34 C32 42 44 52 44 52 C44 52 56 42 56 34 Z"
+        stroke={ACCENT}
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M62 60 H120 C124 60 127 63 127 67 V80 C127 84 124 87 120 87 H82 L70 96 V87 H62 C58 87 55 84 55 80 V67 C55 63 58 60 62 60 Z"
+        stroke={STROKE}
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <line x1="66" y1="70" x2="116" y2="70" stroke={DIM} strokeWidth="1.3" />
+      <line x1="66" y1="78" x2="100" y2="78" stroke={DIM} strokeWidth="1.3" />
+    </svg>
+  );
+}
+
 function BasicsArt() {
   // A mortarboard over a stacked transcript -- "the basics" round collects
   // name, grade, GPA, and current school.
@@ -122,7 +146,7 @@ export function CareerQuizArt() {
   );
 }
 
-const ILLUSTRATIONS = [BasicsArt, MajorArt, ActivitiesArt, TestScoresArt];
+const ILLUSTRATIONS = [DiscoveryArt, BasicsArt, MajorArt, ActivitiesArt, TestScoresArt];
 
 export default function OnboardingIllustration({ step }: { step: number }) {
   const Art = ILLUSTRATIONS[step] ?? BasicsArt;

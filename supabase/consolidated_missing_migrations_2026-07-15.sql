@@ -540,3 +540,24 @@ create policy "eligible_participants_write" on war_room_comments
 create index idx_war_room_comments_match on war_room_comments(school_match_id);
 
 
+-- ============================================================
+-- migration_024_scholarship_nudges.sql
+-- ============================================================
+-- Focus-group action item (Jul 17): Ahana's one ask of her real counselor was
+-- unprompted outreach ("emails when she thinks an opportunity fits my
+-- interests"). Extends the existing SMS-nudge pattern (migration_020) to
+-- proactively surface newly-matching scholarships instead of requiring the
+-- student to check /scholarships themselves. `scholarship_alerts` reuses the
+-- same jsonb prefs column rather than a new one; a profile with no key set
+-- for it is still treated as opted-in (checked via `!== false`, matching the
+-- other three nudge types), so this needs no default-value migration for
+-- existing rows.
+--
+-- notified_scholarship_names tracks what's already been texted so the same
+-- match isn't re-sent every day -- capped in application code, not by a DB
+-- constraint, since "cap the array" isn't expressible as a simple check().
+
+alter table profiles
+  add column if not exists notified_scholarship_names text[] not null default '{}';
+
+

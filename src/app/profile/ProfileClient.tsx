@@ -343,9 +343,13 @@ export default function ProfileClient({
           </div>
           <div>
             <label htmlFor="pf-geo-pref" className="block text-sm text-text-gray mb-1">Geographic preference</label>
+            <p className="text-text-gray text-xs mb-2">
+              Region, climate, and/or proximity to home or people you know — whatever matters to you.
+            </p>
             <input
               id="pf-geo-pref"
               type="text"
+              placeholder="e.g. West Coast, warmer climate, within driving distance of family in Chicago"
               value={form.geographic_pref}
               onChange={(e) => setForm({ ...form, geographic_pref: e.target.value })}
               className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"

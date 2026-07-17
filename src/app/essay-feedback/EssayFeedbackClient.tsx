@@ -91,6 +91,10 @@ export default function EssayFeedbackClient() {
 
   return (
     <div>
+      <p className="text-text-gray text-xs bg-secondary-tint border border-border rounded-xl px-4 py-2.5 mb-5">
+        Kairos helps you brainstorm and critique — you write the essay.
+      </p>
+
       {/* Mode toggle */}
       <div className="flex gap-2 mb-5">
         {(["feedback", "brainstorm"] as Mode[]).map((m) => (
