@@ -106,6 +106,7 @@ export default function OnboardingChat({ onCancel }: { onCancel: () => void }) {
     }
     const { error: insertError } = await supabase.from("profiles").insert({
       user_id: user.id,
+      display_name: draft.full_name || user.email || null,
       grade_level: draft.grade_level,
       unweighted_gpa: draft.unweighted_gpa,
       weighted_gpa: draft.weighted_gpa ?? draft.unweighted_gpa,

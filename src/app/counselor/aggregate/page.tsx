@@ -1,4 +1,4 @@
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getCounselorRecord } from "@/lib/access";
 import CounselorNavShell from "@/components/CounselorNavShell";
@@ -31,18 +31,7 @@ export default async function AggregatePage() {
   if (profilesError) console.error("counselor aggregate profiles query failed:", profilesError);
 
   const studentIds = (profiles ?? []).map((p) => p.user_id);
-
-  const emailByUser = new Map<string, string>();
-  if (studentIds.length) {
-    const serviceClient = createServiceClient();
-    const results = await Promise.all(
-      studentIds.map((id) => serviceClient.auth.admin.getUserById(id))
-    );
-    results.forEach((res, i) => {
-      const name = res.data.user?.user_metadata?.full_name ?? res.data.user?.email;
-      if (name) emailByUser.set(studentIds[i], name);
-    });
-  }
+  const nameByUser = new Map((profiles ?? []).map((p) => [p.user_id, p.display_name as string | null]));
 
   const { data: matches, error: matchesError } = studentIds.length
     ? await supabase
@@ -116,7 +105,7 @@ export default async function AggregatePage() {
   const schoolStudents = new Map<string, { user_id: string; name: string }[]>();
   for (const m of matches ?? []) {
     const list = schoolStudents.get(m.school_name) ?? [];
-    list.push({ user_id: m.user_id, name: emailByUser.get(m.user_id) ?? "Student" });
+    list.push({ user_id: m.user_id, name: nameByUser.get(m.user_id) ?? "Student" });
     schoolStudents.set(m.school_name, list);
   }
   const topSchools: SchoolTally[] = [...schoolStudents.entries()]

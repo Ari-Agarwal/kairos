@@ -201,6 +201,7 @@ export default function OnboardingPage() {
     // rather than blocking account creation.
     const { error } = await supabase.from("profiles").insert({
       user_id: user.id,
+      display_name: fullName || user.email || null,
       grade_level: gradeLevel,
       unweighted_gpa: parseFloat(unweightedGpa),
       weighted_gpa: parseFloat(weightedGpa),

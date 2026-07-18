@@ -1,4 +1,4 @@
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getCounselorRecord } from "@/lib/access";
 import CounselorNavShell from "@/components/CounselorNavShell";
@@ -29,15 +29,16 @@ export default async function ReviewRequestsPage() {
 
   if (schoolError) console.error("counselor review-requests school query failed:", schoolError);
 
-  // Fetch student user_ids assigned to this counselor's school.
+  // Fetch students assigned to this counselor's school.
   const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
-    .select("user_id")
+    .select("user_id, display_name")
     .eq("school_id", counselor.school_id);
 
   if (profilesError) console.error("counselor review-requests profiles query failed:", profilesError);
 
   const studentIds = (profiles ?? []).map((p) => p.user_id);
+  const nameByUser = new Map((profiles ?? []).map((p) => [p.user_id, p.display_name as string | null]));
 
   const requests: ReviewRequest[] = [];
 
@@ -50,28 +51,12 @@ export default async function ReviewRequestsPage() {
 
     if (rowsError) console.error("counselor review-requests query failed:", rowsError);
 
-    if (rows && rows.length > 0) {
-      const serviceClient = createServiceClient();
-      const emailByUser = new Map<string, string>();
-
-      await Promise.all(
-        rows
-          .map((r) => r.user_id)
-          .filter((id, i, arr) => arr.indexOf(id) === i) // dedupe
-          .map(async (id) => {
-            const res = await serviceClient.auth.admin.getUserById(id);
-            const label = res.data.user?.user_metadata?.full_name ?? res.data.user?.email ?? "Student";
-            emailByUser.set(id, label);
-          })
-      );
-
-      for (const r of rows) {
-        requests.push({
-          ...r,
-          status: r.status as ReviewRequest["status"],
-          studentName: emailByUser.get(r.user_id) ?? "Student",
-        });
-      }
+    for (const r of rows ?? []) {
+      requests.push({
+        ...r,
+        status: r.status as ReviewRequest["status"],
+        studentName: nameByUser.get(r.user_id) ?? "Student",
+      });
     }
   }
 

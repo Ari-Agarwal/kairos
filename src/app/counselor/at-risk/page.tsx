@@ -1,4 +1,4 @@
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getCounselorRecord } from "@/lib/access";
 import CounselorNavShell from "@/components/CounselorNavShell";
@@ -29,18 +29,7 @@ export default async function AtRiskPage() {
   if (profilesError) console.error("at-risk profiles query failed:", profilesError);
 
   const studentIds = (profiles ?? []).map((p) => p.user_id);
-
-  const emailByUser = new Map<string, string>();
-  if (studentIds.length) {
-    const serviceClient = createServiceClient();
-    const results = await Promise.all(
-      studentIds.map((id) => serviceClient.auth.admin.getUserById(id))
-    );
-    results.forEach((res, i) => {
-      const name = res.data.user?.user_metadata?.full_name ?? res.data.user?.email;
-      if (name) emailByUser.set(studentIds[i], name);
-    });
-  }
+  const nameByUser = new Map((profiles ?? []).map((p) => [p.user_id, p.display_name as string | null]));
 
   const { data: matches } = studentIds.length
     ? await supabase.from("school_matches").select("user_id").in("user_id", studentIds).eq("is_active", true)
@@ -70,7 +59,7 @@ export default async function AtRiskPage() {
   const flagged = computeFlags(profiles ?? [], matchCountByUser, overdueByUser);
   const sortedFlagged: FlaggedStudent[] = flagged.map((s) => ({
     user_id: s.user_id,
-    name: emailByUser.get(s.user_id) ?? "Student",
+    name: nameByUser.get(s.user_id) ?? "Student",
     grade_level: s.grade_level,
     reasons: s.reasons,
   }));

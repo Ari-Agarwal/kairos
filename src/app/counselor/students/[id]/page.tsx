@@ -1,4 +1,4 @@
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { getCounselorRecord } from "@/lib/access";
 import CounselorNavShell from "@/components/CounselorNavShell";
@@ -32,11 +32,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
 
   if (!profile) notFound();
 
-  const serviceClient = createServiceClient();
-  const { data: authUser, error: authUserError } = await serviceClient.auth.admin.getUserById(id);
-  if (authUserError) console.error("student detail auth user lookup failed:", authUserError);
-  const studentName =
-    (authUser.user?.user_metadata?.full_name as string | undefined) ?? authUser.user?.email ?? "Student";
+  const studentName = (profile.display_name as string | null) ?? "Student";
 
   const { data: matches, error: matchesError } = await supabase
     .from("school_matches")

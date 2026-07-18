@@ -157,6 +157,7 @@ export default function ProfileClient({
     await supabase
       .from("profiles")
       .update({
+        display_name: form.full_name || user.email || null,
         grade_level: form.grade_level,
         unweighted_gpa: parseFloat(form.unweighted_gpa),
         weighted_gpa: parseFloat(form.weighted_gpa),

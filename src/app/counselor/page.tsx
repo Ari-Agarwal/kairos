@@ -1,4 +1,4 @@
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getCounselorRecord } from "@/lib/access";
 import CounselorNavShell from "@/components/CounselorNavShell";
@@ -63,9 +63,6 @@ export default async function CounselorHomePage({
 
   if (schoolError) console.error("counselor home school query failed:", schoolError);
 
-  // Stats and status flags need the full roster, but the per-student
-  // auth.admin.getUserById lookup below is the real scaling risk — that
-  // fan-out is bounded to just the current page's rows, not every student.
   const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
     .select("*")
@@ -80,19 +77,6 @@ export default async function CounselorHomePage({
   const pageProfiles = allProfiles.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const studentIds = allProfiles.map((p) => p.user_id);
-  const pageStudentIds = pageProfiles.map((p) => p.user_id);
-
-  const emailByUser = new Map<string, string>();
-  if (pageStudentIds.length) {
-    const serviceClient = createServiceClient();
-    const results = await Promise.all(
-      pageStudentIds.map((id) => serviceClient.auth.admin.getUserById(id))
-    );
-    results.forEach((res, i) => {
-      const email = res.data.user?.user_metadata?.full_name ?? res.data.user?.email;
-      if (email) emailByUser.set(pageStudentIds[i], email);
-    });
-  }
 
   const { data: matches } = studentIds.length
     ? await supabase
@@ -143,7 +127,7 @@ export default async function CounselorHomePage({
 
     return {
       user_id: p.user_id,
-      name: emailByUser.get(p.user_id) ?? "Student",
+      name: p.display_name ?? "Student",
       grade_level: p.grade_level,
       unweightedGpa: p.unweighted_gpa,
       weightedGpa: p.weighted_gpa,
