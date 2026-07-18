@@ -84,7 +84,7 @@ export default function StudentDetailClient({
 
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-1">
         <h1 className="font-serif text-2xl text-text">{studentName}</h1>
-        <SendReminderButton counselorId={counselorId} studentUserId={studentUserId} />
+        <SendReminderButton studentUserId={studentUserId} />
       </div>
       <p className="text-text-gray text-sm mb-6">
         {profile.grade_level} · GPA {profile.unweighted_gpa} unweighted / {profile.weighted_gpa} weighted · {profile.intended_major?.length ? profile.intended_major.join(", ") : "Major undecided"}
@@ -123,8 +123,7 @@ export default function StudentDetailClient({
   );
 }
 
-function SendReminderButton({ counselorId, studentUserId }: { counselorId: string; studentUserId: string }) {
-  const supabase = createClient();
+function SendReminderButton({ studentUserId }: { studentUserId: string }) {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -135,14 +134,20 @@ function SendReminderButton({ counselorId, studentUserId }: { counselorId: strin
     if (!message.trim()) return;
     setSending(true);
     setError("");
-    const { error: insertError } = await supabase
-      .from("reminder_log")
-      .insert({ counselor_id: counselorId, student_user_id: studentUserId, message_text: message.trim() });
-    setSending(false);
-    if (insertError) {
-      setError("Failed to send reminder. Please try again.");
+    try {
+      const res = await fetch("/api/counselor/send-reminder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentUserId, message: message.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send reminder.");
+    } catch (err) {
+      setSending(false);
+      setError(err instanceof Error ? err.message : "Failed to send reminder. Please try again.");
       return;
     }
+    setSending(false);
     setSentAt(Date.now());
     setMessage("");
     setTimeout(() => setOpen(false), 1200);
