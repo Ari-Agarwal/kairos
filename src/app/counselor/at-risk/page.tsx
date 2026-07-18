@@ -56,12 +56,23 @@ export default async function AtRiskPage() {
     }
   }
 
+  const { data: dismissals, error: dismissalsError } = await supabase
+    .from("at_risk_dismissals")
+    .select("student_user_id, dismissed_until")
+    .eq("counselor_id", counselor.counselor_id)
+    .gt("dismissed_until", new Date().toISOString());
+
+  if (dismissalsError) console.error("at-risk dismissals query failed:", dismissalsError);
+
+  const dismissedUntilByUser = new Map((dismissals ?? []).map((d) => [d.student_user_id, d.dismissed_until]));
+
   const flagged = computeFlags(profiles ?? [], matchCountByUser, overdueByUser);
   const sortedFlagged: FlaggedStudent[] = flagged.map((s) => ({
     user_id: s.user_id,
     name: nameByUser.get(s.user_id) ?? "Student",
     grade_level: s.grade_level,
     reasons: s.reasons,
+    snoozedUntil: dismissedUntilByUser.get(s.user_id) ?? null,
   }));
 
   return (
