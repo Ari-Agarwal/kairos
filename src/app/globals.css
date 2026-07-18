@@ -1,26 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  /* Jul 16 pivot #15: warm cream base (kept) + cool charcoal accent (reverted
-     from the warm-charcoal variant — cool charcoal preferred against the
-     cream). See CLAUDE.md for the original locked dark/gold rationale —
-     superseded by explicit user direction. Tier hues (red/green/premium)
-     stay as functional signal colors; charcoal is the brand accent, not a
-     fourth competing hue. */
-  --bg: #FAF7F2;
-  --card: #F1ECE4;
-  /* Brand accent — cool charcoal rather than pure black for a softer fill;
-     --primary-deep gives CTAs/hero a two-tone gradient instead of a single
-     flat fill. */
-  --primary: #2A2E30;
-  --primary-deep: #14181A;
-  --primary-hover: #4A5052;
+  /* Jul 17 pivot (focus-group synthesis): parchment + forest-green, replacing
+     the warm cream + cool charcoal pivot from Jul 16. Site was already light
+     going into this change — this is a retune, not a dark-to-light reversal.
+     Forest green is deliberately a different shade from --green (the
+     existing safety-tier/muted-neutral color) so the brand accent and the
+     tier signal color stay visually distinct — see the --green comment below. */
+  --bg: #F8F6EC;
+  --card: #FDFCF7;
+  /* Brand accent — deep forest green; --primary-deep gives CTAs/hero a
+     two-tone gradient instead of a single flat fill. */
+  --primary: #3C5E3B;
+  --primary-deep: #24391F;
+  --primary-hover: #4F7A4E;
   /* target schools / "you are here" marker — same brand accent, not a separate hue */
-  --amber: #2A2E30;
-  --amber-tint: rgba(42, 46, 48, 0.08);
-  --amber-text-on-tint: #14181A;
+  --amber: #3C5E3B;
+  --amber-tint: rgba(60, 94, 59, 0.1);
+  --amber-text-on-tint: #24391F;
   /* safety schools / on-track / completed — calmest, most muted; stays neutral
-     on purpose so tier distinction reads by shade/label, not by competing hue */
+     on purpose so tier distinction reads by shade/label, not by competing hue.
+     Kept as a separate, more muted sage from --primary's deep forest so the
+     brand accent and the safety-tier signal read as distinct at a glance. */
   --green: #6B9080;
   --green-tint: rgba(107, 144, 128, 0.12);
   /* reserved urgency color — reach schools / errors / overdue / needs-attention.
@@ -31,18 +32,18 @@
   --premium: #8B5CF6;
   --premium-tint: rgba(139, 92, 246, 0.10);
   /* neutral info / no-activity — dimmest of the five. */
-  --secondary: #7A736A;
-  --secondary-tint: rgba(31, 27, 24, 0.05);
+  --secondary: #78716A;
+  --secondary-tint: rgba(30, 34, 24, 0.05);
   /* neutral overlay for selected/active surfaces (nav active-pill) — stronger
      than --secondary-tint's hover state, still hue-neutral on purpose */
-  --active-tint: rgba(31, 27, 24, 0.08);
-  --text: #1F1B18;
-  --text-gray: #6B645C;
-  --border: #E5DFD5;
+  --active-tint: rgba(30, 34, 24, 0.08);
+  --text: #1E2218;
+  --text-gray: #68715C;
+  --border: #DCDFC9;
   /* brand-accent glow, tokenized so timeline's pulse/shadow effects don't
      hardcode the accent rgb triplet outside this file */
-  --amber-glow-ring: rgba(42, 46, 48, 0.4);
-  --amber-glow-ring-fade: rgba(42, 46, 48, 0);
+  --amber-glow-ring: rgba(60, 94, 59, 0.4);
+  --amber-glow-ring-fade: rgba(60, 94, 59, 0);
   --amber-glow-shadow: rgba(42, 46, 48, 0.25);
 }
 

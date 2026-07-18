@@ -46,6 +46,38 @@ Sources: [firsto.co — First 1,000 Users Playbook](https://firsto.co/blog/first
 
 ---
 
+## 1.2b Karma/trust-building checklist (trimmed, 10 subreddits)
+
+**Rule:** genuinely useful comments only — no link, no Kairos mention — until trust is built in that specific sub. Daily-rotation subs (Tier A/B) should NOT all get promotional posts in a short window; that pattern reads as spam/brigading to mod tools and risks a sitewide suspension.
+
+**Cadence:**
+- Tier A/B: 1 comment/day per subreddit
+- Tier C: 1 comment every other day per subreddit
+- Tier E: 1 comment/week per subreddit
+
+Removed (Jul 17): r/CollegeApplications, r/TransferToTop25, r/SAT, r/ACT, r/IntltoUSA, r/GradSchool, r/teenagers, Tier D (school-specific) in full, r/somebodymakethis, r/AppIdeas, Tier F (local) in full.
+
+Each sub below has a row of checkboxes for its cadence — check one off each time you comment there. Boxes are undated on purpose (check left-to-right as days pass); re-copy a fresh row once a set is fully checked if you want to keep going.
+
+### Tier A — Core admissions/applications (1/day)
+- [ ] r/ApplyingToCollege (A2C) — primary target — [x] [ ] [ ] [ ] [ ] [ ] [ ]
+- [ ] r/chanceme — [x] [ ] [ ] [ ] [ ] [ ] [ ]
+- [ ] r/CollegeAdmissions — [x] [ ] [ ] [ ] [ ] [ ] [ ]
+- [ ] r/CollegeEssays — [x] [ ] [ ] [ ] [ ] [ ] [ ]
+
+### Tier B — Test prep / adjacent academic stress (1/day)
+- [ ] r/APStudents — [x] [ ] [ ] [ ] [ ] [ ] [ ]
+- [ ] r/IBO — [x] [ ] [ ] [ ] [ ] [ ] [ ]
+
+### Tier C — Broader high school / student life (1/every other day)
+- [ ] r/highschool — [x] [ ] [ ] [ ]
+
+### Tier E — Builder/distribution audience (1/week)
+- [ ] r/SideProject — [x]
+- [ ] r/EntrepreneurRideAlong — [x]
+
+---
+
 ## 1.3 Cold email — three target lists with real sourcing method + templates
 
 Small, targeted lists beat mass blasts (per the ProSales Connection data above) — build these lists by hand, don't scrape indiscriminately.
@@ -63,6 +95,633 @@ Small, targeted lists beat mass blasts (per the ProSales Connection data above) 
 ### List C — Influencers/creators (full process in 1.4)
 
 **Cold email operating rule:** one follow-up only, 5-7 days after no response. Track every send in a spreadsheet (name, org, date sent, template, response, outcome) so you never duplicate an ask.
+
+---
+
+## 1.3b Cold email tracking — List A & List B
+
+Add a row per person/outlet as you source them. Fill in Sent/Follow-up dates when sent; Response/Outcome once you hear back (or note "no response" after the 5-7 day window closes).
+
+### List A — Counselors & consultants (target 40-60, 5-8 sends/week, Template C)
+
+| # | Name | School/Org | Email | Source | Sent | Follow-up (5-7d) | Response | Outcome |
+|---|------|-----------|-------|--------|------|-------------------|----------|---------|
+| 1 | Mai Nguyen | Menlo-Atherton HS — College Counselor A-L | mlnguyen@seq.org | mabears.org/Counseling/College-and-Career | Jul 17 | | Auto-reply | Out of office, limited access to email |
+| 2 | Joshua Barraza | Menlo-Atherton HS — College Counselor M-Z | jbarraza@seq.org | mabears.org/Counseling/College-and-Career | Jul 17 | | Auto-reply | Out of office, limited access to email |
+| 3 | Lisa Giarratano | Menlo School — Director of College Counseling | lisa.giarratano@menloschool.org | menloschool.org/academics/college-counseling | Jul 17 | | | |
+| 4 | Grace Hartman | Menlo School — Associate Director of College Counseling | ghartman@menloschool.org | menloschool.org/academics/college-counseling | Jul 17 | | Auto-reply | Away, back Jul 20 |
+| 5 | David Melena | Menlo School — Associate Director of College Counseling | dmelena@menloschool.org | menloschool.org/academics/college-counseling | Jul 17 | | | |
+| 6 | Elena Wong | Menlo School — Associate Director of College Counseling | elena.wong@menloschool.org | menloschool.org/academics/college-counseling | Jul 17 | | Auto-reply | Summer break, back Jul 21 |
+| 7 | Quincy Jones | Menlo School — Associate Director of College Counseling | qjones@menloschool.org | menloschool.org/academics/college-counseling | Jul 17 | | | |
+| 8 | Lauri Badar | Sacred Heart Schools, Atherton — Director of College Counseling | lbadar@shschools.org | shschools.org/academics/college-counseling | Jul 17 | | Auto-reply | Summer break, back Aug 10 |
+| 9 | Beth Goode | Sacred Heart Schools, Atherton — Associate Director of College Counseling | bgoode@shschools.org | rocketreach.co/beth-goode-email | Jul 17 | | Auto-reply | Summer break, back Aug 11 |
+| 11 | Ms. Lang | Carlmont HS — Counseling (backup contact for Stephanie Jacobovitz, on leave) | jlang@seq.org | Provided by Stephanie Jacobovitz's auto-reply, Jul 17 | Jul 17 | | | |
+| 12 | Sandra Cernobori | Palo Alto HS (Paly) — College Advisor A-K | scernobori@pausd.org | collegeadmissionbook.com/blog/palo-alto-high-schools-sandra-cernobori | Jul 17 | | Auto-reply | Paly closed for summer since Jun 4, has FAQ auto-response |
+| 13 | Janet Cochrane | Palo Alto HS (Paly) — College Advisor L-Z | jcochrane@pausd.org | linkedin.com/in/janetlcochrane | Jul 17 | | Auto-reply | Paly closed for summer since Jun 4 |
+| 14 | Gabrielle McColgan | Castilleja School — Director of College Counseling | gmccolgan@castilleja.org | castilleja.org/learning/college-counseling | Jul 17 | | Auto-reply | On vacation through Jul 31 |
+| 16 | Gavin Bradley | The Nueva School — Director of College Counseling | gbradley@nuevaschool.org | nuevaschool.org/academics/upper-school/college-counseling | Jul 17 | | | |
+| 17 | Paul Gallagher | The Nueva School — Associate Director of College Counseling | pgallagher@nuevaschool.org | nuevaschool.org/academics/upper-school/college-counseling | Jul 17 | | | |
+| 18 | Erika Rojas | The Nueva School — College Counseling Operations Manager | erojas@nuevaschool.org | nuevaschool.org/academics/upper-school/college-counseling | Jul 17 | | Auto-reply | Slower response Jun 15-Aug 9, transcripts sent |
+| 19 | Colleen Burson-Ryan Okpala | Woodside Priory School — Director of College Counseling | cbrokpala@prioryca.org | prioryca.org/academics/college-counseling | Jul 17 | | Auto-reply | Away for summer, back Jul 29 |
+| 20 | Anya Ishida | Woodside Priory School — Associate Director of College Counseling | aishida@prioryca.org | prioryca.org/academics/college-counseling | Jul 17 | | | |
+| 21 | Queenie Hua | Aragon HS (San Mateo) — Career & CTE Coordinator | qhua@smuhsd.org | ahs.smuhsd.org/counseling/college-career-center | Jul 17 | | Auto-reply | Out for summer, back Aug 5 |
+| 22 | Linda Kirsch | Henry M. Gunn HS (Palo Alto) — College & Career Counselor | lkirsch@pausd.org | ratemyteachers.com/us/california/palo-alto/henry-m-gunn-high-school/linda-kirsch | Jul 17 | | | |
+| 23 | David Leftwich | Henry M. Gunn HS (Palo Alto) — Lead Counselor | dleftwich@pausd.org | gunn.pausd.org/campus-life/counseling/counselors1 | Jul 17 | | Auto-reply | Gunn closed for summer, not checking email |
+| 24 | Janice Kelly | Hillsdale HS (San Mateo) — Lead Counselor | jkelly@smuhsd.org | hhs.smuhsd.org/counseling/school-counseling | Jul 17 | | Auto-reply | SMUHSD on summer recess, checking periodically |
+| 25 | Ed Canda | Hillsdale HS (San Mateo) — Counselor | ecanda@smuhsd.org | hhs.smuhsd.org/counseling/school-counseling | Jul 17 | | Auto-reply | Summer out of office, back Aug 4 |
+| 26 | Christiana Cassio | Hillsdale HS (San Mateo) — Counselor | ccassio@smuhsd.org | hhs.smuhsd.org/counseling/school-counseling | Jul 17 | | Auto-reply | SMUHSD on summer recess |
+| 27 | Jessica Solis | Hillsdale HS (San Mateo) — Counselor | jcsolis@smuhsd.org | hhs.smuhsd.org/counseling/school-counseling | Jul 17 | | Auto-reply | SMUHSD on summer recess, back Aug 10 |
+| 28 | Jenny Rienzo | Hillsdale HS (San Mateo) — Counselor | jrienzo@smuhsd.org | hhs.smuhsd.org/counseling/school-counseling | Jul 17 | | | |
+| 29 | Jane Zimmerman | San Mateo HS — Counselor, Class of 2026 | jzimmerman@smuhsd.org | smhs.smuhsd.org/counseling | Jul 17 | | Auto-reply | Out of office for summer, back Aug 3 |
+| 30 | Jon Dhyne | Burlingame HS — College & Career Advisor | jdhyne@smuhsd.org | bhs.smuhsd.org/counseling/college-and-career-counseling | Jul 17 | | Auto-reply | BHS College & Career Center closed for summer, reopens Aug 3 |
+| 31 | Luis Mashek | Burlingame HS — Counseling Department Chair | lmashek@smuhsd.org | bhs.smuhsd.org/counseling | Jul 17 | | Auto-reply | School closed for summer break Jun 5-Aug 3 |
+| 32 | Kaylin Liang | Kehillah Jewish HS — Director of College Counseling | kliang@kehillah.org | kehillah.org/college-counseling | Jul 17 | | | |
+| 33 | Jennifer Carleton | Crystal Springs Uplands School — Director of College Counseling | jcarleton@csus.org | crystal.org/resources/academic-support/college-counseling | Jul 17 | | | |
+| 35 | Kevin Lum Lung | The Harker School — College Counselor | kevin.lumlung@harker.org | harker.org/upper-school/support-services/college-counseling | Jul 17 | | | |
+| 36 | Andrew Quinn | The Harker School — College Counselor | andrew.quinn@harker.org | harker.org/upper-school/support-services/college-counseling | Jul 17 | | Auto-reply | Harker College Counseling Office closed for summer, back Aug 18 |
+
+*(36 total sourced so far, target 40-60. Still need: Woodside HS and Sequoia HS counselor names — their sites don't publish a browsable directory without JS/login, so check by phone or the Sequoia Union staff portal at staffdirectory.seq.org. Also open: IECA independent-consultant directory for non-school-affiliated names, not yet pulled.)*
+
+---
+
+## 1.3c Drafted Template C emails (List A, all 36)
+
+All 36 drafted from the current Template C (1.6), sender: Ari Agarwal, sophomore, Menlo-Atherton High School. Greetings use first name only (no Mr./Ms.) since pronouns for several recipients aren't confirmed. Swap `https://kairosadmissions.vercel.app/notify?src=mentor` for the real waitlist URL before sending. Rows 1-2 use the "own school" framing since Mai Nguyen and Joshua Barraza are Ari's actual counselors; the rest use the general version.
+
+**1 — Mai Nguyen (Menlo-Atherton HS)**
+> Subject: A tool I built for tracking college app deadlines, thought it might be useful for M-A students
+>
+> Hi Mai,
+>
+> I'm Ari Agarwal, a sophomore at M-A. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**2 — Joshua Barraza (Menlo-Atherton HS)**
+> Subject: A tool I built for tracking college app deadlines, thought it might be useful for M-A students
+>
+> Hi Joshua,
+>
+> I'm Ari Agarwal, a sophomore at M-A. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**3 — Lisa Giarratano (Menlo School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Lisa,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**4 — Grace Hartman (Menlo School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Grace,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**5 — David Melena (Menlo School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi David,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**6 — Elena Wong (Menlo School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Elena,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**7 — Quincy Jones (Menlo School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Quincy,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**8 — Lauri Badar (Sacred Heart Schools, Atherton)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Lauri,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**9 — Beth Goode (Sacred Heart Schools, Atherton)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Beth,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**11 — Stephanie Jacobovitz (Carlmont HS)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Stephanie,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**12 — Sandra Cernobori (Palo Alto HS / Paly)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Sandra,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**13 — Janet Cochrane (Palo Alto HS / Paly)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Janet,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**14 — Gabrielle McColgan (Castilleja School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Gabrielle,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**15 — Alyson Tom (Castilleja School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Alyson,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**16 — Gavin Bradley (The Nueva School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Gavin,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**17 — Paul Gallagher (The Nueva School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Paul,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**18 — Erika Rojas (The Nueva School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Erika,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**19 — Colleen Burson-Ryan Okpala (Woodside Priory School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Colleen,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**20 — Anya Ishida (Woodside Priory School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Anya,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**21 — Queenie Hua (Aragon HS)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Queenie,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**22 — Linda Kirsch (Henry M. Gunn HS)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Linda,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**23 — David Leftwich (Henry M. Gunn HS)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi David,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**24 — Janice Kelly (Hillsdale HS)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Janice,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**25 — Ed Canda (Hillsdale HS)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Ed,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**26 — Christiana Cassio (Hillsdale HS)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Christiana,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**27 — Jessica Solis (Hillsdale HS)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Jessica,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**28 — Jenny Rienzo (Hillsdale HS)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Jenny,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**29 — Jane Zimmerman (San Mateo HS)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Jane,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**30 — Jon Dhyne (Burlingame HS)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Jon,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**31 — Luis Mashek (Burlingame HS)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Luis,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**32 — Kaylin Liang (Kehillah Jewish HS)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Kaylin,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**33 — Jennifer Carleton (Crystal Springs Uplands School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Jennifer,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**34 — Jean Lee (Crystal Springs Uplands School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Jean,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**35 — Kevin Lum Lung (The Harker School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Kevin,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+**36 — Andrew Quinn (The Harker School)**
+> Subject: Student-built tool for tracking college app deadlines, thought your students might find it useful
+>
+> Hi Andrew,
+>
+> I'm Ari Agarwal, a sophomore at Menlo-Atherton High School. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
+>
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
+>
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> Thanks for reading this either way,
+> Ari Agarwal
+
+### List B — Local press, school newspapers, education newsletters (target 15-20, Template D)
+
+| # | Outlet | Contact Name | Email | Source | Sent | Follow-up (5-7d) | Response | Outcome |
+|---|--------|--------------|-------|--------|------|-------------------|----------|---------|
+| 1 | The Oracle (Gunn HS student newspaper) | Sylvie Nguyen, Editor-in-Chief | oraclegunn@gmail.com | gunnoracle.com/contact | Jul 17 | | | |
+| 2 | The Campanile (Paly student newspaper) | Editors (general) | palycampanile@gmail.com | thecampanile.org/about-us | Jul 17 | | | |
+| 3 | Palo Alto Weekly / Palo Alto Online | General Editorial | paloaltoonline.com/contact-us (form) | paloaltoonline.com/contact-us | Jul 17 | | | |
+| 4 | The Almanac (Menlo Park/Atherton/Portola Valley/Woodside) | Editor (general) | editor@AlmanacNews.com | almanacnews.com/about-us | Jul 17 | | | |
+| 5 | Palo Alto Daily Post | Dave Price, Editor and Co-Publisher (newsroom desk) | news@padailypost.com | padailypost.com/contact | Jul 17 | | | |
+| 6 | San Mateo Daily Journal | Newsroom desk (story ideas/press releases) | news@smdailyjournal.com | smdailyjournal.com/site/contact.html | Jul 17 | | | |
+| 7 | San Mateo Union HSD district communications (covers Aragon, Hillsdale, San Mateo, Burlingame HS) | Laura B. Chalkley, Director of Communications | lchalkley@smuhsd.org | smuhsd.org/departments/communications | Jul 17 | | | |
+| 8 | Sequoia HS PTSA newsletter (Sequoia Union HSD family) | *(submit via SequoiaPTSANews)* | SequoiaPTSANews@gmail.com | seq.org/ABOUT-US/Superintendent/Communications | Jul 17 | | | |
+
+*(8 sent, list trimmed from the original 15 on Jul 17 — Ari decided to drop the remaining form-only/no-email outlets (Verde Magazine, both Patches, InMenlo, The Paw Print, M-A Chronicle, The Coat of Arms) rather than chase contact forms with no confirmed recipient.)*
 
 ---
 
@@ -115,6 +774,122 @@ The core tradeoff: bigger accounts have more pull per post but respond far less 
 
 ---
 
+## 1.4c List C tracking — Tier 4 DM outreach
+
+These go out as DMs on the creator's platform (TikTok/Instagram), not email — no send tool available for social platforms, so this is manual on your end. Link used is the live product (`https://kairosadmissions.vercel.app`), not the notify/waitlist link, since we're asking them to actually try it.
+
+| # | Creator | Platform | Followers/Subs | Sent | Response | Outcome |
+|---|---------|----------|-----------------|------|----------|---------|
+| 1 | Ruby Cline | TikTok | 34.5k | | | |
+| 2 | Lydia Violeta | TikTok | 38.3k | | | |
+| 3 | Yvonne | TikTok | Micro | | | |
+| 4 | Helene | TikTok | Micro | | | |
+| 5 | dearest emi (@dearestemi) | YouTube | 9.2k | | | |
+| 6 | zahra - muslimthicc (@muslimthicc) | YouTube | 22.5k | | | |
+| 7 | SmileyEssie (@SmileyEssie) | YouTube | 32.7k | | | |
+| 8 | HorHey (@HorHey) | YouTube | 9.6k | | | |
+| 9 | Joe Saii (@saijojp) | TikTok | 48.8k | | | |
+| 10 | Monique Armendariz (@missatothez) | TikTok | 16.5k | | | |
+| 11 | Luke Austin (@lukeaustinnn) | TikTok | 41.2k | | | |
+| 12 | @ivyleagueguide | TikTok | Unconfirmed (not in Tier 4's 5k-50k range per search snippet, verify before sending) | | | |
+| 13 | Kayla (UC Berkeley vlogger) | YouTube | 14k | | | |
+| 14 | Nicolas (Princeton) | YouTube | 19k | | | |
+| 15 | Brianna Cortez (@briannacortezoficial) | TikTok | 6.9k | | | |
+| 16 | Dyllen | Unconfirmed platform (evidence-based admissions advising) | 46k | | | |
+| 17 | Maya ("Diary of a College Girl," UCSC) | TikTok | 7k | | | |
+| 18 | Jade (USC student) | TikTok | 24k | | | |
+| 19 | Rayne (Chicago college student) | TikTok | 6k | | | |
+
+*(19 sourced so far, target 40-60. Sourced via Modash's live rankings plus targeted searches (essay tips, gap year, first-gen, transfer, chance-me content, admissions-coach micro-influencers), filtered for genuine studytok/college-admissions niche fit — many "student"-tagged creators on generic directories are nursing/fitness/meme accounts, not this niche, and were excluded rather than padded in. Rows 12 and 16 have incomplete source data (platform/follower count not fully confirmed) — verify before sending. Direct TikTok/YouTube browsing was attempted as a different sourcing angle but both blocked unauthenticated/automated access outright. Diminishing returns past this point: further searches mostly surface generic discovery pages, not individual creators. Closing the gap to 40-60 realistically requires live TikTok hashtag/FYP browsing from a logged-in account, which needs the app itself.)*
+
+**Drafted DMs (Template E, personalized per creator):**
+
+**1 — Ruby Cline**
+> Hey Ruby, I'm a HS student and I built a free tool called Kairos that helps students stay organized through the college application process, deadlines, requirements, and everything else that piles up. I've been following your academic advice content and think it'd genuinely be useful for your audience.
+>
+> No ask attached to this, I'd love to just send you free access and get your honest take. If you like it and want to mention it, awesome; if not, no worries at all, would still love the feedback.
+>
+> https://kairosadmissions.vercel.app
+
+**2 — Lydia Violeta**
+> Hey Lydia, I'm a HS student and I built a free tool called Kairos that helps students stay organized through the college application process, deadlines, requirements, and everything else that piles up. I've been following your productivity/day-in-the-life content and think it'd genuinely be useful for your audience.
+>
+> No ask attached to this, I'd love to just send you free access and get your honest take. If you like it and want to mention it, awesome; if not, no worries at all, would still love the feedback.
+>
+> https://kairosadmissions.vercel.app
+
+**3 — Yvonne**
+> Hey Yvonne, I'm a HS student and I built a free tool called Kairos that helps students stay organized through the college application process, deadlines, requirements, and everything else that piles up. I've been following your study-with-me content and think it'd genuinely be useful for your audience.
+>
+> No ask attached to this, I'd love to just send you free access and get your honest take. If you like it and want to mention it, awesome; if not, no worries at all, would still love the feedback.
+>
+> https://kairosadmissions.vercel.app
+
+**4 — Helene**
+> Hey Helene, I'm a HS student and I built a free tool called Kairos that helps students stay organized through the college application process, deadlines, requirements, and everything else that piles up. I've been following your freshman-year tips and note-taking content and think it'd genuinely be useful for your audience.
+>
+> No ask attached to this, I'd love to just send you free access and get your honest take. If you like it and want to mention it, awesome; if not, no worries at all, would still love the feedback.
+>
+> https://kairosadmissions.vercel.app
+
+**5 — dearest emi**
+> Hey Emi, I'm a HS student and I built a free tool called Kairos that helps students stay organized through the college application process, deadlines, requirements, and everything else that piles up. I've been following your college decision reaction and application-journey videos and think it'd genuinely be useful for your audience.
+>
+> No ask attached to this, I'd love to just send you free access and get your honest take. If you like it and want to mention it, awesome; if not, no worries at all, would still love the feedback.
+>
+> https://kairosadmissions.vercel.app
+
+**6 — zahra (muslimthicc)**
+> Hey Zahra, I'm a HS student and I built a free tool called Kairos that helps students stay organized through the college application process, deadlines, requirements, and everything else that piles up. I've been following your college life content and think it'd genuinely be useful for your audience.
+>
+> No ask attached to this, I'd love to just send you free access and get your honest take. If you like it and want to mention it, awesome; if not, no worries at all, would still love the feedback.
+>
+> https://kairosadmissions.vercel.app
+
+**7 — SmileyEssie**
+> Hey Essie, I'm a HS student and I built a free tool called Kairos that helps students stay organized through the college application process, deadlines, requirements, and everything else that piles up. I've been following your Harvard journey and admissions-reaction videos and think it'd genuinely be useful for your audience.
+>
+> No ask attached to this, I'd love to just send you free access and get your honest take. If you like it and want to mention it, awesome; if not, no worries at all, would still love the feedback.
+>
+> https://kairosadmissions.vercel.app
+
+**8 — HorHey**
+> Hey George, I'm a HS student and I built a free tool called Kairos that helps students stay organized through the college application process, deadlines, requirements, and everything else that piles up. I've been following your college life content and think it'd genuinely be useful for your audience.
+>
+> No ask attached to this, I'd love to just send you free access and get your honest take. If you like it and want to mention it, awesome; if not, no worries at all, would still love the feedback.
+>
+> https://kairosadmissions.vercel.app
+
+**9 — Joe Saii**
+> Hey Joe, I'm a HS student and I built a free tool called Kairos that helps students stay organized through the college application process, deadlines, requirements, and everything else that piles up. I've been following your college life content and think it'd genuinely be useful for your audience.
+>
+> No ask attached to this, I'd love to just send you free access and get your honest take. If you like it and want to mention it, awesome; if not, no worries at all, would still love the feedback.
+>
+> https://kairosadmissions.vercel.app
+
+**10 — Monique Armendariz**
+> Hey Monique, I'm a HS student and I built a free tool called Kairos that helps students stay organized through the college application process, deadlines, requirements, and everything else that piles up. I've been following your academic-life content and think it'd genuinely be useful for your audience.
+>
+> No ask attached to this, I'd love to just send you free access and get your honest take. If you like it and want to mention it, awesome; if not, no worries at all, would still love the feedback.
+>
+> https://kairosadmissions.vercel.app
+
+**11 — Luke Austin**
+> Hey Luke, I'm a HS student and I built a free tool called Kairos that helps students stay organized through the college application process, deadlines, requirements, and everything else that piles up. I've been following your premed/study journey content and think it'd genuinely be useful for your audience.
+>
+> No ask attached to this, I'd love to just send you free access and get your honest take. If you like it and want to mention it, awesome; if not, no worries at all, would still love the feedback.
+>
+> https://kairosadmissions.vercel.app
+
+**Reusable script for expanding Tier 4** (per 1.4's sourcing method above — hashtag search, YouTube search, Tier 1/2 comment sections, Modash/Collabstr):
+> Hey [name], I'm a HS student and I built a free tool called Kairos that helps students stay organized through the college application process, deadlines, requirements, and everything else that piles up. I've been following your [specific content type] content and think it'd genuinely be useful for your audience.
+>
+> No ask attached to this, I'd love to just send you free access and get your honest take. If you like it and want to mention it, awesome; if not, no worries at all, would still love the feedback.
+>
+> https://kairosadmissions.vercel.app
+
+---
+
 ## 1.4b Test-prep & tutoring company partnerships
 
 Bay Area test-prep/counseling companies already have exactly the audience Kairos wants, at scale, and have a business incentive to offer their students something extra — this is a distribution partner category, not a one-off influencer ask.
@@ -139,7 +914,7 @@ Bay Area test-prep/counseling companies already have exactly the audience Kairos
 >
 > Happy to give you or your team a quick walkthrough if useful.
 >
-> [Notification link]
+> https://kairosadmissions.vercel.app/notify?src=mentor
 >
 > Thanks,
 > [Your name]
@@ -196,31 +971,37 @@ This is individual/club-level outreach — sharing a free tool the way you'd tel
 ## 1.6 Email templates
 
 **Template C — Individual counselor / consultant outreach**
-> Subject: Student-built tool for [specific pain point] — thought your students might find it useful
+> Subject: Student-built tool for [specific pain point], thought your students might find it useful
 >
 > Hi [Name],
 >
-> I'm [your name], a [grade] student at [school] — I built a free tool called Kairos that helps students [specific, concrete benefit, e.g. "track application deadlines and requirements across every school they're applying to in one place"]. It's free for students, no sales pitch involved.
+> I'm [your name], a [grade] student at [school]. I built a free tool called Kairos because I found it genuinely hard to stay organized across every school's deadlines, requirements, and essays, and figured other students were hitting the same wall. It's free for students, with no ads or data-selling behind it, and I built and maintain it myself.
 >
-> I'm not asking you to endorse anything — just wondering if it'd be useful to mention to any students who are feeling overwhelmed by the process. Happy to send a one-line description you could forward, or answer any questions.
+> Could you add it to your resource list, or mention it in your next student email or newsletter? To make that as easy as possible, here's a ready-to-use line if you want to just drop it in:
 >
-> [Notification link]
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
+>
+> If you'd rather learn more first, or want me to walk you through it, I'm happy to do a quick call or send more detail, whatever's easiest on your end.
+>
+> https://kairosadmissions.vercel.app/notify?src=mentor
 >
 > Thanks for reading this either way,
 > [Your name]
 
+*(Revised Jul 17: the original "mention to students who seem overwhelmed" ask required the counselor to identify a subset of students, which is a judgment call with too much friction. The direct ask ties to something they already do, a resource list or a recurring email, so it's a mechanical yes/no, not a filtering decision. Also added a ready-to-paste one-line blurb so "drop it in" requires zero writing on their end, which should raise the odds it actually gets used. Expanded to explain the actual problem and what Kairos does, rather than a one-line description, so the recipient understands the product well enough to vouch for it, not just forward a link blind. Em dashes removed throughout per house style.)*
+
 **Template D — Local press / student newspaper pitch**
-> Subject: Local student built a free college-app tool — story idea?
+> Subject: Local student built a free college-app tool, story idea?
 >
 > Hi [Name],
 >
-> I'm a [grade] student at [school] in [city], and I built a free web app called Kairos that helps students manage the college application process. I thought it might be a fun local angle — a student building something to solve a problem for other students, entirely self-taught/bootstrapped.
+> I'm [your name], a [grade] student at [school] in [city]. I built a free tool called Kairos that helps students stay organized through the college application process, deadlines, requirements, and everything else that piles up when you're applying to multiple schools. It's free, self-taught, and I built and maintain it myself.
 >
-> Happy to do a quick call or answer questions by email if it's of interest. No obligation either way — just thought I'd flag it.
+> Would this be worth a short feature or mention? I'm happy to do a quick call or answer questions by email, whatever's easiest.
 >
-> [Notification link] / [1-line description]
+> "Kairos is a free tool built by a local student to help students stay organized and on track throughout the college application process: https://kairosadmissions.vercel.app/notify?src=mentor"
 >
-> Thanks,
+> Thanks for reading this either way,
 > [Your name]
 
 **Template E — Influencer/creator DM or email**
@@ -239,7 +1020,7 @@ This is individual/club-level outreach — sharing a free tool the way you'd tel
 >
 > Would you be open to forwarding this to your NHS/student council/newsletter list? Totally understand if not — just thought it might be useful.
 >
-> [Notification link]
+> https://kairosadmissions.vercel.app/notify?src=mentor
 >
 > Thanks so much,
 > [Your name]
@@ -260,6 +1041,9 @@ This is individual/club-level outreach — sharing a free tool the way you'd tel
 - **Partner with local chapters of national student orgs** (NHS, DECA, FBLA) — some have their own social accounts/newsletters separate from the school's, worth identifying 2-3 with real followings.
 - **Separate, calmer video cut for parent Facebook groups** (Section on parents below) — a 60-90 second explainer converts better there than a fast-cut TikTok-style hook.
 - **Local Bay Area tech/startup Reddit and Discord communities** (e.g. r/bayarea, local YC/startup Slack or Discord groups) — "built by a Bay Area high schooler" is a strong local human-interest hook that also reaches parents/professionals who forward things to their own kids.
+- **(YC specific) Track waitlist signups over time so you can show a growth curve (10-20%/week), not just a total.** The publicity plan above drives the signups; this is the separate discipline of logging them on a schedule so there's a curve to cite, not just an end total.
+- **(YC specific) Log where each batch of signups came from** (specific school group chat, subreddit, team) so growth is sourced, not anonymous, when the application asks how users found out.
+- **(YC specific) Push the existing Phase 3-4 pilot roadmap forward** — get a counselor or principal to put pilot interest in writing (even informal/email) before the MVP exists.
 
 ---
 

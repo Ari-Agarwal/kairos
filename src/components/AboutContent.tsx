@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { User } from "lucide-react";
 
 const STATS = [
   { value: "400,000+", label: "academically strong students who fail to enroll in any college each year" },
@@ -51,6 +52,24 @@ export function AboutContent({ showLogo }: { showLogo: boolean }) {
           admissions data to generate a school list, a personalized timeline, and essay
           feedback. It&apos;s free to start.
         </p>
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-6 flex items-start gap-4 mb-2">
+        <div className="shrink-0 w-16 h-16 rounded-full bg-secondary-tint border border-border flex items-center justify-center overflow-hidden">
+          {/* Placeholder — swap for the real headshot, e.g.:
+              <img src="/ari-headshot.jpg" alt="Ari Agarwal" className="w-full h-full object-cover" /> */}
+          <User className="w-7 h-7 text-text-gray" />
+        </div>
+        <div>
+          <p className="text-text font-medium text-sm">Ari Agarwal</p>
+          <p className="text-text-gray text-xs mb-2">Founder, Kairos</p>
+          <p className="text-text-gray text-sm leading-relaxed">
+            {/* Draft copy — replace with your own. */}
+            I started Kairos after watching students around me with strong grades and test
+            scores get no real guidance on where that could actually take them. I wanted to
+            build the tool I wished existed: honest, data-backed, and free to start.
+          </p>
+        </div>
       </div>
 
       {showLogo && (

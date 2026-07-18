@@ -5,13 +5,14 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium transition-[transform,box-shadow,filter,background-color,border-color,color] duration-150 ease-out hover:scale-[1.03] active:scale-[0.98] motion-reduce:hover:scale-100 motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 disabled:hover:scale-100",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-b from-primary to-primary-deep text-bg shadow-sm hover:from-primary-hover hover:to-primary-deep",
-        outline: "border border-border bg-transparent text-text hover:bg-card",
+          "bg-gradient-to-b from-primary to-primary-deep text-bg shadow-sm hover:from-primary-hover hover:to-primary-deep hover:shadow-[0_0_0_4px_var(--amber-tint)]",
+        outline:
+          "border border-border bg-transparent text-text hover:border-primary hover:text-primary hover:bg-card hover:shadow-[0_0_0_4px_var(--amber-tint)]",
         ghost: "text-text-gray hover:text-text hover:bg-card",
         link: "text-primary underline-offset-4 hover:underline",
       },
