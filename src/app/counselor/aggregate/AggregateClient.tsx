@@ -1,15 +1,20 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
+
 export interface GradeAggregate {
   grade: string;
   studentCount: number;
   avgGpa: number | null;
   avgTimelineCompletionPct: number | null;
+  atRiskCount: number;
 }
 
 export interface SchoolTally {
   name: string;
   count: number;
+  students: { user_id: string; name: string }[];
 }
 
 export default function AggregateClient({
@@ -21,6 +26,8 @@ export default function AggregateClient({
   gradeAggregates: GradeAggregate[];
   topSchools: SchoolTally[];
 }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
   return (
     <div className="px-5 md:px-8 py-8 max-w-3xl mx-auto w-full">
       <h1 className="font-serif text-2xl text-text mb-1">Class-Level Overview</h1>
@@ -49,6 +56,10 @@ export default function AggregateClient({
                     {g.avgTimelineCompletionPct !== null ? `${g.avgTimelineCompletionPct}%` : "—"}
                   </span>
                 </p>
+                <p className="text-text-gray">
+                  At risk:{" "}
+                  <span className={g.atRiskCount > 0 ? "text-red" : "text-text"}>{g.atRiskCount}</span>
+                </p>
               </div>
             )}
           </div>
@@ -61,15 +72,37 @@ export default function AggregateClient({
           <p className="text-text-gray text-sm">No active matches yet across your roster.</p>
         </div>
       ) : (
-        <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
-          {topSchools.map((s) => (
-            <div key={s.name} className="flex items-center justify-between gap-3">
-              <p className="text-text text-sm truncate">{s.name}</p>
-              <span className="text-text-gray text-sm shrink-0">
-                {s.count} student{s.count === 1 ? "" : "s"}
-              </span>
-            </div>
-          ))}
+        <div className="bg-card border border-border rounded-2xl p-5 space-y-1">
+          {topSchools.map((s) => {
+            const isOpen = expanded === s.name;
+            return (
+              <div key={s.name}>
+                <button
+                  onClick={() => setExpanded(isOpen ? null : s.name)}
+                  className="w-full flex items-center justify-between gap-3 py-2 text-left hover:text-primary transition-colors"
+                  aria-expanded={isOpen}
+                >
+                  <p className="text-text text-sm truncate">{s.name}</p>
+                  <span className="text-text-gray text-sm shrink-0">
+                    {s.count} student{s.count === 1 ? "" : "s"} {isOpen ? "▲" : "▼"}
+                  </span>
+                </button>
+                {isOpen && (
+                  <div className="pl-3 pb-2 space-y-1">
+                    {s.students.map((student) => (
+                      <Link
+                        key={student.user_id}
+                        href={`/counselor/students/${student.user_id}`}
+                        className="block text-sm text-text-gray hover:text-primary hover:underline"
+                      >
+                        {student.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

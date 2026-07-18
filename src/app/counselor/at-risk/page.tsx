@@ -3,11 +3,7 @@ import { redirect } from "next/navigation";
 import { getCounselorRecord } from "@/lib/access";
 import CounselorNavShell from "@/components/CounselorNavShell";
 import AtRiskClient, { type FlaggedStudent } from "./AtRiskClient";
-
-function daysSince(dateString: string | null): number {
-  if (!dateString) return Infinity;
-  return (Date.now() - new Date(dateString).getTime()) / (1000 * 60 * 60 * 24);
-}
+import { computeFlags } from "@/lib/at-risk";
 
 export default async function AtRiskPage() {
   const supabase = await createClient();
@@ -71,40 +67,17 @@ export default async function AtRiskPage() {
     }
   }
 
-  const flagged: FlaggedStudent[] = [];
-  for (const p of profiles ?? []) {
-    const reasons: string[] = [];
-    const overdueCount = overdueByUser.get(p.user_id) ?? 0;
-    const activeMatchCount = matchCountByUser.get(p.user_id) ?? 0;
-    const loginAge = daysSince(p.last_login_at);
-    const incompleteProfile = !(
-      p.intended_major?.length > 0 &&
-      p.extracurriculars?.length > 0 &&
-      p.schools_already_considering &&
-      p.test_scores
-    );
-
-    if (overdueCount > 0) reasons.push(`${overdueCount} overdue timeline item${overdueCount > 1 ? "s" : ""}`);
-    if (activeMatchCount === 0) reasons.push("No active school matches");
-    if (p.last_login_at === null) reasons.push("Never logged in");
-    else if (loginAge >= 30) reasons.push(`No login in ${Math.floor(loginAge)}+ days`);
-    else if (incompleteProfile && loginAge >= 14) reasons.push("Profile incomplete for 2+ weeks");
-
-    if (reasons.length > 0) {
-      flagged.push({
-        user_id: p.user_id,
-        name: emailByUser.get(p.user_id) ?? "Student",
-        grade_level: p.grade_level,
-        reasons,
-      });
-    }
-  }
-
-  flagged.sort((a, b) => b.reasons.length - a.reasons.length);
+  const flagged = computeFlags(profiles ?? [], matchCountByUser, overdueByUser);
+  const sortedFlagged: FlaggedStudent[] = flagged.map((s) => ({
+    user_id: s.user_id,
+    name: emailByUser.get(s.user_id) ?? "Student",
+    grade_level: s.grade_level,
+    reasons: s.reasons,
+  }));
 
   return (
     <CounselorNavShell schoolName={school?.name ?? "Your School"}>
-      <AtRiskClient students={flagged} />
+      <AtRiskClient students={sortedFlagged} />
     </CounselorNavShell>
   );
 }

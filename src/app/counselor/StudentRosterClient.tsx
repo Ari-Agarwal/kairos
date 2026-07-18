@@ -16,9 +16,13 @@ type SortKey = "deadline" | "lastLogin" | "gpaAsc" | "gpaDesc";
 export default function StudentRosterClient({
   students,
   stats,
+  currentPage,
+  totalPages,
 }: {
   students: RosterStudent[];
   stats: { total: number; incompleteProfiles: number; noMatches: number; overdue: number };
+  currentPage: number;
+  totalPages: number;
 }) {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -150,6 +154,33 @@ export default function StudentRosterClient({
           <p className="text-text-gray text-sm text-center py-10">No students match these filters.</p>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-5 text-sm text-text-gray">
+          <Link
+            href={currentPage > 1 ? `/counselor?page=${currentPage - 1}` : "#"}
+            aria-disabled={currentPage <= 1}
+            className={`px-3 py-2 rounded-xl border border-border ${
+              currentPage <= 1 ? "opacity-40 pointer-events-none" : "hover:text-text hover:border-primary/40"
+            }`}
+          >
+            ← Previous
+          </Link>
+          <span>
+            Page {currentPage} of {totalPages}
+            <span className="hidden sm:inline"> — filters and search apply within this page only</span>
+          </span>
+          <Link
+            href={currentPage < totalPages ? `/counselor?page=${currentPage + 1}` : "#"}
+            aria-disabled={currentPage >= totalPages}
+            className={`px-3 py-2 rounded-xl border border-border ${
+              currentPage >= totalPages ? "opacity-40 pointer-events-none" : "hover:text-text hover:border-primary/40"
+            }`}
+          >
+            Next →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

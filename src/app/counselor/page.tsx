@@ -38,7 +38,16 @@ function daysSince(dateString: string | null): number {
   return (Date.now() - new Date(dateString).getTime()) / (1000 * 60 * 60 * 24);
 }
 
-export default async function CounselorHomePage() {
+const PAGE_SIZE = 25;
+
+export default async function CounselorHomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = await searchParams;
+  const currentPage = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -54,24 +63,34 @@ export default async function CounselorHomePage() {
 
   if (schoolError) console.error("counselor home school query failed:", schoolError);
 
+  // Stats and status flags need the full roster, but the per-student
+  // auth.admin.getUserById lookup below is the real scaling risk — that
+  // fan-out is bounded to just the current page's rows, not every student.
   const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
     .select("*")
-    .eq("school_id", counselor.school_id);
+    .eq("school_id", counselor.school_id)
+    .order("created_at", { ascending: true })
+    .order("user_id", { ascending: true });
 
   if (profilesError) console.error("counselor home profiles query failed:", profilesError);
 
-  const studentIds = (profiles ?? []).map((p) => p.user_id);
+  const allProfiles = profiles ?? [];
+  const totalPages = Math.max(1, Math.ceil(allProfiles.length / PAGE_SIZE));
+  const pageProfiles = allProfiles.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const studentIds = allProfiles.map((p) => p.user_id);
+  const pageStudentIds = pageProfiles.map((p) => p.user_id);
 
   const emailByUser = new Map<string, string>();
-  if (studentIds.length) {
+  if (pageStudentIds.length) {
     const serviceClient = createServiceClient();
     const results = await Promise.all(
-      studentIds.map((id) => serviceClient.auth.admin.getUserById(id))
+      pageStudentIds.map((id) => serviceClient.auth.admin.getUserById(id))
     );
     results.forEach((res, i) => {
       const email = res.data.user?.user_metadata?.full_name ?? res.data.user?.email;
-      if (email) emailByUser.set(studentIds[i], email);
+      if (email) emailByUser.set(pageStudentIds[i], email);
     });
   }
 
@@ -107,7 +126,7 @@ export default async function CounselorHomePage() {
     timelineByUser.set(item.user_id, entry);
   }
 
-  const students: RosterStudent[] = (profiles ?? []).map((p) => {
+  function buildStudent(p: (typeof allProfiles)[number]): RosterStudent {
     const activeMatchCount = matchCountByUser.get(p.user_id) ?? 0;
     const timeline = timelineByUser.get(p.user_id) ?? { incomplete: 0, overdue: 0 };
     const complete = isProfileComplete(p);
@@ -135,18 +154,21 @@ export default async function CounselorHomePage() {
       status,
       lastLoginAt: p.last_login_at,
     };
-  });
+  }
+
+  const allStudents = allProfiles.map(buildStudent);
+  const students = pageProfiles.map(buildStudent);
 
   const stats = {
-    total: students.length,
-    incompleteProfiles: (profiles ?? []).filter((p) => !isProfileComplete(p)).length,
-    noMatches: students.filter((s) => s.activeMatchCount === 0).length,
-    overdue: students.filter((s) => s.overdueCount > 0).length,
+    total: allStudents.length,
+    incompleteProfiles: allProfiles.filter((p) => !isProfileComplete(p)).length,
+    noMatches: allStudents.filter((s) => s.activeMatchCount === 0).length,
+    overdue: allStudents.filter((s) => s.overdueCount > 0).length,
   };
 
   return (
     <CounselorNavShell schoolName={school?.name ?? "Your School"}>
-      <StudentRosterClient students={students} stats={stats} />
+      <StudentRosterClient students={students} stats={stats} currentPage={currentPage} totalPages={totalPages} />
     </CounselorNavShell>
   );
 }

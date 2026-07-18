@@ -7,6 +7,27 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
 import { isTrustedOrigin } from "@/lib/origin-check";
 
+export async function GET(req: Request) {
+  if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data, error } = await supabase
+    .from("activity_evaluations")
+    .select("id, score, score_rationale, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error("activity evaluations history query failed:", error);
+    return NextResponse.json({ error: "Failed to load history" }, { status: 500 });
+  }
+  return NextResponse.json({ history: data ?? [] });
+}
+
 export async function POST(req: Request) {
   if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
@@ -57,7 +78,19 @@ export async function POST(req: Request) {
       score: number;
       score_rationale: string;
       suggestions: { label: string; text: string }[];
+      per_activity?: { activity: string; strength: string; note: string }[];
     }>(text);
+
+    const { error: historyError } = await supabase.from("activity_evaluations").insert({
+      user_id: user.id,
+      activities_text: activitiesText,
+      score: parsed.score,
+      score_rationale: parsed.score_rationale,
+      suggestions: parsed.suggestions,
+      per_activity: parsed.per_activity ?? null,
+    });
+    if (historyError) console.error("activity evaluation history insert failed:", historyError);
+
     return NextResponse.json(parsed);
   } catch (err) {
     logAiUsage("activities/evaluate", user.id, MODEL, t0, err instanceof Error ? err : new Error(String(err)));

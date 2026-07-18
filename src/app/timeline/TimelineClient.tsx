@@ -105,6 +105,16 @@ export default function TimelineClient({
     setItems((prev) => prev.filter((i) => i.id !== id));
   }
 
+  async function handleToggleComplete(item: TimelineItem) {
+    const completed = !item.completed;
+    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, completed } : i)));
+    const { error } = await supabase.from("timeline_items").update({ completed }).eq("id", item.id);
+    if (error) {
+      // revert on failure
+      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, completed: !completed } : i)));
+    }
+  }
+
   async function handleAddItem() {
     if (!newTitle.trim()) return;
     setAdding(true);
@@ -369,9 +379,23 @@ export default function TimelineClient({
                 ) : (
                 <div className="pointer-events-none">
                   <div className={`flex items-center justify-between mb-1.5 ${editing ? "pr-24" : ""}`}>
-                    <p className={`font-medium text-[15px] ${item.completed ? "text-text-gray line-through" : "text-text"}`}>
-                      {item.title}
-                    </p>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleToggleComplete(item);
+                        }}
+                        aria-label={item.completed ? "Mark incomplete" : "Mark complete"}
+                        aria-pressed={item.completed}
+                        className={`pointer-events-auto shrink-0 w-4 h-4 rounded-full border-2 transition-colors ${
+                          item.completed ? "bg-text-gray border-text-gray" : "border-border hover:border-primary"
+                        }`}
+                      />
+                      <p className={`font-medium text-[15px] truncate ${item.completed ? "text-text-gray line-through" : "text-text"}`}>
+                        {item.title}
+                      </p>
+                    </div>
                     {item.is_strategic && (
                       <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-premium text-bg shrink-0 ml-2">
                         PREMIUM

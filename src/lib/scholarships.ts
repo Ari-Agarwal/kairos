@@ -90,24 +90,50 @@ export function getAllScholarships(): Scholarship[] {
 // hides a scholarship outright, since a false negative here costs a student
 // real money in a way a false positive doesn't.
 export function isLikelyMatch(scholarship: Scholarship, profile: ScholarshipProfile): boolean {
+  return getMatchReason(scholarship, profile) !== null;
+}
+
+// Same heuristic as isLikelyMatch, but returns *why* -- "likely match" tagging
+// previously had no visible rationale, so a student had no way to tell if it
+// was a good guess or a coin flip.
+export function getMatchReason(scholarship: Scholarship, profile: ScholarshipProfile): string | null {
   const text = scholarship.eligibility_summary.toLowerCase();
 
   if (profile.first_gen === true && (text.includes("first-generation") || text.includes("financial need") || text.includes("low-income"))) {
-    return true;
+    return "You indicated you're a first-generation student, and this scholarship considers that.";
   }
   if (profile.financial_aid_need === true && (text.includes("financial need") || text.includes("need-based") || text.includes("low-income") || text.includes("pell"))) {
-    return true;
+    return "You indicated financial need, and this scholarship is need-based.";
   }
-  if (profile.intended_major?.some((m) => {
+  const majorMatch = profile.intended_major?.find((m) => {
     const major = m.toLowerCase();
     return Object.entries(MAJOR_KEYWORDS).some(
       ([key, keywords]) => major.includes(key) && keywords.some((k) => text.includes(k))
     );
-  })) {
-    return true;
+  });
+  if (majorMatch) {
+    return `Your intended major (${majorMatch}) lines up with this scholarship's eligibility.`;
   }
   if (profile.extracurriculars?.some((ec) => text.includes("rotc") && ec.toLowerCase().includes("rotc"))) {
-    return true;
+    return "Your ROTC activity matches this scholarship's eligibility.";
   }
-  return false;
+  return null;
+}
+
+const MONTH_ORDER: Record<string, number> = {
+  january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
+  july: 6, august: 7, september: 8, october: 9, november: 10, december: 11,
+};
+
+// deadline_window is free text ("February–March", "Early October of senior
+// year"), not a structured date -- extract the first month mentioned as a
+// rough sort key. Unparseable windows (e.g. "Applications open summer, board
+// review through early spring") sort last, not first, so they don't falsely
+// look like the most urgent deadlines.
+export function deadlineSortKey(deadlineWindow: string): number {
+  const text = deadlineWindow.toLowerCase();
+  for (const [name, index] of Object.entries(MONTH_ORDER)) {
+    if (text.includes(name)) return index;
+  }
+  return 99;
 }

@@ -1,8 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getCounselorRecord } from "@/lib/access";
 import CounselorNavShell from "@/components/CounselorNavShell";
 import AggregateClient, { type GradeAggregate, type SchoolTally } from "./AggregateClient";
+import { computeFlags } from "@/lib/at-risk";
 
 const GRADES = ["Freshman", "Sophomore", "Junior", "Senior"] as const;
 
@@ -31,6 +32,18 @@ export default async function AggregatePage() {
 
   const studentIds = (profiles ?? []).map((p) => p.user_id);
 
+  const emailByUser = new Map<string, string>();
+  if (studentIds.length) {
+    const serviceClient = createServiceClient();
+    const results = await Promise.all(
+      studentIds.map((id) => serviceClient.auth.admin.getUserById(id))
+    );
+    results.forEach((res, i) => {
+      const name = res.data.user?.user_metadata?.full_name ?? res.data.user?.email;
+      if (name) emailByUser.set(studentIds[i], name);
+    });
+  }
+
   const { data: matches, error: matchesError } = studentIds.length
     ? await supabase
         .from("school_matches")
@@ -44,19 +57,37 @@ export default async function AggregatePage() {
   const { data: timelineItems, error: timelineError } = studentIds.length
     ? await supabase
         .from("timeline_items")
-        .select("user_id, completed, is_strategic")
+        .select("user_id, due_date, completed, is_strategic")
         .in("user_id", studentIds)
     : { data: [], error: null };
 
   if (timelineError) console.error("counselor aggregate timeline query failed:", timelineError);
 
   const completionByUser = new Map<string, { total: number; done: number }>();
+  const matchCountByUser = new Map<string, number>();
+  const overdueByUser = new Map<string, number>();
+  const today = new Date().toISOString().slice(0, 10);
+
   for (const item of timelineItems ?? []) {
     if (item.is_strategic) continue;
     const entry = completionByUser.get(item.user_id) ?? { total: 0, done: 0 };
     entry.total += 1;
     if (item.completed) entry.done += 1;
     completionByUser.set(item.user_id, entry);
+    if (!item.completed && item.due_date && item.due_date < today) {
+      overdueByUser.set(item.user_id, (overdueByUser.get(item.user_id) ?? 0) + 1);
+    }
+  }
+  for (const m of matches ?? []) {
+    matchCountByUser.set(m.user_id, (matchCountByUser.get(m.user_id) ?? 0) + 1);
+  }
+
+  // Shared with counselor/at-risk so the two pages can't disagree on what
+  // "at risk" means -- this page just needs the count per grade.
+  const flagged = computeFlags(profiles ?? [], matchCountByUser, overdueByUser);
+  const atRiskCountByGrade = new Map<string, number>();
+  for (const f of flagged) {
+    atRiskCountByGrade.set(f.grade_level, (atRiskCountByGrade.get(f.grade_level) ?? 0) + 1);
   }
 
   const gradeAggregates: GradeAggregate[] = GRADES.map((grade) => {
@@ -78,15 +109,18 @@ export default async function AggregatePage() {
       studentCount: count,
       avgGpa: count ? Number(avgGpa.toFixed(2)) : null,
       avgTimelineCompletionPct: avgCompletion !== null ? Math.round(avgCompletion * 100) : null,
+      atRiskCount: atRiskCountByGrade.get(grade) ?? 0,
     };
   });
 
-  const schoolCounts = new Map<string, number>();
+  const schoolStudents = new Map<string, { user_id: string; name: string }[]>();
   for (const m of matches ?? []) {
-    schoolCounts.set(m.school_name, (schoolCounts.get(m.school_name) ?? 0) + 1);
+    const list = schoolStudents.get(m.school_name) ?? [];
+    list.push({ user_id: m.user_id, name: emailByUser.get(m.user_id) ?? "Student" });
+    schoolStudents.set(m.school_name, list);
   }
-  const topSchools: SchoolTally[] = [...schoolCounts.entries()]
-    .map(([name, count]) => ({ name, count }))
+  const topSchools: SchoolTally[] = [...schoolStudents.entries()]
+    .map(([name, students]) => ({ name, count: students.length, students }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
 

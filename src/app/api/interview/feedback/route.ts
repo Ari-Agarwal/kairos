@@ -14,6 +14,27 @@ interface InterviewFeedback {
   one_line_summary: string;
 }
 
+export async function GET(req: Request) {
+  if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data, error } = await supabase
+    .from("interview_sessions")
+    .select("id, question, score, summary, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error("interview sessions history query failed:", error);
+    return NextResponse.json({ error: "Failed to load history" }, { status: 500 });
+  }
+  return NextResponse.json({ sessions: data ?? [] });
+}
+
 export async function POST(req: Request) {
   if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 

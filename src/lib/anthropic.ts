@@ -244,12 +244,17 @@ Evaluate along these dimensions (but do not output the dimensions as separate fi
 - Specificity: are activities described with enough detail (duration, role, scope) to be credible, or are they vague one-liners?
 - Fit with intended major: does any activity connect to the student's stated academic direction?
 
+Also assess each individual activity line from the input separately, so the student can see which specific activities are strong vs. weak, not just an overall score for the whole list.
+
 Return your response as JSON matching this exact structure:
 {
   "score": integer (1–10),
   "score_rationale": "string (1–2 sentences explaining the score)",
   "suggestions": [
     { "label": "string (short directive, e.g. 'Add a leadership title to Chess Club')", "text": "string (2–3 sentences: what to change and why it matters to an admissions reader)" }
+  ],
+  "per_activity": [
+    { "activity": "string (the activity line as the student wrote it, verbatim or closely matching)", "strength": "strong" | "average" | "weak", "note": "string (1 sentence: what's working or missing for this specific activity)" }
   ]
 }`;
 

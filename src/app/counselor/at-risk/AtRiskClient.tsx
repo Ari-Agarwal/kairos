@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
+import SendReminderButton from "@/components/SendReminderButton";
 
 export interface FlaggedStudent {
   user_id: string;
@@ -25,16 +26,17 @@ export default function AtRiskClient({ students }: { students: FlaggedStudent[] 
       ) : (
         <div className="space-y-3">
           {students.map((s) => (
-            <Link
+            <div
               key={s.user_id}
-              href={`/counselor/students/${s.user_id}`}
-              className="block bg-card border border-red/30 rounded-2xl p-5 hover:border-red/60 hover:-translate-y-0.5 transition-all"
+              className="bg-card border border-red/30 rounded-2xl p-5 hover:border-red/60 transition-colors"
             >
               <div className="flex items-center justify-between mb-2">
-                <p className="font-medium text-text">{s.name}</p>
+                <Link href={`/counselor/students/${s.user_id}`} className="font-medium text-text hover:underline">
+                  {s.name}
+                </Link>
                 <span className="text-text-gray text-xs">{s.grade_level}</span>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mb-4">
                 {s.reasons.map((reason) => (
                   <span
                     key={reason}
@@ -45,7 +47,8 @@ export default function AtRiskClient({ students }: { students: FlaggedStudent[] 
                   </span>
                 ))}
               </div>
-            </Link>
+              <SendReminderButton studentUserId={s.user_id} />
+            </div>
           ))}
         </div>
       )}

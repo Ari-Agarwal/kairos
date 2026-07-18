@@ -7,6 +7,27 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
 import { isTrustedOrigin } from "@/lib/origin-check";
 
+export async function GET(req: Request) {
+  if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data, error } = await supabase
+    .from("essay_feedback_history")
+    .select("id, school, essay_text, feedback, is_rubric, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error("essay feedback history query failed:", error);
+    return NextResponse.json({ error: "Failed to load history" }, { status: 500 });
+  }
+  return NextResponse.json({ history: data ?? [] });
+}
+
 export async function POST(req: Request) {
   if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
@@ -67,6 +88,16 @@ export async function POST(req: Request) {
     logAiUsage("essay/feedback", user.id, MODEL, t0, response);
     const text = response.content.find((b) => b.type === "text")?.text ?? "";
     const parsed = extractJson<{ feedback: unknown[] }>(text);
+
+    const { error: historyError } = await supabase.from("essay_feedback_history").insert({
+      user_id: user.id,
+      school: school ?? null,
+      essay_text: essay,
+      feedback: parsed.feedback,
+      is_rubric: useRubric,
+    });
+    if (historyError) console.error("essay feedback history insert failed:", historyError);
+
     return NextResponse.json({ ...parsed, rubric: useRubric });
   } catch (err) {
     logAiUsage("essay/feedback", user.id, MODEL, t0, err instanceof Error ? err : new Error(String(err)));

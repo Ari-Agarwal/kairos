@@ -5,6 +5,16 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
+// The Common App personal statement limit -- the most common essay this
+// feature is used for. Supplement-specific limits vary, so this is a
+// reasonable default reference point, not a hard rule enforced anywhere.
+const COMMON_APP_WORD_LIMIT = 650;
+
+function wordCount(text: string): number {
+  const trimmed = text.trim();
+  return trimmed ? trimmed.split(/\s+/).length : 0;
+}
+
 const DIMENSION_COLORS: Record<string, string> = {
   Specificity: "text-primary",
   Voice: "text-premium",
@@ -18,6 +28,15 @@ interface FeedbackItem {
   text: string;
   dimension?: string;
   quote?: string;
+}
+
+interface HistoryEntry {
+  id: string;
+  school: string | null;
+  essay_text: string;
+  feedback: FeedbackItem[];
+  is_rubric: boolean;
+  created_at: string;
 }
 
 interface BrainstormAngle {
@@ -38,6 +57,37 @@ export default function EssayFeedbackClient() {
   const [angles, setAngles] = useState<BrainstormAngle[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[] | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  async function toggleHistory() {
+    if (showHistory) {
+      setShowHistory(false);
+      return;
+    }
+    setShowHistory(true);
+    if (history !== null) return;
+    setLoadingHistory(true);
+    const res = await fetch("/api/essay/feedback");
+    if (res.ok) {
+      const data = await res.json();
+      setHistory(data.history ?? []);
+    } else {
+      setHistory([]);
+    }
+    setLoadingHistory(false);
+  }
+
+  function viewHistoryEntry(entry: HistoryEntry) {
+    setMode("feedback");
+    setEssay(entry.essay_text);
+    setSchool(entry.school ?? "");
+    setFeedback(entry.feedback);
+    setIsRubric(entry.is_rubric);
+    setAngles(null);
+    setShowHistory(false);
+  }
 
   async function handleFeedback() {
     if (!essay.trim()) return;
@@ -59,6 +109,7 @@ export default function EssayFeedbackClient() {
     setFeedback(data.feedback);
     setIsRubric(!!data.rubric);
     setLoading(false);
+    setHistory(null);
   }
 
   async function handleBrainstorm() {
@@ -96,21 +147,56 @@ export default function EssayFeedbackClient() {
       </p>
 
       {/* Mode toggle */}
-      <div className="flex gap-2 mb-5">
-        {(["feedback", "brainstorm"] as Mode[]).map((m) => (
+      <div className="flex items-center justify-between gap-2 mb-5">
+        <div className="flex gap-2">
+          {(["feedback", "brainstorm"] as Mode[]).map((m) => (
+            <button
+              key={m}
+              onClick={() => { setMode(m); setFeedback(null); setAngles(null); setError(null); }}
+              className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
+                mode === m
+                  ? "bg-primary text-bg"
+                  : "bg-card border border-border text-text-gray hover:text-text"
+              }`}
+            >
+              {m === "feedback" ? "Essay Feedback" : "Brainstorm Angles"}
+            </button>
+          ))}
+        </div>
+        {mode === "feedback" && (
           <button
-            key={m}
-            onClick={() => { setMode(m); setFeedback(null); setAngles(null); setError(null); }}
-            className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
-              mode === m
-                ? "bg-primary text-bg"
-                : "bg-card border border-border text-text-gray hover:text-text"
-            }`}
+            onClick={toggleHistory}
+            className="rounded-xl border border-border text-text-gray hover:text-text text-sm font-medium px-3 py-2 transition-colors shrink-0"
           >
-            {m === "feedback" ? "Essay Feedback" : "Brainstorm Angles"}
+            {showHistory ? "Hide History" : "History"}
           </button>
-        ))}
+        )}
       </div>
+
+      {showHistory && mode === "feedback" && (
+        <div className="bg-card border border-border rounded-2xl p-4 mb-5 space-y-2">
+          {loadingHistory ? (
+            <p className="text-text-gray text-sm">Loading history…</p>
+          ) : !history || history.length === 0 ? (
+            <p className="text-text-gray text-sm">No past feedback yet.</p>
+          ) : (
+            history.map((h) => (
+              <button
+                key={h.id}
+                onClick={() => viewHistoryEntry(h)}
+                className="w-full text-left rounded-xl border border-border px-3 py-2 hover:border-primary/40 transition-colors"
+              >
+                <p className="text-text text-sm truncate">{h.school || "No school specified"}</p>
+                <p className="text-text-gray text-xs">
+                  {new Date(h.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                  {" — "}
+                  {wordCount(h.essay_text)} words
+                </p>
+              </button>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Context fields (both modes) */}
       <div className="flex gap-3 mb-3">
@@ -137,14 +223,19 @@ export default function EssayFeedbackClient() {
 
       {/* Essay draft (feedback mode only) */}
       {mode === "feedback" && (
-        <textarea
-          value={essay}
-          onChange={(e) => setEssay(e.target.value)}
-          rows={10}
-          aria-label="Essay draft"
-          placeholder="Paste your essay draft here…"
-          className="w-full rounded-2xl bg-card border border-border px-4 py-3 text-text text-sm outline-none focus:border-primary resize-none mb-3"
-        />
+        <>
+          <textarea
+            value={essay}
+            onChange={(e) => setEssay(e.target.value)}
+            rows={10}
+            aria-label="Essay draft"
+            placeholder="Paste your essay draft here…"
+            className="w-full rounded-2xl bg-card border border-border px-4 py-3 text-text text-sm outline-none focus:border-primary resize-none mb-1"
+          />
+          <p className={`text-xs mb-3 ${wordCount(essay) > COMMON_APP_WORD_LIMIT ? "text-red" : "text-text-gray"}`}>
+            {wordCount(essay)} / {COMMON_APP_WORD_LIMIT} words (Common App personal statement limit — supplements vary)
+          </p>
+        </>
       )}
 
       <p className="text-text-gray text-xs mb-4">

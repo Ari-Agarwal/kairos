@@ -4,7 +4,17 @@ import { getAnthropic, MODEL, NARRATIVE_SYNTHESIS_PROMPT, extractJson } from "@/
 import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isTrustedOrigin } from "@/lib/origin-check";
-import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
+import { rejectScriptTags, ValidationError } from "@/lib/validate";
+
+// Unlike requireString, an empty answer is allowed here -- questions in this
+// flow are optional (a student can skip one they don't have an answer for),
+// so only type/length are validated, not presence.
+function optionalAnswer(value: unknown, field: string, maxLength: number): string {
+  if (value === undefined || value === null || value === "") return "";
+  if (typeof value !== "string") throw new ValidationError(`${field} must be text.`);
+  if (value.length > maxLength) throw new ValidationError(`${field} must be ${maxLength} characters or fewer.`);
+  return value;
+}
 
 const QUESTION_KEYS = ["moment", "revealed", "pattern", "struggle", "differentiator", "direction"] as const;
 type QuestionKey = (typeof QUESTION_KEYS)[number];
@@ -35,9 +45,12 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = {} as Answers;
     for (const key of QUESTION_KEYS) {
-      const value = requireString(body?.answers?.[key], `Answer for "${key}"`, 3000);
+      const value = optionalAnswer(body?.answers?.[key], `Answer for "${key}"`, 3000);
       rejectScriptTags(value, `Answer for "${key}"`);
       parsed[key] = value;
+    }
+    if (Object.values(parsed).every((v) => !v.trim())) {
+      return NextResponse.json({ error: "Answer at least one question." }, { status: 400 });
     }
     answers = parsed;
   } catch (e) {
@@ -45,12 +58,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  const userMessage = `1. Formative moment: ${answers.moment}
-2. What it revealed: ${answers.revealed}
-3. Where the same pattern shows up elsewhere: ${answers.pattern}
-4. A struggle or setback and what changed: ${answers.struggle}
-5. What they do differently from others with similar interests: ${answers.differentiator}
-6. Where they want to take this (intended major/future direction): ${answers.direction}`;
+  const QUESTION_LABELS: Record<QuestionKey, string> = {
+    moment: "Formative moment",
+    revealed: "What it revealed",
+    pattern: "Where the same pattern shows up elsewhere",
+    struggle: "A struggle or setback and what changed",
+    differentiator: "What they do differently from others with similar interests",
+    direction: "Where they want to take this (intended major/future direction)",
+  };
+
+  const userMessage = QUESTION_KEYS
+    .filter((key) => answers[key].trim())
+    .map((key, i) => `${i + 1}. ${QUESTION_LABELS[key]}: ${answers[key]}`)
+    .join("\n");
 
   flagAnomalousUsage("narrative/generate", user.id);
   const t0 = Date.now();

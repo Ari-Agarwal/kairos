@@ -9,6 +9,17 @@ interface InterviewFeedback {
   one_line_summary: string;
 }
 
+interface SessionHistoryEntry {
+  id: string;
+  question: string;
+  score: number | null;
+  summary: string | null;
+  created_at: string;
+}
+
+const CATEGORIES = ["General", "Why This School", "Behavioral", "Extracurricular"] as const;
+type Category = (typeof CATEGORIES)[number];
+
 interface SpeechRecognitionResultLike {
   transcript: string;
 }
@@ -44,6 +55,28 @@ export default function MockInterviewClient() {
   const [loadingFeedback, setLoadingFeedback] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const processedResultCount = useRef(0);
+  const [category, setCategory] = useState<Category>("General");
+  const [history, setHistory] = useState<SessionHistoryEntry[] | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  async function toggleHistory() {
+    if (showHistory) {
+      setShowHistory(false);
+      return;
+    }
+    setShowHistory(true);
+    setLoadingHistory(true);
+    const res = await fetch("/api/interview/feedback");
+    if (res.ok) {
+      const data = await res.json();
+      setHistory(data.sessions ?? []);
+    } else {
+      setHistory([]);
+    }
+    setLoadingHistory(false);
+  }
 
   // Feature detection reads browser APIs, so it can't run during SSR/render
   // without a hydration mismatch (same constraint documented in
@@ -62,7 +95,11 @@ export default function MockInterviewClient() {
     setError(null);
     setFeedback(null);
     setAnswer("");
-    const res = await fetch("/api/interview/question", { method: "POST" });
+    const res = await fetch("/api/interview/question", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category }),
+    });
     setLoadingQuestion(false);
     if (!res.ok) {
       setError("Couldn't get a question. Please try again.");
@@ -87,10 +124,20 @@ export default function MockInterviewClient() {
     recognition.continuous = true;
     recognition.interimResults = false;
     recognition.lang = "en-US";
+    // Bug fix: this used to iterate e.results from index 0 on every event
+    // and append the full reconstructed text to the existing answer each
+    // time -- since e.results accumulates across the whole session, already
+    // appended text got re-appended on every subsequent result, duplicating
+    // the transcript. Track how many results have already been consumed and
+    // only append the genuinely new ones.
+    processedResultCount.current = 0;
     recognition.onresult = (e) => {
-      let text = "";
-      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript + " ";
-      setAnswer((prev) => (prev ? prev + " " : "") + text.trim());
+      let newText = "";
+      for (let i = processedResultCount.current; i < e.results.length; i++) {
+        newText += e.results[i][0].transcript + " ";
+      }
+      processedResultCount.current = e.results.length;
+      if (newText.trim()) setAnswer((prev) => (prev ? prev + " " : "") + newText.trim());
     };
     recognition.onend = () => setListening(false);
     recognitionRef.current = recognition;
@@ -113,11 +160,20 @@ export default function MockInterviewClient() {
       return;
     }
     setFeedback(await res.json());
+    setHistory(null);
   }
 
   return (
     <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
-      <h1 className="font-serif text-2xl text-text mb-2">Mock Interview</h1>
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <h1 className="font-serif text-2xl text-text">Mock Interview</h1>
+        <button
+          onClick={toggleHistory}
+          className="rounded-xl border border-border text-text-gray hover:text-text text-sm font-medium px-3 py-1.5 transition-colors shrink-0"
+        >
+          {showHistory ? "Hide History" : "History"}
+        </button>
+      </div>
       <p className="text-text-gray text-sm mb-2 leading-relaxed">
         Practice answering a real admissions interview question out loud, then get direct feedback.
       </p>
@@ -126,14 +182,53 @@ export default function MockInterviewClient() {
         on our servers, only the text you see below.{!speechSupported && " Voice input isn't supported in this browser; type your answer instead."}
       </p>
 
+      {showHistory && (
+        <div className="bg-card border border-border rounded-2xl p-4 mb-6 space-y-2">
+          {loadingHistory ? (
+            <p className="text-text-gray text-sm">Loading history…</p>
+          ) : !history || history.length === 0 ? (
+            <p className="text-text-gray text-sm">No past sessions yet.</p>
+          ) : (
+            history.map((h) => (
+              <div key={h.id} className="rounded-xl border border-border px-3 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-text text-sm truncate">{h.question}</p>
+                  {h.score !== null && (
+                    <span className="text-text-gray text-xs font-medium shrink-0">{h.score}/10</span>
+                  )}
+                </div>
+                <p className="text-text-gray text-xs">
+                  {new Date(h.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
       {!question && (
-        <button
-          onClick={getQuestion}
-          disabled={loadingQuestion}
-          className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-4 py-2.5 disabled:opacity-50"
-        >
-          {loadingQuestion ? "Loading…" : "Start mock interview"}
-        </button>
+        <>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {CATEGORIES.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCategory(c)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  category === c ? "bg-primary text-bg border-primary" : "border-border text-text-gray hover:text-text"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={getQuestion}
+            disabled={loadingQuestion}
+            className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-4 py-2.5 disabled:opacity-50"
+          >
+            {loadingQuestion ? "Loading…" : "Start mock interview"}
+          </button>
+        </>
       )}
 
       {question && (

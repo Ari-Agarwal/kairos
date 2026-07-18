@@ -19,6 +19,7 @@ interface Match {
   category: Category;
   percentage: number;
   why_text: string;
+  is_manual: boolean;
 }
 
 const CATEGORY_STYLES: Record<string, string> = {
@@ -31,6 +32,7 @@ const CATEGORY_ORDER: Record<Category, number> = { reach: 0, target: 1, safety: 
 const CATEGORIES: Category[] = ["reach", "target", "safety"];
 
 const MANUAL_NOTE = "This school was added manually, so an AI assessment isn't available.";
+const REGENERATE_SNAPSHOT_KEY = "kairos_matches_regenerate_snapshot";
 
 export default function MatchListClient({
   initialMatches,
@@ -55,6 +57,39 @@ export default function MatchListClient({
   const [newSchoolCategory, setNewSchoolCategory] = useState<Category>("target");
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+
+  // Inline editing for a manually-added school's name/category -- the only
+  // fields it makes sense to edit, since a manual entry has no AI-generated
+  // why_text/factors to revise.
+  const [editingSchoolId, setEditingSchoolId] = useState<string | null>(null);
+  const [editSchoolName, setEditSchoolName] = useState("");
+  const [editSchoolCategory, setEditSchoolCategory] = useState<Category>("target");
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  function startEditSchool(m: Match) {
+    setEditingSchoolId(m.id);
+    setEditSchoolName(m.school_name);
+    setEditSchoolCategory(m.category);
+  }
+
+  async function handleSaveEditSchool() {
+    if (!editingSchoolId || !editSchoolName.trim()) return;
+    setSavingEdit(true);
+    const { error } = await supabase
+      .from("school_matches")
+      .update({ school_name: editSchoolName.trim(), category: editSchoolCategory })
+      .eq("id", editingSchoolId);
+    setSavingEdit(false);
+    if (error) return;
+    setMatches((prev) =>
+      prev
+        .map((m) =>
+          m.id === editingSchoolId ? { ...m, school_name: editSchoolName.trim(), category: editSchoolCategory } : m
+        )
+        .sort((a, b) => CATEGORY_ORDER[a.category] - CATEGORY_ORDER[b.category])
+    );
+    setEditingSchoolId(null);
+  }
 
 
   // Aid offers loaded from DB (matchId → amount) — used to gate appeal button
@@ -90,6 +125,30 @@ export default function MatchListClient({
   // optional feedback, full-screen like the primary onboarding) rather than
   // dropping the questions inline on this page.
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // Regenerate replaces the whole list server-side with no visibility into
+  // what changed. Snapshot the pre-regenerate list to sessionStorage before
+  // navigating to /matches/prep, then diff against it once on the way back.
+  // Computed as a lazy initial state (not an effect) so there's no
+  // setState-in-effect cascade -- this only ever needs to run once, on the
+  // very first render after the snapshot was written.
+  const [regenerateDiff] = useState<{ added: string[]; removed: string[] } | null>(() => {
+    if (typeof window === "undefined") return null;
+    const raw = sessionStorage.getItem(REGENERATE_SNAPSHOT_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(REGENERATE_SNAPSHOT_KEY);
+    try {
+      const before: string[] = JSON.parse(raw);
+      const afterNames = new Set(initialMatches.map((m) => m.school_name));
+      const beforeNames = new Set(before);
+      const added = initialMatches.map((m) => m.school_name).filter((name) => !beforeNames.has(name));
+      const removed = before.filter((name) => !afterNames.has(name));
+      return added.length || removed.length ? { added, removed } : null;
+    } catch {
+      return null;
+    }
+  });
+  const [dismissedDiff, setDismissedDiff] = useState(false);
 
   // Onboarding kicks off generation itself, but that call can take up to ~50s
   // and is abandoned if the user closes the tab before it finishes — leaving
@@ -149,6 +208,7 @@ export default function MatchListClient({
           social_fit: MANUAL_NOTE,
         },
         is_active: true,
+        is_manual: true,
       })
       .select()
       .single();
@@ -203,10 +263,39 @@ export default function MatchListClient({
               Not yet
             </button>
             <button
-              onClick={() => router.push("/matches/prep")}
+              onClick={() => {
+                sessionStorage.setItem(REGENERATE_SNAPSHOT_KEY, JSON.stringify(matches.map((m) => m.school_name)));
+                router.push("/matches/prep");
+              }}
               className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-3 py-1.5"
             >
               Yes, let&apos;s go
+            </button>
+          </div>
+        </div>
+      )}
+
+      {regenerateDiff && !dismissedDiff && (
+        <div className="mb-6 rounded-xl border border-border bg-card px-4 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="text-sm space-y-1">
+              <p className="text-text font-medium">Your list changed</p>
+              {regenerateDiff.added.length > 0 && (
+                <p className="text-text-gray">
+                  <span className="text-green">Added:</span> {regenerateDiff.added.join(", ")}
+                </p>
+              )}
+              {regenerateDiff.removed.length > 0 && (
+                <p className="text-text-gray">
+                  <span className="text-red">Removed:</span> {regenerateDiff.removed.join(", ")}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => setDismissedDiff(true)}
+              className="text-text-gray hover:text-text text-xs px-2 shrink-0"
+            >
+              Dismiss
             </button>
           </div>
         </div>
@@ -308,16 +397,29 @@ export default function MatchListClient({
               transition={{ duration: 0.4, ease: EASE, delay: reduceMotion ? 0 : i * 0.06 }}
               className="bg-card border border-border rounded-2xl p-5 relative hover:border-text-gray/40 hover:-translate-y-0.5 transition-all"
             >
-              <Link href={`/schools/${m.id}`} className="absolute inset-0 rounded-2xl" aria-label={`View ${m.school_name} details`} />
+              {editingSchoolId !== m.id && (
+                <Link href={`/schools/${m.id}`} className="absolute inset-0 rounded-2xl" aria-label={`View ${m.school_name} details`} />
+              )}
 
               {editing ? (
-                <button
-                  onClick={() => handleRemove(m.id)}
-                  className="absolute top-3 right-3 z-10 text-text-gray hover:text-red text-xs px-2.5 py-2 rounded-lg transition-colors"
-                  aria-label="Remove school"
-                >
-                  Remove
-                </button>
+                <div className="absolute top-3 right-3 z-10 flex gap-1">
+                  {m.is_manual && (
+                    <button
+                      onClick={() => startEditSchool(m)}
+                      className="text-text-gray hover:text-primary text-xs px-2.5 py-2 rounded-lg transition-colors"
+                      aria-label={`Edit ${m.school_name}`}
+                    >
+                      Edit
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleRemove(m.id)}
+                    className="text-text-gray hover:text-red text-xs px-2.5 py-2 rounded-lg transition-colors"
+                    aria-label="Remove school"
+                  >
+                    Remove
+                  </button>
+                </div>
               ) : (
                 <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-1">
                   {aidOffers[m.id] !== undefined && Object.keys(aidOffers).length >= 2 && (
@@ -332,29 +434,70 @@ export default function MatchListClient({
                 </div>
               )}
 
-              <div className="pointer-events-none">
-                <div className="flex items-start justify-between mb-2 pr-24">
-                  <div>
-                    <span
-                      className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full mb-2 capitalize ${CATEGORY_STYLES[m.category]}`}
+              {editingSchoolId === m.id ? (
+                <div className="pr-24">
+                  <div className="flex flex-col sm:flex-row gap-2 mb-2">
+                    <input
+                      type="text"
+                      aria-label="School name"
+                      value={editSchoolName}
+                      onChange={(e) => setEditSchoolName(e.target.value)}
+                      className="flex-1 rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary"
+                    />
+                    <select
+                      aria-label="School category"
+                      value={editSchoolCategory}
+                      onChange={(e) => setEditSchoolCategory(e.target.value as Category)}
+                      className="rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary capitalize"
                     >
-                      {m.category}
-                    </span>
-                    <p className="font-serif text-lg text-text">{m.school_name}</p>
+                      {CATEGORIES.map((c) => (
+                        <option key={c} value={c} className="capitalize">
+                          {c}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <CountUp value={m.percentage} suffix="%" className="font-serif text-2xl text-primary shrink-0" />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSaveEditSchool}
+                      disabled={savingEdit || !editSchoolName.trim()}
+                      className="rounded-lg bg-primary hover:bg-primary-hover transition-colors text-bg text-xs font-medium px-3 py-2 disabled:opacity-40"
+                    >
+                      {savingEdit ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      onClick={() => setEditingSchoolId(null)}
+                      className="text-text-gray hover:text-text text-xs px-2"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
+              ) : (
+                <div className="pointer-events-none">
+                  <div className="flex items-start justify-between mb-2 pr-24">
+                    <div>
+                      <span
+                        className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full mb-2 capitalize ${CATEGORY_STYLES[m.category]}`}
+                      >
+                        {m.category}
+                      </span>
+                      <p className="font-serif text-lg text-text">{m.school_name}</p>
+                    </div>
+                    <CountUp value={m.percentage} suffix="%" className="font-serif text-2xl text-primary shrink-0" />
+                  </div>
 
-                <p className="text-text-gray text-sm">{m.why_text}</p>
-                {m.why_text !== "Added manually by you." && (
-                  <p className="text-text-gray/70 text-xs mt-2">
-                    Based on your GPA, course rigor, ECs, major &amp; social fit —{" "}
-                    <Link href="/methodology" className="underline underline-offset-2 hover:text-text-gray pointer-events-auto">
-                      how this is calculated
-                    </Link>
-                  </p>
-                )}
-              </div>
+                  <p className="text-text-gray text-sm">{m.why_text}</p>
+                  {!m.is_manual && (
+                    <p className="text-text-gray/70 text-xs mt-2">
+                      Based on your GPA, course rigor, ECs, major &amp; social fit —{" "}
+                      <Link href="/methodology" className="underline underline-offset-2 hover:text-text-gray pointer-events-auto">
+                        how this is calculated
+                      </Link>
+                    </p>
+                  )}
+                </div>
+              )}
             </motion.div>
           ))}
         </AnimatePresence>

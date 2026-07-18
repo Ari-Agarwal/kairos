@@ -6,6 +6,16 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { isTrustedOrigin } from "@/lib/origin-check";
 import { canAccessFeature } from "@/lib/access";
 
+const CATEGORIES = ["General", "Why This School", "Behavioral", "Extracurricular"] as const;
+type Category = (typeof CATEGORIES)[number];
+
+const CATEGORY_GUIDANCE: Record<Category, string> = {
+  General: "Ask a broad, general admissions interview question.",
+  "Why This School": "Ask a question specifically about why the student is interested in a particular school or program.",
+  Behavioral: "Ask a behavioral question (e.g. about a challenge, conflict, or teamwork experience).",
+  Extracurricular: "Ask a question specifically about the student's extracurricular activities or interests outside class.",
+};
+
 export async function POST(req: Request) {
   if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
@@ -26,6 +36,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Mock Interview is a Premium feature." }, { status: 403 });
   }
 
+  let category: Category = "General";
+  try {
+    const body = await req.json().catch(() => ({}));
+    if (body?.category && CATEGORIES.includes(body.category)) category = body.category;
+  } catch {
+    // no body / invalid JSON -- fall back to General
+  }
+
   flagAnomalousUsage("interview-question", user.id);
   // Two attempts, matching the retry pattern used for timeline/generate --
   // a single transient Anthropic 5xx (e.g. overloaded_error) shouldn't read
@@ -42,7 +60,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Intended major: ${profile.intended_major?.length ? profile.intended_major.join(", ") : "Undecided"}\nCareer goals: ${profile.career_goals ?? "not specified"}`,
+            content: `${CATEGORY_GUIDANCE[category]}\n\nIntended major: ${profile.intended_major?.length ? profile.intended_major.join(", ") : "Undecided"}\nCareer goals: ${profile.career_goals ?? "not specified"}`,
           },
         ],
       });

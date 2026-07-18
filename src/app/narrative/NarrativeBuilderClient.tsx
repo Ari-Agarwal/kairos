@@ -81,12 +81,18 @@ export default function NarrativeBuilderClient({ initial }: { initial: Narrative
       : null
   );
   const [editing, setEditing] = useState(!initial);
+  // Editing an existing result reopens a flat form of all 6 answers (not the
+  // step-by-step wizard) so changing one answer doesn't mean re-walking the
+  // whole flow -- the backend still has to re-run the full synthesis either
+  // way, but the UX no longer forces a restart to get there.
+  const [quickEdit, setQuickEdit] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const totalSteps = QUESTIONS.length;
   const current = QUESTIONS[step];
   const currentValue = answers[current.key];
+  const hasAnyAnswer = Object.values(answers).some((v) => v.trim());
 
   async function handleSubmit() {
     setLoading(true);
@@ -107,7 +113,53 @@ export default function NarrativeBuilderClient({ initial }: { initial: Narrative
     const data: NarrativeSynthesis = await res.json();
     setResult(data);
     setEditing(false);
+    setQuickEdit(false);
     setLoading(false);
+  }
+
+  if (!editing && result && quickEdit) {
+    return (
+      <div>
+        <p className="text-text-gray text-xs bg-secondary-tint border border-border rounded-xl px-4 py-2.5 mb-5">
+          Change any answer below, then regenerate — no need to walk through each question again.
+        </p>
+        <div className="space-y-4 mb-4">
+          {QUESTIONS.map((q) => (
+            <div key={q.key} className="bg-card border border-border rounded-2xl p-5">
+              <label htmlFor={`quick-${q.key}`} className="block text-text font-medium text-sm mb-2">
+                {q.label}
+              </label>
+              <textarea
+                id={`quick-${q.key}`}
+                value={answers[q.key]}
+                onChange={(e) => setAnswers((prev) => ({ ...prev, [q.key]: e.target.value }))}
+                placeholder={q.placeholder}
+                rows={3}
+                maxLength={3000}
+                className="w-full rounded-xl bg-bg border border-border text-text text-sm px-3 py-2.5 focus:ring-1 focus:ring-primary outline-none resize-none"
+              />
+            </div>
+          ))}
+        </div>
+        {error && <p role="alert" className="text-red text-sm mb-4">{error}</p>}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setQuickEdit(false)}
+            disabled={loading}
+            className="text-text-gray text-sm hover:text-text disabled:opacity-40"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={loading || !hasAnyAnswer}
+            className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-6 py-2.5 disabled:opacity-50"
+          >
+            {loading ? "Regenerating..." : "Regenerate"}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!editing && result) {
@@ -170,15 +222,20 @@ export default function NarrativeBuilderClient({ initial }: { initial: Narrative
           </div>
         )}
 
-        <button
-          onClick={() => {
-            setEditing(true);
-            setStep(0);
-          }}
-          className="text-primary text-sm hover:text-primary-hover"
-        >
-          Edit your answers
-        </button>
+        <div className="flex items-center gap-4">
+          <button onClick={() => setQuickEdit(true)} className="text-primary text-sm hover:text-primary-hover">
+            Edit an answer
+          </button>
+          <button
+            onClick={() => {
+              setEditing(true);
+              setStep(0);
+            }}
+            className="text-text-gray text-sm hover:text-text"
+          >
+            Start over
+          </button>
+        </div>
       </motion.div>
     );
   }
@@ -246,15 +303,14 @@ export default function NarrativeBuilderClient({ initial }: { initial: Narrative
         {step < totalSteps - 1 ? (
           <button
             onClick={() => setStep((s) => Math.min(totalSteps - 1, s + 1))}
-            disabled={!currentValue.trim()}
-            className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-6 py-2.5 disabled:opacity-50"
+            className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-6 py-2.5"
           >
-            Next
+            {currentValue.trim() ? "Next" : "Skip"}
           </button>
         ) : (
           <button
             onClick={handleSubmit}
-            disabled={loading || !currentValue.trim()}
+            disabled={loading || !hasAnyAnswer}
             className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-6 py-2.5 disabled:opacity-50"
           >
             {loading ? (
