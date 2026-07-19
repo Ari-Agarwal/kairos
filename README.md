@@ -1,8 +1,8 @@
 # Kairos
 
-Free, AI-powered college counseling for students who don't have access to a private counselor.
+A hub for students applying to college.
 
-Private college counselors run $4,000+ a year, out of reach for most families. Kairos gives every student a personalized school match list, a full application timeline, and an AI mentor for admissions questions, the kind of guidance only paying families get today. Counselors get a dashboard to manage their full caseload in one place.
+Kairos brings everything a student needs for the college application process into one place: a personalized school match list, a full application timeline, and an AI mentor for admissions questions. Counselors get a dashboard to manage their full caseload in one place.
 
 Built and shipped solo by [Ari Agarwal](https://github.com/Ari-Agarwal), a high school sophomore, using Claude Code as the primary AI coding tool.
 
