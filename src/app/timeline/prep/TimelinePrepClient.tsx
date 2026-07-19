@@ -35,14 +35,14 @@ export default function TimelinePrepClient({
       }
     }
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 65_000);
+    // Generation now runs as a background job (see api/timeline/generate) --
+    // this call only does validation + kicks the job off, so it returns fast.
+    // /timeline itself polls job status and shows a generating state.
     try {
       const res = await fetch("/api/timeline/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ feedback: feedback.trim() || undefined }),
-        signal: controller.signal,
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -50,15 +50,8 @@ export default function TimelinePrepClient({
       }
       router.push("/timeline");
       return {};
-    } catch (err) {
-      return {
-        error:
-          err instanceof DOMException && err.name === "AbortError"
-            ? "This is taking longer than expected. Please try again."
-            : "Failed to generate. Please try again.",
-      };
-    } finally {
-      clearTimeout(timeout);
+    } catch {
+      return { error: "Failed to generate. Please try again." };
     }
   }
 

@@ -6,6 +6,7 @@ import { canAccessFeature } from "@/lib/access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
 import { isTrustedOrigin } from "@/lib/origin-check";
+import { getNarrativeContextText } from "@/lib/narrative-context";
 
 export async function GET(req: Request) {
   if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -70,10 +71,12 @@ export async function POST(req: Request) {
   }
 
   const useRubric = !!supplementPrompt;
+  const narrativeContext = await getNarrativeContextText(supabase, user.id);
+  const narrativeBlock = narrativeContext ? `${narrativeContext}\n\n` : "";
 
   const userContent = useRubric
-    ? `Supplement prompt${school ? ` (${school})` : ""}:\n${supplementPrompt}\n\nStudent draft:\n${essay}`
-    : essay;
+    ? `${narrativeBlock}Supplement prompt${school ? ` (${school})` : ""}:\n${supplementPrompt}\n\nStudent draft:\n${essay}`
+    : `${narrativeBlock}${essay}`;
 
   flagAnomalousUsage("essay/feedback", user.id);
   const t0 = Date.now();

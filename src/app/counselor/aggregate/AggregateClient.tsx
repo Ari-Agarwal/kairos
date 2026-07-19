@@ -2,14 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import type { GradeAggregate } from "@/lib/aggregate";
 
-export interface GradeAggregate {
-  grade: string;
-  studentCount: number;
-  avgGpa: number | null;
-  avgTimelineCompletionPct: number | null;
-  atRiskCount: number;
-}
+export type { GradeAggregate };
 
 export interface SchoolTally {
   name: string;
@@ -55,10 +50,24 @@ export default function AggregateClient({
                   <span className="text-text">
                     {g.avgTimelineCompletionPct !== null ? `${g.avgTimelineCompletionPct}%` : "—"}
                   </span>
+                  {g.trendCompletionDelta != null && g.trendCompletionDelta !== 0 && (
+                    <span className={g.trendCompletionDelta > 0 ? "text-green" : "text-red"}>
+                      {" "}
+                      ({g.trendCompletionDelta > 0 ? "+" : ""}
+                      {g.trendCompletionDelta}pt vs last week)
+                    </span>
+                  )}
                 </p>
                 <p className="text-text-gray">
                   At risk:{" "}
                   <span className={g.atRiskCount > 0 ? "text-red" : "text-text"}>{g.atRiskCount}</span>
+                  {g.trendAtRiskDelta != null && g.trendAtRiskDelta !== 0 && (
+                    <span className={g.trendAtRiskDelta < 0 ? "text-green" : "text-red"}>
+                      {" "}
+                      ({g.trendAtRiskDelta > 0 ? "+" : ""}
+                      {g.trendAtRiskDelta} vs last week)
+                    </span>
+                  )}
                 </p>
               </div>
             )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { CalendarDays } from "lucide-react";
@@ -39,11 +39,13 @@ export default function TimelineClient({
   isPremium,
   youAreHereId,
   remaining,
+  initialJobStatus,
 }: {
   items: TimelineItem[];
   isPremium: boolean;
   youAreHereId: string | null;
   remaining: number | null;
+  initialJobStatus: "pending" | null;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -54,6 +56,33 @@ export default function TimelineClient({
     setPrevInitialItems(initialItems);
     setItems(initialItems);
   }
+
+  // Generation runs as a background job now (see api/timeline/generate) --
+  // poll for completion instead of the old ~50s blocking foreground request.
+  const [jobPending, setJobPending] = useState(initialJobStatus === "pending");
+  const [jobError, setJobError] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!jobPending) return;
+    pollRef.current = setInterval(async () => {
+      const res = await fetch("/api/timeline/generate");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.status === "done") {
+        if (pollRef.current) clearInterval(pollRef.current);
+        setJobPending(false);
+        router.refresh();
+      } else if (data.status === "error") {
+        if (pollRef.current) clearInterval(pollRef.current);
+        setJobPending(false);
+        setJobError(data.error_message ?? "Failed to generate. Please try again.");
+      }
+    }, 3000);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [jobPending, router]);
   const [editing, setEditing] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDueDate, setNewDueDate] = useState("");
@@ -152,6 +181,22 @@ export default function TimelineClient({
   }
 
   if (items.length === 0) {
+    if (jobPending) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center min-h-[60vh]">
+          <div className="relative mb-5 h-10 w-10">
+            <motion.span
+              className="absolute inset-0 m-auto h-2.5 w-2.5 rounded-full bg-primary"
+              animate={reduceMotion ? undefined : { opacity: [0.35, 0.9, 0.35] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </div>
+          <p className="font-serif text-xl text-text mb-1">Mapping out your timeline...</p>
+          <p className="text-text-gray text-sm">This can take up to a minute. Feel free to check back.</p>
+        </div>
+      );
+    }
+
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-6 text-center min-h-[60vh]">
         {/* a single dim star, waiting to light up */}
@@ -167,6 +212,7 @@ export default function TimelineClient({
         <p className="text-text-gray text-xs mb-4">
           {isPremium ? "Unlimited regenerations" : `${remaining} regeneration${remaining === 1 ? "" : "s"} left this week`}
         </p>
+        {jobError && <p role="alert" className="text-red text-sm mb-3">{jobError}</p>}
         <button
           onClick={handleGenerate}
           disabled={regenDisabled}
@@ -185,6 +231,22 @@ export default function TimelineClient({
 
   return (
     <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
+      {jobPending && (
+        <div className="mb-5 rounded-xl border border-primary/30 bg-secondary-tint px-4 py-3 flex items-center gap-3">
+          <span
+            className="h-1.5 w-1.5 rounded-full bg-primary ambient-star shrink-0"
+            style={{ ["--twinkle-max" as string]: "1", ["--twinkle-duration" as string]: "1.2s" }}
+          />
+          <p className="text-text-gray text-sm">
+            Regenerating your timeline in the background — this list will update automatically once it&apos;s ready.
+          </p>
+        </div>
+      )}
+      {jobError && (
+        <div className="mb-5 rounded-xl border border-red/30 bg-red-tint px-4 py-3">
+          <p className="text-red text-sm">{jobError}</p>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-1">
         <h1 className="font-serif text-2xl text-text">Your Timeline</h1>
         <div className="flex items-center gap-3">

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAnthropic, MODEL, LOGISTICS_PROMPT, STRATEGIC_PROMPT, extractJson } from "@/lib/anthropic";
 import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
@@ -19,6 +19,27 @@ interface TimelineEntry {
   school_tags: string[];
   why_text: string;
   what_to_do: string[];
+}
+
+export async function GET(req: Request) {
+  if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data, error } = await supabase
+    .from("generation_jobs")
+    .select("status, error_message")
+    .eq("user_id", user.id)
+    .eq("feature", "timeline")
+    .maybeSingle();
+
+  if (error) {
+    console.error("timeline generate job status query failed:", error);
+    return NextResponse.json({ error: "Failed to check status" }, { status: 500 });
+  }
+  return NextResponse.json({ status: data?.status ?? null, error_message: data?.error_message ?? null });
 }
 
 export async function POST(req: Request) {
@@ -89,7 +110,31 @@ export async function POST(req: Request) {
   if (!matches || matches.length === 0) {
     return NextResponse.json({ error: "Generate your school matches first." }, { status: 400 });
   }
+  const confirmedMatches = matches;
 
+  const { error: jobError } = await supabase
+    .from("generation_jobs")
+    .upsert({ user_id: userId, feature: "timeline", status: "pending", error_message: null }, { onConflict: "user_id,feature" });
+  if (jobError) {
+    console.error("timeline generate job upsert failed:", jobError);
+    return NextResponse.json({ error: "Failed to start generation." }, { status: 500 });
+  }
+
+  // Everything past this point (the actual AI calls + DB writes) runs after
+  // the response is sent -- the client no longer holds one long request open
+  // for up to ~50s, it polls GET on this route for job status instead.
+  after(async () => {
+    try {
+      await runGeneration();
+    } catch (err) {
+      console.error("timeline generate background job failed:", err);
+      await markJobError("Failed to generate timeline. Please try again.");
+    }
+  });
+
+  return NextResponse.json({ ok: true, deferred: true }, { status: 202 });
+
+  async function runGeneration() {
   const userMessage = `Today's date: ${new Date().toISOString().slice(0, 10)}
 
 Student profile:
@@ -112,13 +157,13 @@ Schools already considering: ${profile.schools_already_considering ?? "not speci
 Internships / research experience: ${profile.internships_research ?? "not specified"}
 ${feedback ? `\nThe student was asked "what would you like different in your timeline?" and said: "${feedback}" -- edit the timeline to reflect this rather than ignoring it, but don't fabricate false urgency or drop the grade-level scoping rules below just to satisfy it.\n` : ""}
 Matched schools:
-${matches.map((m) => `- ${m.school_name} (${m.category})`).join("\n")}
+${confirmedMatches.map((m) => `- ${m.school_name} (${m.category})`).join("\n")}
 
 Confirmed deadlines (source-verified, use these exact dates verbatim -- do not
 alter or hedge them -- for any matched school listed below; for matched
 schools NOT listed here, continue using general/typical ED-EA-RD timing
 patterns and label them as general, not confirmed):
-${matches
+${confirmedMatches
   .map((m) => {
     const d = getSchoolDeadline(m.school_name);
     if (!d) return null;
@@ -184,7 +229,8 @@ ${matches
     console.error("Timeline generation failed for strategic_advice:", strategicResult.reason);
   }
   if (logisticsResult.status === "rejected" && strategicResult.status === "rejected") {
-    return NextResponse.json({ error: "Failed to generate timeline. Please try again." }, { status: 502 });
+    await markJobError("Failed to generate timeline. Please try again.");
+    return;
   }
 
   const logistics: TimelineEntry[] = logisticsResult.status === "fulfilled" ? logisticsResult.value : [];
@@ -216,11 +262,23 @@ ${matches
   ];
 
   const { error } = await supabase.from("timeline_items").insert(rows);
-  if (error) return NextResponse.json({ error: "Failed to save timeline." }, { status: 500 });
+  if (error) {
+    await markJobError("Failed to save timeline.");
+    return;
+  }
 
   await supabase
     .from("regeneration_log")
     .upsert({ user_id: userId, week_start_date: week, timeline_count: currentCount + 1 });
 
-  return NextResponse.json({ ok: true });
+  await supabase
+    .from("generation_jobs")
+    .upsert({ user_id: userId, feature: "timeline", status: "done", error_message: null }, { onConflict: "user_id,feature" });
+  }
+
+  async function markJobError(message: string) {
+    await supabase
+      .from("generation_jobs")
+      .upsert({ user_id: userId, feature: "timeline", status: "error", error_message: message }, { onConflict: "user_id,feature" });
+  }
 }

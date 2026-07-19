@@ -75,6 +75,15 @@ export default async function TimelinePage() {
 
   if (regenRowError) console.error("timeline regeneration_log query failed:", regenRowError);
 
+  const { data: job, error: jobError } = await supabase
+    .from("generation_jobs")
+    .select("status")
+    .eq("user_id", user.id)
+    .eq("feature", "timeline")
+    .maybeSingle();
+
+  if (jobError) console.error("timeline generation_jobs query failed:", jobError);
+
   const isPremium = profile.subscription_tier === "premium";
   const remaining = isPremium ? null : Math.max(0, 3 - (regenRow?.timeline_count ?? 0));
   const youAreHereId = items ? computeYouAreHere(items as TimelineItem[]) : null;
@@ -86,6 +95,7 @@ export default async function TimelinePage() {
         isPremium={isPremium}
         youAreHereId={youAreHereId}
         remaining={remaining}
+        initialJobStatus={job?.status === "pending" ? "pending" : null}
       />
     </NavShell>
   );

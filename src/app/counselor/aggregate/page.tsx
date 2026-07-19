@@ -2,10 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getCounselorRecord } from "@/lib/access";
 import CounselorNavShell from "@/components/CounselorNavShell";
-import AggregateClient, { type GradeAggregate, type SchoolTally } from "./AggregateClient";
+import AggregateClient, { type SchoolTally } from "./AggregateClient";
 import { computeFlags } from "@/lib/at-risk";
-
-const GRADES = ["Freshman", "Sophomore", "Junior", "Senior"] as const;
+import { computeGradeAggregates } from "@/lib/aggregate";
 
 export default async function AggregatePage() {
   const supabase = await createClient();
@@ -79,28 +78,36 @@ export default async function AggregatePage() {
     atRiskCountByGrade.set(f.grade_level, (atRiskCountByGrade.get(f.grade_level) ?? 0) + 1);
   }
 
-  const gradeAggregates: GradeAggregate[] = GRADES.map((grade) => {
-    const gradeProfiles = (profiles ?? []).filter((p) => p.grade_level === grade);
-    const count = gradeProfiles.length;
-    const avgGpa = count
-      ? gradeProfiles.reduce((sum, p) => sum + (p.unweighted_gpa ?? 0), 0) / count
-      : 0;
-    const completionRates = gradeProfiles.map((p) => {
-      const entry = completionByUser.get(p.user_id);
-      return entry && entry.total > 0 ? entry.done / entry.total : null;
-    }).filter((r): r is number => r !== null);
-    const avgCompletion = completionRates.length
-      ? completionRates.reduce((a, b) => a + b, 0) / completionRates.length
-      : null;
+  const gradeAggregates = computeGradeAggregates(profiles ?? [], completionByUser, atRiskCountByGrade);
 
-    return {
-      grade,
-      studentCount: count,
-      avgGpa: count ? Number(avgGpa.toFixed(2)) : null,
-      avgTimelineCompletionPct: avgCompletion !== null ? Math.round(avgCompletion * 100) : null,
-      atRiskCount: atRiskCountByGrade.get(grade) ?? 0,
-    };
-  });
+  // Trend vs. ~7 days ago: pick the closest snapshot at or before that date
+  // per grade (cron may not run exactly every day, so don't require an exact
+  // date match) and diff against today's live numbers.
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const { data: pastSnapshots, error: snapshotsError } = await supabase
+    .from("aggregate_snapshots")
+    .select("grade_level, snapshot_date, avg_timeline_completion_pct, at_risk_count")
+    .eq("school_id", counselor.school_id)
+    .lte("snapshot_date", sevenDaysAgo.toISOString().slice(0, 10))
+    .order("snapshot_date", { ascending: false });
+
+  if (snapshotsError) console.error("counselor aggregate snapshots query failed:", snapshotsError);
+
+  const snapshotByGrade = new Map<string, { avg_timeline_completion_pct: number | null; at_risk_count: number }>();
+  for (const snap of pastSnapshots ?? []) {
+    if (!snapshotByGrade.has(snap.grade_level)) snapshotByGrade.set(snap.grade_level, snap);
+  }
+
+  for (const g of gradeAggregates) {
+    const past = snapshotByGrade.get(g.grade);
+    if (!past) continue;
+    g.trendCompletionDelta =
+      g.avgTimelineCompletionPct !== null && past.avg_timeline_completion_pct !== null
+        ? g.avgTimelineCompletionPct - past.avg_timeline_completion_pct
+        : null;
+    g.trendAtRiskDelta = g.atRiskCount - past.at_risk_count;
+  }
 
   const schoolStudents = new Map<string, { user_id: string; name: string }[]>();
   for (const m of matches ?? []) {

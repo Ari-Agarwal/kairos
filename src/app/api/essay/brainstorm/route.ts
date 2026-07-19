@@ -6,6 +6,7 @@ import { canAccessFeature } from "@/lib/access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
 import { isTrustedOrigin } from "@/lib/origin-check";
+import { getNarrativeContextText } from "@/lib/narrative-context";
 
 export async function POST(req: Request) {
   if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -61,7 +62,9 @@ export async function POST(req: Request) {
     .filter(Boolean)
     .join("\n");
 
-  const userContent = `Supplement prompt${school ? ` (${school})` : ""}:\n${supplementPrompt}\n\nStudent profile:\n${profileSummary || "No profile data available."}`;
+  const narrativeContext = await getNarrativeContextText(supabase, user.id);
+
+  const userContent = `Supplement prompt${school ? ` (${school})` : ""}:\n${supplementPrompt}\n\nStudent profile:\n${profileSummary || "No profile data available."}${narrativeContext ? `\n\n${narrativeContext}` : ""}`;
 
   flagAnomalousUsage("essay/brainstorm", user.id);
   const t0 = Date.now();
