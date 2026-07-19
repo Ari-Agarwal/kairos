@@ -1,37 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kairos
 
-## Getting Started
+Free, AI-powered college counseling for students who don't have access to a private counselor.
 
-First, run the development server:
+Private college counselors run $4,000+ a year, out of reach for most families. Kairos gives every student a personalized school match list, a full application timeline, and an AI mentor for admissions questions, the kind of guidance only paying families get today. Counselors get a dashboard to manage their full caseload in one place.
+
+Built and shipped solo by [Ari Agarwal](https://github.com/Ari-Agarwal), a high school sophomore, using Claude Code as the primary AI coding tool.
+
+## Product
+
+- **Student match list**: reach/target/safety school recommendations generated from GPA, coursework, extracurriculars, and preferences, with visible reasoning behind each recommendation.
+- **Application timeline**: every deadline and requirement across every school a student is applying to, in one place.
+- **AI mentor chat**: admissions questions answered directly, positioned as coaching, not essay drafting.
+- **Counselor dashboard**: a filterable, sortable roster view so a counselor can track an entire caseload of students at once.
+
+## Tech stack
+
+- [Next.js](https://nextjs.org) 16 / [React](https://react.dev) 19 / TypeScript
+- [Supabase](https://supabase.com) for auth and the database
+- [Anthropic Claude API](https://www.anthropic.com) for AI-generated match reasoning and the mentor chat
+- [Resend](https://resend.com) for transactional email
+- Deployed on [Vercel](https://vercel.com)
+
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# Kairos
+Open [http://localhost:3000](http://localhost:3000). Requires a `.env.local` with Supabase and Anthropic API credentials (not included in this repo).
