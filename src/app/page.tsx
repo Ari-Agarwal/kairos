@@ -9,6 +9,14 @@ export default async function IntroPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
+    const { data: counselor, error: counselorError } = await supabase
+      .from("counselors")
+      .select("counselor_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (counselorError) console.error("intro counselor query failed:", counselorError);
+    if (counselor) redirect("/counselor");
+
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("user_id")
