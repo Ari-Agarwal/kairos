@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/", "/login", "/signup", "/api/stripe/webhook", "/auth/callback", "/preview-heroes", "/terms", "/privacy", "/about", "/methodology", "/notify", "/notify/join", "/api/waitlist", "/admin/waitlist", "/api/sms/send-nudges", "/api/cron/aggregate-snapshot"];
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/api/stripe/webhook", "/auth/callback", "/preview-heroes", "/terms", "/privacy", "/about", "/methodology", "/notify", "/notify/join", "/api/waitlist", "/admin/waitlist", "/api/sms/send-nudges", "/api/cron/aggregate-snapshot", "/api/cron/waitlist-nurture", "/api/cron/waitlist-growth-snapshot"];
 
 // Prefix-matched public paths — for routes with dynamic segments that must
 // stay reachable by an unauthenticated visitor (share links, recommender
