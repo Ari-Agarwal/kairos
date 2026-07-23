@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Flag, ShieldOff } from "lucide-react";
 
 // Drop this into any surface where one user sees another user's content
-// (mentor loop messages, war room comments) -- Section 8's safety policy
-// requires report + block available "from message one," not added later.
+// (e.g. mentor loop messages) -- Section 8's safety policy requires
+// report + block available "from message one," not added later.
 export default function ReportBlockMenu({
   targetUserId,
   contentType,

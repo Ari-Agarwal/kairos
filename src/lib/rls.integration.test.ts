@@ -261,30 +261,6 @@ describe("RLS student-table isolation", () => {
     expect(foreignMessage).toBeUndefined();
   });
 
-  it("student A cannot read war_room_comments on student B's applications", async () => {
-    const { data: studentBRows } = await studentB.from("profiles").select("user_id").limit(1);
-    const studentBId = studentBRows?.[0]?.user_id;
-    const { data: matchRows } = await studentB.from("school_matches").select("id").eq("user_id", studentBId).limit(1);
-    const matchId = matchRows?.[0]?.id;
-    if (!matchId) return; // no match fixture for student B in this environment — nothing to attempt
-    const { data } = await studentA.from("war_room_comments").select("*").eq("school_match_id", matchId);
-    expect(data ?? []).toHaveLength(0);
-  });
-
-  it("student A cannot post a war_room_comment on student B's application", async () => {
-    const { data: studentBRows } = await studentB.from("profiles").select("user_id").limit(1);
-    const studentBId = studentBRows?.[0]?.user_id;
-    const { data: matchRows } = await studentB.from("school_matches").select("id").eq("user_id", studentBId).limit(1);
-    const matchId = matchRows?.[0]?.id;
-    if (!matchId) return;
-    const { data: studentARows } = await studentA.from("profiles").select("user_id").limit(1);
-    const studentAId = studentARows?.[0]?.user_id;
-    const { error } = await studentA
-      .from("war_room_comments")
-      .insert({ school_match_id: matchId, user_id: studentAId, role: "student", body: "forged" });
-    expect(error).not.toBeNull();
-  });
-
   it("student A cannot read student B's recommenders (rec-letter brag sheets)", async () => {
     const { data: studentBRows } = await studentB.from("profiles").select("user_id").limit(1);
     const studentBId = studentBRows?.[0]?.user_id;

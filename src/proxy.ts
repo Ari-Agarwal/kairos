@@ -12,7 +12,7 @@ const PUBLIC_PATHS = ["/", "/login", "/signup", "/api/stripe/webhook", "/auth/ca
 // authenticated CRUD routes ([id] list/update/delete) at the proxy layer,
 // leaving their own internal getUser()/401 check as the only remaining
 // guard instead of defense-in-depth.
-const PUBLIC_PATH_PREFIXES = ["/shared/", "/api/shared/", "/recommender/", "/api/war-room/parent/"];
+const PUBLIC_PATH_PREFIXES = ["/shared/", "/api/shared/", "/recommender/"];
 const PUBLIC_PATH_PATTERNS = [/^\/api\/recommendations\/[^/]+\/talking-points$/];
 
 export async function proxy(request: NextRequest) {

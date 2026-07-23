@@ -87,11 +87,6 @@ export default function PrivacyPage() {
               contact is always a request, not open messaging; see Section 3 for who can see this.
             </li>
             <li>
-              <span className="text-text">War room comments</span> on a specific application — to
-              share a running discussion with the people you&apos;ve given access to that
-              application (yourself, and any parent, counselor, or accepted mentor for it).
-            </li>
-            <li>
               <span className="text-text">Reports and blocks you submit against another user</span>{" "}
               — to enforce our safety policy. A block is never visible to the person you blocked.
             </li>
@@ -157,9 +152,7 @@ export default function PrivacyPage() {
             </li>
             <li>
               <span className="text-text">A mentor or mentee</span> can see your mentor profile
-              only after you both accept a connection request — never before. A shared
-              application&apos;s war room is visible only to you, and to any parent, counselor, or
-              accepted mentor you&apos;ve given access to that specific application.
+              only after you both accept a connection request — never before.
             </li>
           </ul>
         </section>

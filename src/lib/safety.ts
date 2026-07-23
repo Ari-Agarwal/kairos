@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-// Any user-to-user contact feature (mentor loop, war room) must check this
+// Any user-to-user contact feature (e.g. mentor loop) must check this
 // before showing content from userB to userA -- silent by design, the
 // blocked party is never told they were blocked.
 export async function isBlocked(
