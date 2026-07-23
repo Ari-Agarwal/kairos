@@ -408,3 +408,33 @@ Shifted focus from product features to launch/growth infrastructure — closing 
   - Hit two more real bugs along the way, both found and fixed: the new route wasn't in `proxy.ts`'s public-path allowlist (so it silently redirected to `/login` for n8n's unauthenticated-looking request) — added it; and `CRON_SECRET` turned out to never have been set in this project's environment at all, meaning **the three pre-existing crons (`send-nudges`, `aggregate-snapshot`, `waitlist-nurture`) had likely been silently 401-ing against Vercel's own cron caller this entire time** — a real, previously-invisible production bug, not just blocking new work. Generated a real secret, walked the user through setting it in `.env.local` and Vercel; fixed all four routes at once.
   - Endpoint verified working end-to-end via direct `curl` (`HTTP 200`, correct real aggregate: date, new-signup count, cumulative total, top source) once deployed.
   - **Blocked, not yet finished**: connecting this now-verified endpoint's HTTP Request node to the Webhook → Notion chain in n8n's own editor hit a reproducible n8n UI bug — the node vanishes from the canvas every time its settings panel is closed, even with no page reload in between, reproduced 4 times with an otherwise-correct, `cURL`-import-verified config. Handed back to the user with the exact working config (URL + header) to paste in themselves, since this specific failure mode isn't something fixable from the API/code side.
+
+---
+
+### 19. Pending live-DB migrations — audit Jul 23
+
+Cross-checked every `supabase/migration_*.sql` file against the actual live-DB table/column listing (pulled by hand from the Supabase SQL editor, since I have no direct DB access). Everything below was confirmed **missing**. Migrations not listed here (001–039, 056, 058–061, etc.) were confirmed present or already applied per the sections above. Run in numeric order — none depend on each other, but order matches how they were written against the schema.
+
+**Missing tables:**
+- [x] `supabase/migration_043_scholarship_logo_cache.sql` — creates `scholarship_logo_cache` — already present in live DB (schema matches file exactly), no-op
+- [x] `supabase/migration_052_career_path_cache.sql` — creates `career_path_cache` — already present in live DB, no-op
+- [x] `supabase/migration_053_ai_usage_log.sql` — creates `ai_usage_log` — already present in live DB, no-op
+
+**Missing columns / policies:**
+- [x] `supabase/migration_040_narrative_suggested_activities.sql` — `narrative_profiles.suggested_activities` — applied Jul 23
+- [x] `supabase/migration_041_scholarship_deadline_nudge.sql` — `profiles.notified_scholarship_deadlines` — applied Jul 23
+- [x] `supabase/migration_042_scholarship_checklist.sql` — `scholarship_tracker.checklist` — applied Jul 23
+- [x] `supabase/migration_044_school_match_lock.sql` — `school_matches.locked` — applied Jul 23
+- [x] `supabase/migration_045_timeline_recurring_items.sql` — `timeline_items.is_recurring` — applied Jul 23
+- [x] `supabase/migration_046_interview_category_difficulty.sql` — `interview_sessions.category` — applied Jul 23
+- [x] `supabase/migration_047_activity_hours.sql` — `profiles.activity_hours` — applied Jul 23
+- [x] `supabase/migration_048_match_confidence.sql` — `school_matches.confidence` — applied Jul 23
+- [x] `supabase/migration_049_reengagement_nudge.sql` — `profiles.last_reengagement_sent_at` — applied Jul 23
+- [x] `supabase/migration_050_student_referrals.sql` — `profiles.referral_code`, `profiles.referred_by_user_id` — applied Jul 23
+- [x] `supabase/migration_051_timeline_checkin_streak.sql` — `profiles.checkin_streak_weeks`, `profiles.last_checkin_week` — applied Jul 23
+- [x] `supabase/migration_054_counselor_task_assignment.sql` — `timeline_items.assigned_by_counselor_id` + RLS insert policy — applied Jul 23
+- [x] `supabase/migration_055_counselor_narrative_essay_sharing.sql` — `profiles.share_narrative_with_counselor` + 2 RLS select policies — applied Jul 23
+
+**Unverified gap — closed Jul 23**: queried `waitlist_signups`, `essay_feedback_history`, `activity_evaluations` columns directly. All confirmed present: `waitlist_signups` has `referral_code`/`referred_by` (037) and `nurture_day7_sent_at`/`nurture_prelaunch_sent_at` (038); both `essay_feedback_history` and `activity_evaluations` have `prompt_version` (039). No further action needed.
+
+**Applied Jul 23** via the `supabase` MCP server, connected under this project's local scope. All 16 migrations in this section are now reconciled with the live DB — 13 applied fresh, 3 (043, 052, 053) found already present with matching schema.
