@@ -36,3 +36,31 @@ jobs:
 
       - name: Test
         run: npm test --if-present
+
+  deploy-migrations:
+    # Applies any supabase/migration_*.sql not yet recorded as applied,
+    # against the live DB, on every push to main -- closes the Section 13
+    # gap where migration application was a manually-remembered release
+    # step (already the direct cause of one real production outage,
+    # Section 6a's prompt-versioning rollout). Needs DATABASE_URL secret; the
+    # script itself no-ops with a warning (not a failure) if it's unset.
+    needs: ci
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply pending migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/apply-pending-migrations.mjs
