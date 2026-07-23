@@ -27,6 +27,7 @@ interface SchoolResult {
     social_fit: string;
   };
   confidence: "low" | "moderate" | "high";
+  merit_aid_likelihood: "low" | "moderate" | "high" | "not applicable";
 }
 
 interface Profile {
@@ -49,6 +50,8 @@ interface Profile {
   first_gen: boolean | null;
   legacy_school: string | null;
   internships_research: string | null;
+  applicant_type: string | null;
+  accessibility_pref: string | null;
 }
 
 function missingFields(profile: Profile): string[] {
@@ -162,6 +165,8 @@ Legacy school: ${profile.legacy_school ?? "none"}
 Internships / research experience: ${profile.internships_research ?? "not given"}
 Campus size preference: ${profile.campus_size_pref?.length ? profile.campus_size_pref.join(" or ") : "no preference given"}
 Campus setting preference: ${profile.campus_setting_pref?.length ? profile.campus_setting_pref.join(" or ") : "no preference given"}
+Applicant type: ${profile.applicant_type ?? "standard (first-time freshman/senior applicant)"}
+Accessibility/accommodation needs: ${profile.accessibility_pref ?? "not given"}
 ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}
 ${lockedNames.size > 0 ? `\nThe student has locked in the following schools already on their list -- they are staying regardless of this generation, so do NOT include them in your results: ${lockedNamesOriginal.join(", ")}.` : ""}
 ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from your last list?" and said: "${feedback}" — this is feedback on the list they just saw, so treat it as a direct correction (e.g. if they said "too many reach schools," shift the new list's balance accordingly), not just a general preference.` : `The student was asked "what are you looking for in your matches?" and said: "${feedback}"`} Weigh this alongside the profile above; don't let it override hard constraints like GPA/test-score realism, but do let it steer emphasis (e.g. toward a specific region, school size, or program strength).` : ""}`;
@@ -199,8 +204,14 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
                 description:
                   "How confident this specific estimate is, based on how much real data backs it -- 'low' when key inputs (test scores, GPA, or a clear major) are missing or the school's admitted-range data is thin/uncertain; 'high' only when GPA, test scores, and major are all known and the school's real acceptance data is well-established; 'moderate' otherwise.",
               },
+              merit_aid_likelihood: {
+                type: "string" as const,
+                enum: ["low", "moderate", "high", "not applicable"],
+                description:
+                  "Distinct from need-based aid (never estimated here -- no financial data is used for this field). Merit aid is typically awarded to applicants who sit well ABOVE a school's typical admitted range, so reuse the same percentile placement already computed for this school's category/percentage: 'high' when the student is meaningfully above the 75th percentile on GPA and (if given) test scores for this school -- the stronger they are relative to the admitted pool, the more likely a merit award, regardless of whether this school is this student's reach/target/safety; 'moderate' when around or somewhat above the median; 'low' when at or below the median (admission itself may still be likely at a safety school, but that doesn't imply merit money); 'not applicable' only for schools that are need-based-aid-only and do not offer merit scholarships (some highly selective privates) -- do not guess this, only use it when you are confident the school has a well-known no-merit-aid policy.",
+              },
             },
-            required: ["name", "percentage", "why_text", "factors", "confidence"],
+            required: ["name", "percentage", "why_text", "factors", "confidence", "merit_aid_likelihood"],
           },
         },
       },
@@ -325,6 +336,7 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
     why_text: s.why_text,
     factors: s.factors,
     confidence: s.confidence,
+    merit_aid_likelihood: s.merit_aid_likelihood,
     is_active: true,
     prompt_version: PROMPT_VERSION,
   }));

@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import CountUp from "@/components/CountUp";
 import { track } from "@/lib/analytics";
 import AidAppealModal from "./AidAppealModal";
+import LociModal from "./LociModal";
 import { MatchesEmptyArt } from "@/components/EmptyStateIllustration";
 import { downloadCollegeListPdf } from "@/lib/college-list-pdf";
 
@@ -24,6 +25,7 @@ interface Match {
   is_manual: boolean;
   locked: boolean;
   confidence: "low" | "moderate" | "high" | null;
+  merit_aid_likelihood: "low" | "moderate" | "high" | "not applicable" | null;
 }
 
 const CONFIDENCE_LABEL: Record<string, string> = {
@@ -32,17 +34,15 @@ const CONFIDENCE_LABEL: Record<string, string> = {
   low: "Low confidence — less data to go on",
 };
 
-// Merit aid (distinct from need-based aid) is awarded by schools largely to
-// attract students whose stats sit above their typical admitted range --
-// which is exactly what "target" and "safety" mean in this app's own tier
-// reasoning (Section 1). This reuses that existing reach/target/safety
-// classification rather than adding any new AI call or data source (Software
-// Timeline.md Section 10). Deliberately hedged ("if offered," "worth asking
-// about") since Kairos has no actual per-school merit-aid data.
-const MERIT_AID_NOTE: Record<Category, string> = {
-  reach: "Merit aid, if offered here, is less likely — your profile is closer to or below this school's typical admitted range, which is what merit scholarships usually reward.",
-  target: "Merit aid, if offered, is worth asking about — your profile is in line with this school's admitted range, which is the range merit scholarships are usually drawn from.",
-  safety: "Merit aid is often strongest here — your profile is above this school's typical admitted range, which is exactly the group most merit scholarships are designed to attract.",
+// Distinct from need-based aid (Section 10) — this is derived from the same
+// GPA/test-score percentile placement already computed per-school, not from
+// the reach/target/safety category (a strong applicant at a reach school can
+// still have low merit-aid likelihood, and vice versa at a safety school).
+const MERIT_AID_LABEL: Record<string, string> = {
+  high: "Merit aid likely, if offered",
+  moderate: "Merit aid possible, if offered",
+  low: "Merit aid less likely here",
+  "not applicable": "This school doesn't typically offer merit aid",
 };
 
 const CATEGORY_STYLES: Record<string, string> = {
@@ -139,28 +139,38 @@ export default function MatchListClient({
 
   // Aid offers loaded from DB (matchId → amount) — used to gate appeal button
   const [aidOffers, setAidOffers] = useState<Record<string, number>>({});
+  // Logged decision per match (matchId → decision_type) -- used to surface the
+  // Section 11 "deferred/waitlisted" guidance (letter of continued interest +
+  // an "adjust your list" nudge) for exactly the students it applies to.
+  const [outcomeDecisions, setOutcomeDecisions] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    async function loadAidOffers() {
+    async function loadOutcomes() {
       const ids = matches.map((m) => m.id);
       if (ids.length === 0) return;
       const { data, error } = await supabase
         .from("application_outcomes")
-        .select("school_match_id, aid_offer_amount")
-        .in("school_match_id", ids)
-        .not("aid_offer_amount", "is", null);
-      if (error) console.error("loadAidOffers query failed:", error);
+        .select("school_match_id, aid_offer_amount, decision_type")
+        .in("school_match_id", ids);
+      if (error) console.error("loadOutcomes query failed:", error);
       if (data) {
-        const map: Record<string, number> = {};
-        for (const row of data as { school_match_id: string; aid_offer_amount: number }[]) {
-          map[row.school_match_id] = row.aid_offer_amount;
+        const aidMap: Record<string, number> = {};
+        const decisionMap: Record<string, string> = {};
+        for (const row of data as { school_match_id: string; aid_offer_amount: number | null; decision_type: string }[]) {
+          if (row.aid_offer_amount !== null) aidMap[row.school_match_id] = row.aid_offer_amount;
+          decisionMap[row.school_match_id] = row.decision_type;
         }
-        setAidOffers(map);
+        setAidOffers(aidMap);
+        setOutcomeDecisions(decisionMap);
       }
     }
-    loadAidOffers();
+    loadOutcomes();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // LOCI (letter of continued interest) modal open/closed -- gated to waitlist/defer
+  const [lociMatchId, setLociMatchId] = useState<string | null>(null);
+  const waitlistedOrDeferredCount = Object.values(outcomeDecisions).filter((d) => d === "waitlist" || d === "defer").length;
 
   // Family reactions left on the shared read-only view (Section 9b) --
   // matchId -> most recent reaction/comment. RLS on shared_list_reactions
@@ -626,6 +636,16 @@ export default function MatchListClient({
         />
       )}
 
+      {lociMatchId && <LociModal matchId={lociMatchId} onClose={() => setLociMatchId(null)} />}
+
+      {waitlistedOrDeferredCount >= 2 && (
+        <div className="bg-amber-tint border border-amber/30 rounded-xl px-4 py-3 text-sm text-text-gray mb-4">
+          <span className="text-amber font-medium">Multiple waitlists/deferrals on your list — </span>
+          it&apos;s worth revisiting your reach/target/safety balance now that you know more than you did when you first applied.{" "}
+          <Link href="/matches/prep" className="underline underline-offset-2 hover:text-text-gray">Regenerate with this in mind</Link>.
+        </div>
+      )}
+
       {matches.length > 0 && (() => {
         const counts = { reach: 0, target: 0, safety: 0 };
         for (const m of matches) counts[m.category] = (counts[m.category] ?? 0) + 1;
@@ -763,6 +783,15 @@ export default function MatchListClient({
                       Appeal aid
                     </button>
                   )}
+                  {(outcomeDecisions[m.id] === "waitlist" || outcomeDecisions[m.id] === "defer") && (
+                    <button
+                      onClick={() => setLociMatchId(m.id)}
+                      className="text-primary hover:text-primary-hover text-xs px-2.5 py-1.5 rounded-lg border border-primary/30 hover:border-primary/60 transition-colors whitespace-nowrap"
+                      aria-label={`Draft letter of continued interest for ${m.school_name}`}
+                    >
+                      {outcomeDecisions[m.id] === "waitlist" ? "Waitlisted" : "Deferred"} — draft a letter
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -857,6 +886,9 @@ export default function MatchListClient({
                       </Link>
                       {m.confidence && ` · ${CONFIDENCE_LABEL[m.confidence]}`}
                     </p>
+                  )}
+                  {!m.is_manual && m.merit_aid_likelihood && (
+                    <p className="text-text-gray/70 text-xs mt-1">{MERIT_AID_LABEL[m.merit_aid_likelihood]}</p>
                   )}
                 </div>
               )}

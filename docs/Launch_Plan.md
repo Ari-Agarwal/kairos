@@ -236,6 +236,27 @@ Every entry below is postable as-is (adjust wording to your voice). Formats and 
 
 ---
 
+## 5.6. Week 2 content calendar — drafted Jul 23, before Week 1 data exists
+
+Per §6, Week 2's real job is applying the §5.7 kill/boost criteria to Week 1's posts before deciding what to repeat — this calendar is scripted assuming Week 1 lands roughly as expected, but **swap any slot below for a repeat of whatever Week 1 format actually hit "Boost" on save rate**, since that's a stronger bet than a new untested format. Mon wk2 is already scripted in §5.5 above (the "reassurance hook" lead-in) — this table picks up Tuesday.
+
+| Day | Format | Hook (first 1-3s, on-screen text) | Content | CTA (spoken/caption) |
+|---|---|---|---|---|
+| Tue | Identity hook, text-led | "For first-gen students only —" | Text overlay speaks directly to first-gen students specifically (no one guiding them through deadlines/lists), cuts to screen recording of Kairos's match list | "Built this because I didn't have this. Link in bio" |
+| Wed | Saveable numbered list, object b-roll | "5 deadlines everyone forgets (not just the Nov 1 one)" | Notebook/phone b-roll, saveable list overlay: recommendation letter lead time, FAFSA/CSS Profile open date, EA/ED decision windows, RD cluster, enrollment deposit | "Save this" |
+| Thu | Stitch/duet (recurring weekly format) | Stitch a real "chance me" or admissions-anxiety TikTok from that week | Text-overlay myth-correction, cut to relevant Kairos feature — same mechanic as Week 1 Friday, moved earlier so it's not the last-minute scramble slot two weeks running | "Link in bio if this helped" |
+| Fri | Screen recording, case-study/prediction style (repeat of Mon's proven pattern, different profile) | "I put a second real applicant's stats in. Different school tier this time." | Same Lim-pattern prediction reveal as Week 1 Monday, but with a lower-stats profile to show the tool works across tiers, not just strong applicants | "Free to try, link in bio" |
+| Sat | Urgency/referral push | "You're not the only one applying to your dream school. Here's how to actually move up the list." | Screen recording of the waitlist referral flow — queue position, "you moved up to #X" — framed as urgency/social proof, not just a feature tour | "Every friend who joins moves you up — link in bio" |
+| Sun | Screen recording, essay/narrative demo | "It found an essay angle I didn't think was interesting enough to write about" | Screen-record Narrative Builder surfacing a specific essay angle from a mundane-sounding activity, show the "why this matters" breakdown | "Find yours free, link in bio" |
+
+**Notes:**
+- Tuesday and Sunday are the closest matches to what tested well in the in-niche research (identity-narrowing hooks, AI-as-differentiator) — prioritize these if the week gets tight.
+- Thursday's stitch moved earlier in the week versus Week 1's Friday slot specifically so it isn't a last-minute scramble two weeks in a row — still needs a live clip found that week, budget the same 15-20 min.
+- Saturday is new ground: nothing in Week 1 pushed the referral loop directly in content, and §3.5 flagged the loop as the single highest-leverage lever in the whole plan — worth testing whether making it the actual hook (not just a caption CTA) performs.
+- Before finalizing this table for real, re-check it against Week 1's §5.7 scorecard — any Week 1 slot that hit "Kill" on save rate shouldn't get a same-format repeat here even where one's scripted above (e.g. swap Friday's case-study repeat if Monday's didn't actually boost).
+
+---
+
 ## 5.7. Measurement & kill/boost criteria
 
 "Identify winners" only means something with numbers attached. These thresholds are practitioner heuristics for a new/small account (industry-average TikTok engagement runs roughly 5-9% of views; saves are a smaller fraction of that and are the highest-intent signal per §2) — treat them as a reasonable starting bar to calibrate against your own actual Week 1 numbers, not as externally validated benchmarks for this specific account.
