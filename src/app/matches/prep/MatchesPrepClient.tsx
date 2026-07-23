@@ -7,9 +7,11 @@ import FeaturePrepFlow from "@/components/FeaturePrepFlow";
 export default function MatchesPrepClient({
   inlineFields,
   linkOutFields,
+  isRegenerate,
 }: {
   inlineFields: string[];
   linkOutFields: string[];
+  isRegenerate: boolean;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -34,7 +36,7 @@ export default function MatchesPrepClient({
         const { error: updateError } = await supabase.from("profiles").update(patch).eq("user_id", user.id);
         if (updateError) return { error: updateError.message };
       } catch {
-        return { error: "Failed to save your answers. Please try again." };
+        return { error: "Couldn't save your answers just now — check your connection and try again." };
       }
     }
 
@@ -44,12 +46,16 @@ export default function MatchesPrepClient({
       const res = await fetch("/api/matches/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feedback: feedback.trim() || undefined }),
+        body: JSON.stringify({ feedback: feedback.trim() || undefined, isRegenerate }),
         signal: controller.signal,
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        return { error: body.error ?? "Failed to generate. Please try again." };
+        return { error: body.error ?? "We hit a snag generating your matches — try again, or check back in a few minutes if it keeps happening." };
+      }
+      const body = await res.json().catch(() => ({}));
+      if (Array.isArray(body.failedCategories) && body.failedCategories.length > 0) {
+        sessionStorage.setItem("kairos_matches_failed_categories", JSON.stringify(body.failedCategories));
       }
       router.push("/matches");
       return {};
@@ -57,8 +63,8 @@ export default function MatchesPrepClient({
       return {
         error:
           err instanceof DOMException && err.name === "AbortError"
-            ? "This is taking longer than expected. Please try again."
-            : "Failed to generate. Please try again.",
+            ? "This is taking longer than expected — try again in a moment."
+            : "We hit a snag generating your matches — try again, or check back in a few minutes if it keeps happening.",
       };
     } finally {
       clearTimeout(timeout);
@@ -72,8 +78,12 @@ export default function MatchesPrepClient({
       subheading="A few quick questions, then we'll generate your list."
       inlineFields={inlineFields}
       linkOutFields={linkOutFields}
-      feedbackQuestion="What are you looking for?"
-      feedbackPlaceholder="e.g. more schools on the West Coast, or a bigger reach list"
+      feedbackQuestion={isRegenerate ? "What should change from your last list?" : "What are you looking for?"}
+      feedbackPlaceholder={
+        isRegenerate
+          ? "e.g. too many reach schools, wrong region, missing a program you care about"
+          : "e.g. more schools on the West Coast, or a bigger reach list"
+      }
       completeLabel="Generate Matches"
       generatingLabel="Building your personalized list..."
       onComplete={handleComplete}

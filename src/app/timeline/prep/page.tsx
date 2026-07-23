@@ -20,9 +20,20 @@ export default async function TimelinePrepPage() {
   const inlineFields = missing.filter((f) => INLINE_TEXT_FIELDS.includes(f));
   const linkOutFields = missing.filter((f) => !INLINE_TEXT_FIELDS.includes(f));
 
+  const { count: timelineItemCount, error: timelineItemCountError } = await supabase
+    .from("timeline_items")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  if (timelineItemCountError) console.error("timeline prep item count query failed:", timelineItemCountError);
+
   return (
     <NavShell>
-      <TimelinePrepClient inlineFields={inlineFields} linkOutFields={linkOutFields} />
+      <TimelinePrepClient
+        inlineFields={inlineFields}
+        linkOutFields={linkOutFields}
+        isRegenerate={!!timelineItemCount}
+      />
     </NavShell>
   );
 }

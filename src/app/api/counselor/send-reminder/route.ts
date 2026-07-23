@@ -16,9 +16,16 @@ export async function POST(req: Request) {
   if (!counselor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const studentUserId = body.studentUserId;
-  if (typeof studentUserId !== "string") {
-    return NextResponse.json({ error: "studentUserId is required." }, { status: 400 });
+  // Bulk send (Software_Timeline.md 5m): studentUserIds takes priority when
+  // present, so a counselor can message N flagged students in one action
+  // instead of repeating this one at a time. studentUserId (singular) stays
+  // supported for the existing single-student flow.
+  const studentUserIds: unknown = body.studentUserIds ?? (body.studentUserId ? [body.studentUserId] : undefined);
+  if (!Array.isArray(studentUserIds) || studentUserIds.length === 0 || !studentUserIds.every((id) => typeof id === "string")) {
+    return NextResponse.json({ error: "studentUserId (or studentUserIds) is required." }, { status: 400 });
+  }
+  if (studentUserIds.length > 100) {
+    return NextResponse.json({ error: "Too many students in one request (max 100)." }, { status: 400 });
   }
 
   let message: string;
@@ -30,37 +37,51 @@ export async function POST(req: Request) {
     throw err;
   }
 
-  const { data: profile, error: profileError } = await supabase
+  const { data: profileRows, error: profileError } = await supabase
     .from("profiles")
     .select("user_id")
-    .eq("user_id", studentUserId)
-    .eq("school_id", counselor.school_id)
-    .maybeSingle();
+    .in("user_id", studentUserIds)
+    .eq("school_id", counselor.school_id);
   if (profileError) console.error("send-reminder profile lookup failed:", profileError);
-  if (!profile) return NextResponse.json({ error: "Student not found." }, { status: 404 });
+  const validIds = new Set((profileRows ?? []).map((p) => p.user_id));
 
   const serviceClient = createServiceClient();
-  const { data: authUser, error: authUserError } = await serviceClient.auth.admin.getUserById(studentUserId);
-  if (authUserError || !authUser.user?.email) {
-    console.error("send-reminder student lookup failed:", authUserError);
-    return NextResponse.json({ error: "Could not find the student's email." }, { status: 500 });
-  }
-  const studentName = (authUser.user.user_metadata?.full_name as string | undefined) || "there";
+  const results: { studentUserId: string; ok: boolean; error?: string }[] = [];
 
-  const { error: insertError } = await supabase
-    .from("reminder_log")
-    .insert({ counselor_id: counselor.counselor_id, student_user_id: studentUserId, message_text: message });
-  if (insertError) {
-    console.error("send-reminder log insert failed:", insertError);
-    return NextResponse.json({ error: "Failed to send reminder. Please try again." }, { status: 500 });
+  for (const studentUserId of studentUserIds) {
+    if (!validIds.has(studentUserId)) {
+      results.push({ studentUserId, ok: false, error: "Student not found." });
+      continue;
+    }
+    const { data: authUser, error: authUserError } = await serviceClient.auth.admin.getUserById(studentUserId);
+    if (authUserError || !authUser.user?.email) {
+      console.error("send-reminder student lookup failed:", authUserError);
+      results.push({ studentUserId, ok: false, error: "Could not find the student's email." });
+      continue;
+    }
+    const studentName = (authUser.user.user_metadata?.full_name as string | undefined) || "there";
+
+    const { error: insertError } = await supabase
+      .from("reminder_log")
+      .insert({ counselor_id: counselor.counselor_id, student_user_id: studentUserId, message_text: message });
+    if (insertError) {
+      console.error("send-reminder log insert failed:", insertError);
+      results.push({ studentUserId, ok: false, error: "Failed to log reminder." });
+      continue;
+    }
+
+    try {
+      await sendCounselorReminder(authUser.user.email, studentName, counselor.name, message);
+      results.push({ studentUserId, ok: true });
+    } catch (err) {
+      console.error("send-reminder email send failed:", err);
+      results.push({ studentUserId, ok: false, error: "Reminder logged but the email failed to send." });
+    }
   }
 
-  try {
-    await sendCounselorReminder(authUser.user.email, studentName, counselor.name, message);
-  } catch (err) {
-    console.error("send-reminder email send failed:", err);
-    return NextResponse.json({ error: "Reminder logged but the email failed to send." }, { status: 502 });
+  const sentCount = results.filter((r) => r.ok).length;
+  if (sentCount === 0) {
+    return NextResponse.json({ error: "Failed to send any reminders. Please try again.", results }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, sentCount, total: studentUserIds.length, results });
 }

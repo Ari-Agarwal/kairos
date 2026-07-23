@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import NavShell from "@/components/NavShell";
 import MatchListClient from "./MatchListClient";
+import { getCollegePhoto } from "@/lib/college-photo";
 
 function weekStart(): string {
   const d = new Date();
@@ -47,9 +48,22 @@ export default async function MatchesPage() {
   const isPremium = profile.subscription_tier === "premium";
   const remaining = isPremium ? null : Math.max(0, 3 - (regenRow?.count ?? 0));
 
+  const photoEntries = await Promise.all(
+    (matches ?? []).map(async (m) => [m.id, await getCollegePhoto(m.school_name)] as const)
+  );
+  const photos = Object.fromEntries(photoEntries);
+
+  const studentName = (user.user_metadata?.full_name as string | undefined) || null;
+
   return (
     <NavShell>
-      <MatchListClient initialMatches={matches ?? []} remaining={remaining} isPremium={isPremium} />
+      <MatchListClient
+        initialMatches={matches ?? []}
+        remaining={remaining}
+        isPremium={isPremium}
+        photos={photos}
+        studentName={studentName}
+      />
     </NavShell>
   );
 }

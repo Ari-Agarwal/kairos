@@ -35,10 +35,17 @@ export async function GET(
   const rl = await checkRateLimit(service, `rec-talking-points:${token}`, 10, 60_000);
   if (!rl.ok) return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
 
-  const { data: userData, error: userDataError } = await service.auth.admin.getUserById(rec.user_id);
-  if (userDataError) console.error("talking-points getUserById failed:", userDataError);
-  const fullName: string =
-    (userData?.user?.user_metadata?.full_name as string | undefined) ?? "the student";
+  // Reads straight off profiles.display_name rather than an
+  // auth.admin.getUserById() round-trip -- same fix as the recommender page
+  // itself, for the same unreliable fan-out pattern (Section 4's earlier fix
+  // across the counselor-facing pages missed both of this feature's routes).
+  const { data: profile, error: profileError } = await service
+    .from("profiles")
+    .select("display_name")
+    .eq("user_id", rec.user_id)
+    .maybeSingle();
+  if (profileError) console.error("talking-points profile lookup failed:", profileError);
+  const fullName = profile?.display_name?.trim() || "the student";
   const firstName = fullName.split(" ")[0];
 
   const brag = (rec.brag_sheet ?? {}) as Record<string, string>;
@@ -60,6 +67,7 @@ export async function GET(
   const message = await anthropic.messages.create({
     model: MODEL,
     max_tokens: 1024,
+    thinking: { type: "disabled" },
     messages: [
       {
         role: "user",
@@ -69,7 +77,7 @@ export async function GET(
   });
   logAiUsage("recommendations/talking-points", rec.user_id, MODEL, t0, message);
 
-  const raw = message.content[0].type === "text" ? message.content[0].text : "";
+  const raw = message.content.find((b) => b.type === "text")?.text ?? "";
   let result: TalkingPointsResult;
   try {
     result = extractJson<TalkingPointsResult>(raw);

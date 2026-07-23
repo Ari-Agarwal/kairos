@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import SendReminderButton from "@/components/SendReminderButton";
+import InfoTooltip from "@/components/InfoTooltip";
 
 export interface FlaggedStudent {
   user_id: string;
@@ -107,7 +108,10 @@ export default function AtRiskClient({ students: initialStudents }: { students: 
 
   return (
     <div className="px-5 md:px-8 py-8 max-w-3xl mx-auto w-full">
-      <h1 className="font-serif text-2xl text-text mb-2">At-Risk Flags</h1>
+      <h1 className="font-serif text-2xl text-text mb-2 inline-flex items-center gap-2">
+        At-Risk Flags
+        <InfoTooltip text="Severity weights how cold a student's engagement is: never logged in counts most, then long inactivity, then having no active matches, then overdue timeline items and an incomplete profile (each worth less, and additive). Higher severity means more of these reasons stacked at once." />
+      </h1>
       <p className="text-text-gray text-sm mb-6">
         Students with overdue deadlines, no active matches, or extended inactivity, worth a check-in.
       </p>

@@ -37,21 +37,51 @@ const STRENGTH_STYLES: Record<string, string> = {
   weak: "bg-red-tint text-red",
 };
 
-export default function ActivityEvalClient({ activities: initialActivities }: { activities: string[] }) {
+export default function ActivityEvalClient({
+  activities: initialActivities,
+  activityHours: initialActivityHours,
+}: {
+  activities: string[];
+  activityHours: Record<string, number>;
+}) {
   const reduceMotion = useReducedMotion();
   const supabase = createClient();
   const [activities, setActivities] = useState(initialActivities.filter(Boolean));
+  const [activityHours, setActivityHours] = useState<Record<string, number>>(initialActivityHours);
   const [editingList, setEditingList] = useState(false);
   const [draftActivities, setDraftActivities] = useState(activities.join("\n"));
   const [savingActivities, setSavingActivities] = useState(false);
+
+  async function updateActivityHours(activity: string, hours: string) {
+    const parsed = hours === "" ? null : Math.max(0, Math.min(168, Number(hours)));
+    setActivityHours((prev) => {
+      const next = { ...prev };
+      if (parsed === null || Number.isNaN(parsed)) delete next[activity];
+      else next[activity] = parsed;
+      return next;
+    });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const next = { ...activityHours };
+    if (parsed === null || Number.isNaN(parsed)) delete next[activity];
+    else next[activity] = parsed;
+    await supabase.from("profiles").update({ activity_hours: next }).eq("user_id", user.id);
+  }
   const [result, setResult] = useState<EvalResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryEntry[] | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  // No distinct regenerate action -- resubmitting the same form is the only
+  // way to get a new evaluation, so this only appears once a result already
+  // exists (i.e. this submit would be a redo). Cleared on successful submit,
+  // not on every activities-list edit.
+  const [regenFeedback, setRegenFeedback] = useState("");
 
-  const activitiesText = activities.join("\n");
+  const activitiesText = activities
+    .map((a) => (activityHours[a] ? `${a} (${activityHours[a]} hrs/week)` : a))
+    .join("\n");
   const hasActivities = activitiesText.trim().length > 0;
 
   async function handleSaveActivities() {
@@ -93,12 +123,12 @@ export default function ActivityEvalClient({ activities: initialActivities }: { 
     const res = await fetch("/api/activities/evaluate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ activitiesText }),
+      body: JSON.stringify({ activitiesText, regenFeedback: regenFeedback.trim() || undefined }),
     });
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "Failed to evaluate activities. Please try again.");
+      setError(body.error ?? "We hit a snag evaluating your activities — try again in a moment.");
       setLoading(false);
       return;
     }
@@ -107,6 +137,7 @@ export default function ActivityEvalClient({ activities: initialActivities }: { 
     setResult(data);
     setLoading(false);
     setHistory(null);
+    setRegenFeedback("");
   }
 
   return (
@@ -166,14 +197,46 @@ export default function ActivityEvalClient({ activities: initialActivities }: { 
       ) : (
         <div className="bg-card border border-border rounded-2xl p-4 mb-4">
           {hasActivities ? (
-            <ul className="space-y-1">
+            <ul className="space-y-2">
               {activities.map((a, i) => (
-                <li key={i} className="text-text-gray text-sm">• {a}</li>
+                <li key={i} className="flex items-center justify-between gap-3 text-text-gray text-sm">
+                  <span className="truncate">• {a}</span>
+                  <label className="flex items-center gap-1.5 text-xs shrink-0">
+                    <input
+                      type="number"
+                      min={0}
+                      max={168}
+                      value={activityHours[a] ?? ""}
+                      onChange={(e) => updateActivityHours(a, e.target.value)}
+                      placeholder="0"
+                      aria-label={`Hours per week for ${a}`}
+                      className="w-14 rounded-lg bg-bg border border-border px-2 py-1 text-text text-xs outline-none focus:border-primary"
+                    />
+                    hrs/wk
+                  </label>
+                </li>
               ))}
             </ul>
           ) : (
             <p className="text-text-gray text-sm">No activities yet. Use &quot;Edit list&quot; above to add some.</p>
           )}
+        </div>
+      )}
+
+      {result && (
+        <div className="mb-4">
+          <label htmlFor="activity-regen-feedback" className="block text-text font-medium text-sm mb-2">
+            What should change from the last evaluation? <span className="text-text-gray font-normal">(optional)</span>
+          </label>
+          <textarea
+            id="activity-regen-feedback"
+            value={regenFeedback}
+            onChange={(e) => setRegenFeedback(e.target.value)}
+            rows={2}
+            maxLength={1000}
+            placeholder="e.g. the leadership score felt too harsh, missed my role in the second activity"
+            className="w-full rounded-xl bg-card border border-border px-4 py-2.5 text-text text-sm outline-none focus:border-primary resize-none"
+          />
         </div>
       )}
 
@@ -194,6 +257,8 @@ export default function ActivityEvalClient({ activities: initialActivities }: { 
             />
             Evaluating your activities...
           </span>
+        ) : result ? (
+          "Regenerate evaluation"
         ) : (
           "Evaluate my activities"
         )}
@@ -224,16 +289,26 @@ export default function ActivityEvalClient({ activities: initialActivities }: { 
               <div className="bg-card border border-border rounded-2xl p-5 mb-4 space-y-2">
                 <p className="text-text font-medium text-sm mb-1">Per-activity breakdown</p>
                 {result.per_activity.map((pa, idx) => (
-                  <div key={idx} className="flex items-start justify-between gap-3 py-1.5 border-b border-border last:border-b-0">
-                    <div className="min-w-0">
-                      <p className="text-text text-sm truncate">{pa.activity}</p>
-                      <p className="text-text-gray text-xs">{pa.note}</p>
+                  <div key={idx} className="py-1.5 border-b border-border last:border-b-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-text text-sm truncate">{pa.activity}</p>
+                        <p className="text-text-gray text-xs">{pa.note}</p>
+                      </div>
+                      <span
+                        className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full capitalize ${STRENGTH_STYLES[pa.strength] ?? "bg-secondary-tint text-text-gray"}`}
+                      >
+                        {pa.strength}
+                      </span>
                     </div>
-                    <span
-                      className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full capitalize ${STRENGTH_STYLES[pa.strength] ?? "bg-secondary-tint text-text-gray"}`}
-                    >
-                      {pa.strength}
-                    </span>
+                    {(pa.strength === "weak" || pa.strength === "average") && (
+                      <a
+                        href={`/narrative?flagged_activity=${encodeURIComponent(pa.activity)}&flagged_note=${encodeURIComponent(pa.note)}`}
+                        className="inline-block mt-1 text-xs text-primary hover:text-primary-hover"
+                      >
+                        Explore this in Narrative Builder →
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCounselorRecord } from "@/lib/access";
 import CounselorNavShell from "@/components/CounselorNavShell";
 import StudentRosterClient from "./StudentRosterClient";
+import { computeFlags } from "@/lib/at-risk";
 
 export interface RosterStudent {
   user_id: string;
@@ -40,13 +41,18 @@ function daysSince(dateString: string | null): number {
 
 const PAGE_SIZE = 25;
 
+type SortKey = "deadline" | "lastLogin" | "gpaAsc" | "gpaDesc";
+
 export default async function CounselorHomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; grade?: string; status?: string; q?: string; sort?: string }>;
 }) {
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, grade: gradeFilter, status: statusFilter, q: goalQuery, sort: sortParam } = await searchParams;
   const currentPage = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
+  const sortKey: SortKey = (["deadline", "lastLogin", "gpaAsc", "gpaDesc"] as const).includes(sortParam as SortKey)
+    ? (sortParam as SortKey)
+    : "deadline";
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -73,8 +79,6 @@ export default async function CounselorHomePage({
   if (profilesError) console.error("counselor home profiles query failed:", profilesError);
 
   const allProfiles = profiles ?? [];
-  const totalPages = Math.max(1, Math.ceil(allProfiles.length / PAGE_SIZE));
-  const pageProfiles = allProfiles.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const studentIds = allProfiles.map((p) => p.user_id);
 
@@ -141,7 +145,6 @@ export default async function CounselorHomePage({
   }
 
   const allStudents = allProfiles.map(buildStudent);
-  const students = pageProfiles.map(buildStudent);
 
   const stats = {
     total: allStudents.length,
@@ -150,9 +153,74 @@ export default async function CounselorHomePage({
     overdue: allStudents.filter((s) => s.overdueCount > 0).length,
   };
 
+  // Filter + sort against the FULL roster, not just the current page --
+  // previously this ran client-side in StudentRosterClient against only the
+  // ~25 students already fetched for that page, so a search could silently
+  // miss a matching student sitting on a different page. Roster pagination
+  // (shipped Jul 18) already fetches every student's profile server-side to
+  // compute the stats above, so this reuses that same full fetch rather than
+  // requiring a new query.
+  let matched = allStudents;
+  if (gradeFilter && gradeFilter !== "all") matched = matched.filter((s) => s.grade_level === gradeFilter);
+  if (statusFilter && statusFilter !== "all") matched = matched.filter((s) => s.status === statusFilter);
+  if (goalQuery?.trim()) {
+    const q = goalQuery.trim().toLowerCase();
+    matched = matched.filter((s) => s.schools_already_considering?.toLowerCase().includes(q));
+  }
+
+  const sorted = [...matched];
+  if (sortKey === "deadline") {
+    sorted.sort((a, b) => b.overdueCount - a.overdueCount || b.incompleteTimelineCount - a.incompleteTimelineCount);
+  } else if (sortKey === "lastLogin") {
+    sorted.sort((a, b) => {
+      const aTime = a.lastLoginAt ? new Date(a.lastLoginAt).getTime() : 0;
+      const bTime = b.lastLoginAt ? new Date(b.lastLoginAt).getTime() : 0;
+      return aTime - bTime;
+    });
+  } else if (sortKey === "gpaAsc") {
+    sorted.sort((a, b) => a.unweightedGpa - b.unweightedGpa);
+  } else if (sortKey === "gpaDesc") {
+    sorted.sort((a, b) => b.unweightedGpa - a.unweightedGpa);
+  }
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const students = sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  // Counselor dashboard home summary (Software_Timeline.md 8): today
+  // counselors land on the roster with no at-a-glance "N students need
+  // attention / M pending review requests" summary and have to check
+  // at-risk, review-requests, and aggregate separately to get their
+  // bearings. Reuses the shared computeFlags (same at-risk definition
+  // /counselor/at-risk and /counselor/aggregate already use) and the
+  // profiles/matches/timeline data already fetched above -- no new queries
+  // for the at-risk count itself.
+  const overdueByUser = new Map<string, number>();
+  for (const [userId, entry] of timelineByUser) overdueByUser.set(userId, entry.overdue);
+  const atRiskCount = computeFlags(allProfiles, matchCountByUser, overdueByUser).length;
+
+  const { count: pendingReviewCount, error: pendingReviewError } = studentIds.length
+    ? await supabase
+        .from("review_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending")
+        .in("user_id", studentIds)
+    : { count: 0, error: null };
+  if (pendingReviewError) console.error("counselor home pending review count query failed:", pendingReviewError);
+
   return (
     <CounselorNavShell schoolName={school?.name ?? "Your School"}>
-      <StudentRosterClient students={students} stats={stats} currentPage={currentPage} totalPages={totalPages} />
+      <StudentRosterClient
+        students={students}
+        stats={stats}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        gradeFilter={gradeFilter ?? "all"}
+        statusFilter={statusFilter ?? "all"}
+        goalQuery={goalQuery ?? ""}
+        sortKey={sortKey}
+        atRiskCount={atRiskCount}
+        pendingReviewCount={pendingReviewCount ?? 0}
+      />
     </CounselorNavShell>
   );
 }

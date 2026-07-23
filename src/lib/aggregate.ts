@@ -51,3 +51,40 @@ export function computeGradeAggregates(
     };
   });
 }
+
+export interface SchoolWideAggregate {
+  studentCount: number;
+  avgGpa: number | null;
+  avgTimelineCompletionPct: number | null;
+  atRiskCount: number;
+}
+
+// School-wide (not just per-grade) rollup (Software_Timeline.md 8) -- weighted
+// by each grade's student count so a small grade doesn't skew the school
+// average as much as a large one. Cross-*year* rollups (e.g. for a board
+// presentation comparing this year to last) would need admissions-cycle-
+// partitioned history this app doesn't track yet -- this is the cross-grade
+// half of that ask, buildable today from data already on hand.
+export function computeSchoolWideAggregate(gradeAggregates: GradeAggregate[]): SchoolWideAggregate {
+  const studentCount = gradeAggregates.reduce((sum, g) => sum + g.studentCount, 0);
+  const atRiskCount = gradeAggregates.reduce((sum, g) => sum + g.atRiskCount, 0);
+
+  const gpaWeighted = gradeAggregates.filter((g) => g.avgGpa !== null);
+  const avgGpa = gpaWeighted.length
+    ? Number(
+        (gpaWeighted.reduce((sum, g) => sum + g.avgGpa! * g.studentCount, 0) /
+          gpaWeighted.reduce((sum, g) => sum + g.studentCount, 0)
+        ).toFixed(2)
+      )
+    : null;
+
+  const completionWeighted = gradeAggregates.filter((g) => g.avgTimelineCompletionPct !== null);
+  const avgTimelineCompletionPct = completionWeighted.length
+    ? Math.round(
+        completionWeighted.reduce((sum, g) => sum + g.avgTimelineCompletionPct! * g.studentCount, 0) /
+          completionWeighted.reduce((sum, g) => sum + g.studentCount, 0)
+      )
+    : null;
+
+  return { studentCount, avgGpa, avgTimelineCompletionPct, atRiskCount };
+}

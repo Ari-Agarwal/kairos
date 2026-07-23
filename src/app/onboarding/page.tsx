@@ -21,6 +21,19 @@ const ROUND_TITLES = ["Getting to know you", "The basics", "Major", "Extracurric
 const GRADE_LEVELS = ["Freshman", "Sophomore", "Junior", "Senior"];
 const EC_LENGTHS = ["Less than 1 year", "1 year", "2 years", "3 years", "4+ years"];
 
+// Software_Timeline.md Section 11: optional, skippable applicant-type flag so
+// a student who isn't a standard first-time freshman/senior applicant isn't
+// silently run through freshman-framed timeline/matches prompts. "standard"
+// is the default/skip value, not a forced choice.
+const APPLICANT_TYPES: { value: string; label: string }[] = [
+  { value: "standard", label: "First-time (standard)" },
+  { value: "transfer", label: "Transfer student" },
+  { value: "homeschooled", label: "Homeschooled" },
+  { value: "international", label: "International student" },
+  { value: "recruited_athlete", label: "Recruited athlete" },
+  { value: "gap_year", label: "Returning after a gap year" },
+];
+
 interface Activity {
   idea: string;
   length: string;
@@ -48,6 +61,9 @@ export default function OnboardingPage() {
   const [careerGoals, setCareerGoals] = useState("");
   const [showCareerQuiz, setShowCareerQuiz] = useState(false);
   const [useChatIntake, setUseChatIntake] = useState(false);
+
+  const [applicantType, setApplicantType] = useState("standard");
+  const [accessibilityPref, setAccessibilityPref] = useState("");
 
   const [activities, setActivities] = useState<Activity[]>([{ idea: "", length: "" }]);
 
@@ -199,9 +215,29 @@ export default function OnboardingPage() {
     // left null here -- they're not needed for a first real match, and are
     // collected afterward via ProfileCompletenessModal -> /profile?edit=true
     // rather than blocking account creation.
+    // Student referral loop (Software_Timeline.md 6b) -- ?ref=<code> is set
+    // by an existing student's invite link (dashboard). Resolved to a
+    // user_id here rather than trusted as one directly from the URL, since
+    // an arbitrary query param shouldn't be able to claim an arbitrary FK.
+    let referredByUserId: string | null = null;
+    const refCode = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("ref") : null;
+    if (refCode) {
+      try {
+        const res = await fetch("/api/referral/resolve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: refCode }),
+        });
+        if (res.ok) referredByUserId = (await res.json()).userId ?? null;
+      } catch {
+        // Referral attribution is a nice-to-have, never a blocker on account creation.
+      }
+    }
+
     const { error } = await supabase.from("profiles").insert({
       user_id: user.id,
       display_name: fullName || user.email || null,
+      referred_by_user_id: referredByUserId,
       grade_level: gradeLevel,
       unweighted_gpa: parseFloat(unweightedGpa),
       weighted_gpa: parseFloat(weightedGpa),
@@ -213,6 +249,8 @@ export default function OnboardingPage() {
       act_score: actScore ? parseInt(actScore, 10) : null,
       career_goals: careerGoals || null,
       financial_aid_need: financialAidNeed,
+      applicant_type: applicantType !== "standard" ? applicantType : null,
+      accessibility_pref: accessibilityPref.trim() || null,
     });
 
     if (error) {
@@ -310,6 +348,40 @@ export default function OnboardingPage() {
               value={beyondTranscript}
               onChange={(e) => setBeyondTranscript(e.target.value)}
               className={`${inputClass} resize-none`}
+            />
+          </div>
+          <div>
+            <label htmlFor="ob-applicant-type" className="block text-sm text-text-gray mb-1">
+              Which of these describes you? <span className="text-text-gray/70">— optional</span>
+            </label>
+            <p className="text-text-gray text-xs mb-2">
+              We&apos;ll shape your timeline and matches to fit — leave this as-is if none apply.
+            </p>
+            <select
+              id="ob-applicant-type"
+              value={applicantType}
+              onChange={(e) => setApplicantType(e.target.value)}
+              className={inputClass}
+            >
+              {APPLICANT_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="ob-accessibility" className="block text-sm text-text-gray mb-1">
+              Anything about campus accessibility or disability services that matters to your search? <span className="text-text-gray/70">— optional</span>
+            </label>
+            <input
+              id="ob-accessibility"
+              type="text"
+              placeholder="e.g. strong disability services office, physically accessible campus"
+              value={accessibilityPref}
+              onChange={(e) => setAccessibilityPref(e.target.value)}
+              maxLength={500}
+              className={inputClass}
             />
           </div>
         </>

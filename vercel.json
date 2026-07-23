@@ -7,6 +7,14 @@
     {
       "path": "/api/cron/aggregate-snapshot",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/waitlist-nurture",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/reengagement",
+      "schedule": "0 15 * * *"
     }
   ]
 }

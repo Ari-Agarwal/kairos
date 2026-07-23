@@ -1,6 +1,6 @@
 import { NextResponse, after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getAnthropic, MODEL, LOGISTICS_PROMPT, STRATEGIC_PROMPT, extractJson } from "@/lib/anthropic";
+import { getAnthropic, MODEL, PROMPT_VERSION, LOGISTICS_PROMPT, STRATEGIC_PROMPT, extractJson } from "@/lib/anthropic";
 import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isTrustedOrigin } from "@/lib/origin-check";
@@ -19,6 +19,8 @@ interface TimelineEntry {
   school_tags: string[];
   why_text: string;
   what_to_do: string[];
+  is_recurring?: boolean;
+  is_financial_aid?: boolean;
 }
 
 export async function GET(req: Request) {
@@ -57,6 +59,7 @@ export async function POST(req: Request) {
   // Optional "what would you like different" explanation from the timeline
   // page's regenerate flow -- edits the timeline rather than a blind redo.
   let feedback: string | null = null;
+  let isRegenerate = false;
   try {
     const body = await req.json().catch(() => ({}));
     if (typeof body?.feedback === "string" && body.feedback.trim().length > 0) {
@@ -66,6 +69,7 @@ export async function POST(req: Request) {
       rejectScriptTags(body.feedback, "feedback");
       feedback = body.feedback.trim();
     }
+    isRegenerate = body?.isRegenerate === true;
   } catch (err) {
     if (err instanceof ValidationError) return NextResponse.json({ error: err.message }, { status: 400 });
     throw err;
@@ -155,7 +159,8 @@ First-generation student: ${profile.first_gen === null ? "not specified" : profi
 Legacy school: ${profile.legacy_school ?? "none"}
 Schools already considering: ${profile.schools_already_considering ?? "not specified"}
 Internships / research experience: ${profile.internships_research ?? "not specified"}
-${feedback ? `\nThe student was asked "what would you like different in your timeline?" and said: "${feedback}" -- edit the timeline to reflect this rather than ignoring it, but don't fabricate false urgency or drop the grade-level scoping rules below just to satisfy it.\n` : ""}
+Applicant type: ${profile.applicant_type ?? "standard (first-time freshman/senior applicant)"}
+${feedback ? `\n${isRegenerate ? `The student was asked "what should change from your current timeline?" and said: "${feedback}" -- this is a correction to the timeline they already have, so directly address it (fix the missing/wrong item, reorder, or thin it out as asked)` : `The student was asked "what would you like different in your timeline?" and said: "${feedback}" -- edit the timeline to reflect this rather than ignoring it`}, but don't fabricate false urgency or drop the grade-level scoping rules below just to satisfy it.\n` : ""}
 Matched schools:
 ${confirmedMatches.map((m) => `- ${m.school_name} (${m.category})`).join("\n")}
 
@@ -248,6 +253,9 @@ ${confirmedMatches
       is_strategic: false,
       why_text: i.why_text,
       what_to_do: i.what_to_do,
+      is_recurring: i.is_recurring ?? false,
+      is_financial_aid: i.is_financial_aid ?? false,
+      prompt_version: PROMPT_VERSION,
     })),
     ...strategic_advice.map((i) => ({
       user_id: userId,
@@ -258,6 +266,9 @@ ${confirmedMatches
       is_strategic: true,
       why_text: i.why_text,
       what_to_do: i.what_to_do,
+      is_recurring: i.is_recurring ?? false,
+      is_financial_aid: false,
+      prompt_version: PROMPT_VERSION,
     })),
   ];
 

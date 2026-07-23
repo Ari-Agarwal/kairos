@@ -88,6 +88,24 @@ export default async function TimelinePage() {
   const remaining = isPremium ? null : Math.max(0, 3 - (regenRow?.timeline_count ?? 0));
   const youAreHereId = items ? computeYouAreHere(items as TimelineItem[]) : null;
 
+  // Check-in streak (Software_Timeline.md 6b) -- weekly, not daily, since a
+  // daily-streak framing would punish the normal weekly-ish cadence of this
+  // process. Advancing/resetting on page load rather than a background job
+  // keeps this in one place with no extra infra.
+  const currentWeek = weekStart();
+  let checkinStreakWeeks = profile.checkin_streak_weeks ?? 0;
+  if (profile.last_checkin_week !== currentWeek) {
+    const lastWeekDate = new Date(currentWeek);
+    lastWeekDate.setUTCDate(lastWeekDate.getUTCDate() - 7);
+    const previousWeek = lastWeekDate.toISOString().slice(0, 10);
+    checkinStreakWeeks = profile.last_checkin_week === previousWeek ? checkinStreakWeeks + 1 : 1;
+    const { error: streakUpdateError } = await supabase
+      .from("profiles")
+      .update({ checkin_streak_weeks: checkinStreakWeeks, last_checkin_week: currentWeek })
+      .eq("user_id", user.id);
+    if (streakUpdateError) console.error("timeline streak update failed:", streakUpdateError);
+  }
+
   return (
     <NavShell>
       <TimelineClient
@@ -96,6 +114,7 @@ export default async function TimelinePage() {
         youAreHereId={youAreHereId}
         remaining={remaining}
         initialJobStatus={job?.status === "pending" ? "pending" : null}
+        checkinStreakWeeks={checkinStreakWeeks}
       />
     </NavShell>
   );

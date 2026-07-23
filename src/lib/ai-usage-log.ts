@@ -1,6 +1,11 @@
 // Structured AI usage logging. Logs metadata only — never essay text,
 // profile content, or any user-supplied free-form data.
-// Shape is a single JSON line to stdout so log aggregators can parse it.
+// Shape is a single JSON line to stdout so log aggregators can parse it,
+// and (best-effort, fire-and-forget) persisted to ai_usage_log so a real
+// cost/volume dashboard (Software_Timeline.md 6d) can query it -- callers
+// stay synchronous, the DB write never blocks or fails the request.
+
+import { createServiceClient } from "@/lib/supabase/server";
 
 export interface AiUsageRecord {
   event: "ai_usage";
@@ -62,6 +67,22 @@ export function logAiUsage(
   }
 
   console.log(JSON.stringify(record));
+
+  void createServiceClient()
+    .from("ai_usage_log")
+    .insert({
+      endpoint: record.endpoint,
+      user_id: record.user_id,
+      model: record.model,
+      latency_ms: record.latency_ms,
+      input_tokens: record.input_tokens,
+      output_tokens: record.output_tokens,
+      success: record.success,
+      error: record.error ?? null,
+    })
+    .then(({ error }) => {
+      if (error) console.error("ai_usage_log insert failed:", error);
+    });
 }
 
 // Flag if a single user has issued an unusually high number of AI calls

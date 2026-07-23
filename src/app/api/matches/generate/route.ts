@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getAnthropic, MODEL, schoolMatchingPrompt } from "@/lib/anthropic";
+import { getAnthropic, MODEL, PROMPT_VERSION, schoolMatchingPrompt } from "@/lib/anthropic";
 import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
 import { canRegenerate, weekStart } from "@/lib/access";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -26,6 +26,7 @@ interface SchoolResult {
     major_fit: string;
     social_fit: string;
   };
+  confidence: "low" | "moderate" | "high";
 }
 
 interface Profile {
@@ -71,6 +72,7 @@ export async function POST(req: Request) {
   // unlike every other free-text field in the app this one is allowed to be
   // empty, so it's validated by hand rather than via requireString.
   let feedback: string | null = null;
+  let isRegenerate = false;
   try {
     const body = await req.json().catch(() => ({}));
     if (typeof body?.feedback === "string" && body.feedback.trim().length > 0) {
@@ -80,6 +82,7 @@ export async function POST(req: Request) {
       rejectScriptTags(body.feedback, "feedback");
       feedback = body.feedback.trim();
     }
+    isRegenerate = body?.isRegenerate === true;
   } catch (err) {
     if (err instanceof ValidationError) return NextResponse.json({ error: err.message }, { status: 400 });
     throw err;
@@ -121,6 +124,21 @@ export async function POST(req: Request) {
     );
   }
 
+  // Schools the student locked stay untouched by this regenerate -- fetched
+  // up front so the prompt tells the model not to re-suggest them (it would
+  // otherwise duplicate a school already staying on the list) and so the
+  // insert below can skip re-adding them under a fresh, possibly-conflicting
+  // assessment.
+  const { data: lockedRows, error: lockedRowsError } = await supabase
+    .from("school_matches")
+    .select("school_name")
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .eq("locked", true);
+  if (lockedRowsError) console.error("matches generate locked-rows query failed:", lockedRowsError);
+  const lockedNamesOriginal = (lockedRows ?? []).map((r) => r.school_name);
+  const lockedNames = new Set(lockedNamesOriginal.map((n) => n.trim().toLowerCase()));
+
   const missing = missingFields(profile);
   const userMessage = `Student profile:
 Grade level: ${profile.grade_level}
@@ -145,7 +163,8 @@ Internships / research experience: ${profile.internships_research ?? "not given"
 Campus size preference: ${profile.campus_size_pref?.length ? profile.campus_size_pref.join(" or ") : "no preference given"}
 Campus setting preference: ${profile.campus_setting_pref?.length ? profile.campus_setting_pref.join(" or ") : "no preference given"}
 ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}
-${feedback ? `\nThe student was asked "what are you looking for in your matches?" and said: "${feedback}" — weigh this alongside the profile above; don't let it override hard constraints like GPA/test-score realism, but do let it steer emphasis (e.g. toward a specific region, school size, or program strength).` : ""}`;
+${lockedNames.size > 0 ? `\nThe student has locked in the following schools already on their list -- they are staying regardless of this generation, so do NOT include them in your results: ${lockedNamesOriginal.join(", ")}.` : ""}
+${feedback ? `\n${isRegenerate ? `The student was asked "what should change from your last list?" and said: "${feedback}" — this is feedback on the list they just saw, so treat it as a direct correction (e.g. if they said "too many reach schools," shift the new list's balance accordingly), not just a general preference.` : `The student was asked "what are you looking for in your matches?" and said: "${feedback}"`} Weigh this alongside the profile above; don't let it override hard constraints like GPA/test-score realism, but do let it steer emphasis (e.g. toward a specific region, school size, or program strength).` : ""}`;
 
   const CATEGORIES = ["reach", "target", "safety"] as const;
 
@@ -174,8 +193,14 @@ ${feedback ? `\nThe student was asked "what are you looking for in your matches?
                 },
                 required: ["gpa_comparison", "course_rigor", "ec_strength", "major_fit", "social_fit"],
               },
+              confidence: {
+                type: "string" as const,
+                enum: ["low", "moderate", "high"],
+                description:
+                  "How confident this specific estimate is, based on how much real data backs it -- 'low' when key inputs (test scores, GPA, or a clear major) are missing or the school's admitted-range data is thin/uncertain; 'high' only when GPA, test scores, and major are all known and the school's real acceptance data is well-established; 'moderate' otherwise.",
+              },
             },
-            required: ["name", "percentage", "why_text", "factors"],
+            required: ["name", "percentage", "why_text", "factors", "confidence"],
           },
         },
       },
@@ -273,15 +298,24 @@ ${feedback ? `\nThe student was asked "what are you looking for in your matches?
     return NextResponse.json({ error: "Failed to generate matches. Please try again." }, { status: 502 });
   }
 
+  // Which categories never produced a usable list after both attempts --
+  // surfaced to the client so a missing safety/reach tier reads as "we
+  // couldn't generate this" rather than silently looking identical to "the
+  // model judged you don't need one" (the two are indistinguishable from the
+  // match list alone).
+  const failedCategories = CATEGORIES.filter((_, i) => settled[i].status === "rejected");
+
   const seen = new Set<string>();
   const schools = byCategory.flat().filter((s) => {
     const key = s.name.trim().toLowerCase();
-    if (seen.has(key)) return false;
+    if (seen.has(key) || lockedNames.has(key)) return false;
     seen.add(key);
     return true;
   });
 
-  await supabase.from("school_matches").update({ is_active: false }).eq("user_id", userId);
+  // Locked rows are excluded from the deactivate sweep entirely, so a locked
+  // school (and its real assessment) stays exactly as-is through a regenerate.
+  await supabase.from("school_matches").update({ is_active: false }).eq("user_id", userId).eq("locked", false);
 
   const rows = schools.map((s) => ({
     user_id: userId,
@@ -290,7 +324,9 @@ ${feedback ? `\nThe student was asked "what are you looking for in your matches?
     percentage: s.percentage,
     why_text: s.why_text,
     factors: s.factors,
+    confidence: s.confidence,
     is_active: true,
+    prompt_version: PROMPT_VERSION,
   }));
 
   const { error: insertError } = await supabase.from("school_matches").insert(rows);
@@ -302,5 +338,5 @@ ${feedback ? `\nThe student was asked "what are you looking for in your matches?
     .from("regeneration_log")
     .upsert({ user_id: userId, week_start_date: week, count: currentCount + 1 });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, failedCategories });
 }

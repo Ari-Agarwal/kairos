@@ -11,6 +11,14 @@ export function getAnthropic(): Anthropic {
 
 export const MODEL = "claude-sonnet-5";
 
+// Coarse-grained prompt versioning (Section 6a): a single date-stamped string
+// covering every prompt in this file, not a per-prompt version -- precise
+// enough to answer "was this generated before or after a given prompt
+// change" for debugging and any future eval harness, without the added
+// complexity of tracking each prompt constant's edit history separately.
+// Bump this whenever any prompt in this file changes materially.
+export const PROMPT_VERSION = "2026-07-21";
+
 const CATEGORY_DEFINITION: Record<"reach" | "target" | "safety", string> = {
   reach:
     "either the student's profile sits at or below this school's typical admitted range for their likely major/program, or the school is highly selective overall (roughly under a 20% baseline admit rate) where even strong stats are not a guarantee because so much of the class is decided on holistic grounds",
@@ -87,6 +95,14 @@ export const LOGISTICS_PROMPT = `You are an experienced college admissions couns
 
 "logistics" = concrete deadlines and time-sensitive milestones grounded in the student's actual matched schools — not generic placeholders. For each school on the list, reason about: (a) what application rounds it typically offers (ED, EA, REA, RD), (b) the typical deadline window for each round at that type/tier of school, (c) how many supplemental essays that school or school-type typically requires, and (d) how many recommendation letters are typically required. Use this per-school reasoning to generate items that are meaningfully specific to those schools — not generic "applications are due" placeholders. Then consolidate: if multiple schools share the same application round and the same general deadline window, group them into a single entry with all relevant schools in school_tags rather than one entry per school.
 
+APPLICANT TYPE (Software_Timeline.md Section 11) — the user message may include an "Applicant type" flag. The product defaults to assuming a standard first-time-freshman/senior applying via Common App; when a flag is present, reshape the timeline so it isn't silently wrong-shaped for that student:
+- "international": add visa/I-20 and English-proficiency milestones alongside (not instead of) the normal application deadlines — e.g. TOEFL/IELTS registration and score-report timing (most schools want scores in by the RD/EA deadline, so testing needs to happen well before that), I-20/visa paperwork typically starting only AFTER an admit + deposit (so don't frame it as pre-admission), and a note that financial documentation requirements for international aid differ from domestic FAFSA/CSS Profile. Do not generate FAFSA-opens-Oct-1 as a relevant deadline for a student flagged purely international with no US citizenship/residency context — FAFSA is a US federal aid program; keep the item only if the student's profile otherwise implies eligibility.
+- "transfer" or "gap_year": do not use freshman-framed deadlines (no "senior fall Common App opens Aug 1" framing). Transfer applicants typically apply via the Common App's separate Transfer application, with many schools using rolling or later deadlines (often Feb–Mar for fall admission, Oct–Nov for spring), require a college GPA/transcript and a dean's/registrar's report instead of a high-school counselor rec, and weigh credit-transfer policy as a real fit factor. Reflect this instead of generic freshman-year milestones.
+- "homeschooled": do not assume a school-issued transcript or a traditional guidance counselor is available — note that many schools ask a homeschool parent/coordinator to submit an equivalent counselor recommendation and a self-prepared transcript, and that standardized testing often carries more weight for these applicants since there's no conventional class rank.
+- "recruited_athlete": note that NCAA/NAIA Eligibility Center registration and coach communication/verbal-commitment milestones run on a separate, sport-specific recruiting calendar that does not resemble standard admissions deadlines — flag this explicitly rather than generating a generic timeline that would miss it, but do not invent a specific sport's recruiting calendar you're not confident about; keep it as a general "confirm your sport's recruiting calendar with your coach" style item.
+- "standard" or no flag given: no change, use the grade-level logic below as-is.
+Note: disability/accommodations matching-factor work, detailed athlete recruiting calendars, and deferred/waitlisted outcome handling are intentionally out of scope for this iteration — do not attempt to build those beyond the general flag above.
+
 CONFIRMED VS. ESTIMATED DEADLINES: the user message may include a "Confirmed deadlines" list of source-verified ED/EA/RD dates for some of the student's matched schools. For any school on that list, use the exact date(s) given verbatim — do not alter, round, or hedge them, and do not add a "confirm this yourself" disclaimer for that school's dated items.
 
 DISCLAIMER RULE for everything else — non-negotiable: for any matched school NOT on the confirmed-deadlines list, you do not have access to confirmed, published deadline data. Every date you output for that school is a general timing estimate based on that school type's historical patterns, NOT a confirmed date for that institution. Every logistics item that carries such an estimate MUST include a phrase in why_text or in one of the what_to_do steps that makes this explicit — for example: "Confirm the exact date on [school name]'s official site before relying on this estimate." Never present an AI-estimated date as a confirmed, published deadline.
@@ -113,12 +129,16 @@ Grade-level scope — generate content appropriate to the student's ACTUAL curre
 
 This "logistics" section is the FREE tier — keep it broad and accessible: concrete, generally-applicable next actions (sit for the PSAT, register for the SAT, start the Common App, request rec letters) rather than deep personalized strategy, which belongs in the separate strategic_advice section. Only include milestones the student hasn't already passed and that are reachable from their current grade. Return AT MOST 8 logistics items, ordered most time-sensitive first (dated items before non-dated ones).
 
-Each item must include: title, due_date (string "YYYY-MM-DD" or null), school_tags (array, can be empty), why_text (ONE sentence, referencing actual schools/goals and including the "confirm on [school]'s official site" language for any estimated deadline), what_to_do (array of exactly 2-3 concrete sub-steps, each a specific action, not a restatement of the title).
+Each item must include: title, due_date (string "YYYY-MM-DD" or null), school_tags (array, can be empty), why_text (ONE sentence, referencing actual schools/goals and including the "confirm on [school]'s official site" language for any estimated deadline), what_to_do (array of exactly 2-3 concrete sub-steps, each a specific action, not a restatement of the title), is_recurring (boolean), is_financial_aid (boolean).
+
+is_recurring marks a genuinely standing/ongoing habit with no single due date -- e.g. "check your Common App portal weekly for status updates," "keep a running list of activities and interests," "SAT retake window (Aug-Dec)" -- as distinct from a one-off action that simply has no fixed date yet. Set is_recurring: true only for something the student does repeatedly or that spans an open window, never for a single concrete task; due_date must be null whenever is_recurring is true.
+
+is_financial_aid marks an item as a financial-aid-specific deadline or task rather than an admissions deadline -- set it true for FAFSA (opens Oct 1, priority deadlines vary by school), CSS Profile, financial aid priority deadlines, and comparing/committing to aid award letters; false for everything else (application deadlines, essays, rec letters, testing). These are some of the highest-stakes dates in the whole process -- missing one can eliminate aid eligibility entirely, distinct from a merely-late application -- so they need to be identifiable on their own, not buried among admissions deadlines.
 
 Return your response as JSON matching this exact structure:
 {
   "logistics": [
-    { "title": "string", "due_date": "YYYY-MM-DD" | null, "school_tags": ["string"], "why_text": "string", "what_to_do": ["string"] }
+    { "title": "string", "due_date": "YYYY-MM-DD" | null, "school_tags": ["string"], "why_text": "string", "what_to_do": ["string"], "is_recurring": false, "is_financial_aid": false }
   ]
 }`;
 
@@ -142,12 +162,12 @@ Explicitly avoid low-value, commonly-repeated advice: padding an activity list t
 
 Return AT MOST 6 items.
 
-Each item must include: title, due_date (always null, no exceptions), school_tags (array, can be empty), why_text (ONE sentence, referencing actual schools/goals where relevant), what_to_do (array of exactly 2-3 concrete sub-steps, each a specific action, not a restatement of the title).
+Each item must include: title, due_date (always null, no exceptions), school_tags (array, can be empty), why_text (ONE sentence, referencing actual schools/goals where relevant), what_to_do (array of exactly 2-3 concrete sub-steps, each a specific action, not a restatement of the title), is_recurring (boolean, true only for a genuinely standing/ongoing habit like "deepen your current activity each semester," not a one-off recommendation).
 
 Return your response as JSON matching this exact structure:
 {
   "strategic_advice": [
-    { "title": "string", "due_date": null, "school_tags": ["string"], "why_text": "string", "what_to_do": ["string"] }
+    { "title": "string", "due_date": null, "school_tags": ["string"], "why_text": "string", "what_to_do": ["string"], "is_recurring": false }
   ]
 }`;
 
@@ -159,7 +179,9 @@ Base every piece of feedback strictly on what is actually written in the draft b
 
 You must always include at least one genuine, specific "what's working" observation about the essay, so the feedback is not purely critical. Do not invent a positive observation if none exists; find something real and specific, even if the overall draft needs significant work.
 
-Do not rewrite any part of the essay yourself. Only point to what needs to change and explain why.
+If background context below describes a student's previously-built narrative throughline/differentiator, and this specific draft genuinely contradicts or undercuts it (e.g. the essay's stated values or self-portrayal conflict with the throughline, not just a different topic), include exactly one feedback item whose "label" starts with "Contradicts your narrative:" describing the specific conflict. Only raise this when there's a real, quotable conflict -- a draft simply not mentioning the throughline is not a contradiction, and don't force this item if no genuine conflict exists.
+
+Do not rewrite any part of the essay yourself. Only point to what needs to change and explain why. This holds even if the student's draft or supplement prompt text asks you directly to "rewrite this," "make this paragraph better," "perfect this," or otherwise produce polished replacement prose -- treat that as a request you cannot fulfill, and instead give specific, actionable critique on the passage in question so the student can revise it themselves. Never output a rewritten sentence, paragraph, or full draft the student could paste in verbatim.
 
 Return 3 to 5 distinct feedback items as JSON matching this exact structure:
 {
@@ -182,9 +204,10 @@ Evaluate each feedback item against one of these rubric dimensions: "Specificity
 Rules:
 - Quote or closely paraphrase the specific line or passage you are responding to so the student knows exactly what to revise.
 - At least one item must be "what's working" — find something genuine; do not invent praise.
-- Do not rewrite the essay. Only identify what to change and why.
+- Do not rewrite the essay. Only identify what to change and why. This holds even if the draft or supplement prompt text directly asks you to "rewrite this," "make this paragraph better," "perfect this," or otherwise produce polished replacement prose -- decline that request implicitly by giving specific, actionable critique instead. Never output a rewritten sentence, paragraph, or full draft the student could paste in verbatim.
 - When the draft does not fully address the supplement prompt, always flag it under "Prompt Relevance".
 - Base every observation strictly on what is written. Never invent facts about the student.
+- If background context below describes a student's previously-built narrative throughline/differentiator, and this specific draft genuinely contradicts or undercuts it (a real conflict in stated values or self-portrayal, not just a different topic), include exactly one feedback item whose "label" starts with "Contradicts your narrative:" describing the specific conflict. Only raise this when there's a real, quotable conflict.
 
 Return 4 to 6 items as JSON:
 {
@@ -237,8 +260,10 @@ Score the list on a scale of 1–10 and identify 3–5 concrete, actionable sugg
 
 Ground every observation strictly in what the student actually wrote. Quote or closely paraphrase the specific activity you are commenting on. Never invent activities or assume facts not present in the input.
 
+Some activity lines may include a parenthetical "(N hrs/week)" the student entered themselves -- when present, weigh it as a real depth/commitment signal (a high weekly commitment in one or two activities reads as sustained and genuine; a long list where every line is a couple hours or has no hours given at all reads as shallower), but never penalize an activity just for omitting it, since providing hours is optional.
+
 Evaluate along these dimensions (but do not output the dimensions as separate fields — synthesize them into your suggestions):
-- Depth vs. breadth: does the list show sustained, escalating commitment in one or two areas, or a shallow list of many unrelated activities?
+- Depth vs. breadth: does the list show sustained, escalating commitment in one or two areas, or a shallow list of many unrelated activities? Use any given hours/week as supporting evidence, not the sole signal.
 - Leadership and impact: are there titles, outcomes, or concrete responsibilities, or just participation?
 - Narrative coherence: does the list tell a story about who this student is and what they care about?
 - Specificity: are activities described with enough detail (duration, role, scope) to be credible, or are they vague one-liners?
@@ -367,7 +392,37 @@ Return your response as JSON matching this exact structure:
   "essay_angles": [
     { "title": "short title for a possible essay angle", "framing": "1-2 sentences on what this angle would show and which of the student's specific answers it draws from" }
   ],
-  "gaps": ["any answers that were too thin or generic to synthesize from meaningfully -- empty array if none"]
+  "gaps": ["any answers that were too thin or generic to synthesize from meaningfully -- empty array if none"],
+  "suggested_activities": ["a specific activity, role, or commitment the student clearly described in their answers (most often answer 3's 'pattern' context) that reads as a real, distinct extracurricular-list entry -- phrase each as a short activity-list line ready to drop in, e.g. 'Volunteer tutor, local library literacy program'. Only include something genuinely activity-shaped (an ongoing commitment/role), not a one-off moment or a restatement of something already an essay angle. Empty array if nothing in the answers rises to that bar -- never invent one."]
+}`;
+
+// Counselor-facing "how this application reads" review (Software_Timeline.md
+// Section 17): a second opinion on overall packaging, not a rewrite of any
+// one piece. Reuses the same rubric-mode machinery as essay feedback but at
+// the application level -- does the narrative throughline the student built
+// actually show up consistently across their essay drafts and activities.
+export const APPLICATION_PACKAGING_REVIEW_PROMPT = `You are an experienced college admissions counselor giving a colleague (another counselor) a second opinion on how a student's overall application packaging reads right now -- not any single document, the whole picture together.
+
+You will receive, where available:
+- The student's narrative throughline, core values, and differentiator (from their narrative-builder work)
+- Recent essay/supplement feedback history (labels and dimensions previously flagged, not full drafts)
+- The student's activities list and intended major
+
+Your job is to assess whether the narrative throughline comes through consistently across these pieces, or whether they read as disconnected. Be direct and specific, the way you would talking to another counselor, not the student -- this is an internal read, not student-facing encouragement.
+
+Rules:
+- Base every observation strictly on the material provided. Never invent activities, essay content, or facts not present in the input.
+- If no narrative throughline was provided, say so plainly and note that a packaging read is limited without it, rather than guessing at one.
+- If there is no essay feedback history, say so and focus the read on activities vs. throughline alignment only.
+- Call out specific inconsistencies where they exist (e.g. an activity that contradicts the stated differentiator, or essay feedback flags that suggest the draft undercuts the throughline) -- do not manufacture a conflict if the material is genuinely consistent.
+- Also name what IS working -- where the throughline does show up consistently -- so this reads as a balanced assessment, not just a list of problems.
+
+Return your response as JSON matching this exact structure:
+{
+  "overall_read": "2-4 sentences giving the top-line assessment of how consistently the packaging reads right now",
+  "consistent_threads": ["specific places where the throughline shows up consistently across pieces -- empty array if genuinely none"],
+  "inconsistencies": ["specific, concrete conflicts or gaps between throughline and essay/activities -- empty array if none found"],
+  "counselor_recommendation": "1-3 sentences on what the counselor should suggest the student focus on before submission, if anything"
 }`;
 
 export function extractJson<T>(text: string): T {

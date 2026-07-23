@@ -13,6 +13,8 @@ const ROWS = [
   { label: "Regenerations", free: "3/week", premium: "Unlimited" },
   { label: "Career path explorer", free: false, premium: true },
   { label: "Essay feedback", free: false, premium: true },
+  { label: "Mock interview practice", free: false, premium: true },
+  { label: "Activity evaluation", free: false, premium: true },
 ];
 
 function Cell({ value }: { value: boolean | string }) {

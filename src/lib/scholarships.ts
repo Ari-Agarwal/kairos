@@ -86,6 +86,13 @@ export function getAllScholarships(): Scholarship[] {
   return scholarshipData.scholarships as Scholarship[];
 }
 
+// Data-freshness surfacing (Software_Timeline.md 6g) -- the dataset already
+// carries a verified_date in its own _meta block; this was never actually
+// shown to students.
+export function getScholarshipDataVerifiedDate(): string | null {
+  return (scholarshipData as { _meta?: { verified_date?: string } })._meta?.verified_date ?? null;
+}
+
 // Heuristic-only "does this look relevant to you" flag -- deliberately never
 // hides a scholarship outright, since a false negative here costs a student
 // real money in a way a false positive doesn't.
@@ -97,13 +104,22 @@ export function isLikelyMatch(scholarship: Scholarship, profile: ScholarshipProf
 // previously had no visible rationale, so a student had no way to tell if it
 // was a good guess or a coin flip.
 export function getMatchReason(scholarship: Scholarship, profile: ScholarshipProfile): string | null {
+  return getMatchFactors(scholarship, profile)[0] ?? null;
+}
+
+// Every independent, legible reason the profile lines up with this
+// scholarship's stated eligibility -- unlike getMatchReason (first hit only),
+// this collects all of them so getFitTier can tell "one coincidental overlap"
+// apart from "multiple independent eligibility factors confirmed."
+function getMatchFactors(scholarship: Scholarship, profile: ScholarshipProfile): string[] {
   const text = scholarship.eligibility_summary.toLowerCase();
+  const factors: string[] = [];
 
   if (profile.first_gen === true && (text.includes("first-generation") || text.includes("financial need") || text.includes("low-income"))) {
-    return "You indicated you're a first-generation student, and this scholarship considers that.";
+    factors.push("You indicated you're a first-generation student, and this scholarship considers that.");
   }
   if (profile.financial_aid_need === true && (text.includes("financial need") || text.includes("need-based") || text.includes("low-income") || text.includes("pell"))) {
-    return "You indicated financial need, and this scholarship is need-based.";
+    factors.push("You indicated financial need, and this scholarship is need-based.");
   }
   const majorMatch = profile.intended_major?.find((m) => {
     const major = m.toLowerCase();
@@ -112,12 +128,40 @@ export function getMatchReason(scholarship: Scholarship, profile: ScholarshipPro
     );
   });
   if (majorMatch) {
-    return `Your intended major (${majorMatch}) lines up with this scholarship's eligibility.`;
+    factors.push(`Your intended major (${majorMatch}) lines up with this scholarship's eligibility.`);
   }
   if (profile.extracurriculars?.some((ec) => text.includes("rotc") && ec.toLowerCase().includes("rotc"))) {
-    return "Your ROTC activity matches this scholarship's eligibility.";
+    factors.push("Your ROTC activity matches this scholarship's eligibility.");
   }
-  return null;
+  return factors;
+}
+
+export type FitTier = "Strong Fit" | "Possible" | "Reach";
+
+export interface FitAssessment {
+  tier: FitTier;
+  reason: string;
+}
+
+// A rough, legible fit tier mirroring how school matches reason about
+// reach/target/safety fit -- built on the same eligibility factors as
+// getMatchReason/isLikelyMatch above (never a hidden AI guess), just graduated
+// instead of a single true/false "likely match" flag. "Reach" here means
+// eligibility is genuinely ambiguous from what we know, not "hard to win" --
+// deliberately never tells a student they're ineligible, since a false
+// negative costs real money in a way a false positive doesn't.
+export function getFitTier(scholarship: Scholarship, profile: ScholarshipProfile): FitAssessment {
+  const factors = getMatchFactors(scholarship, profile);
+  if (factors.length >= 2) {
+    return { tier: "Strong Fit", reason: factors.join(" ") };
+  }
+  if (factors.length === 1) {
+    return { tier: "Possible", reason: factors[0] };
+  }
+  return {
+    tier: "Reach",
+    reason: "Nothing in your profile confirms eligibility here — check the source link for the exact requirements.",
+  };
 }
 
 const MONTH_ORDER: Record<string, number> = {

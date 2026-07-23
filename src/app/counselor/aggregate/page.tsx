@@ -4,9 +4,19 @@ import { getCounselorRecord } from "@/lib/access";
 import CounselorNavShell from "@/components/CounselorNavShell";
 import AggregateClient, { type SchoolTally } from "./AggregateClient";
 import { computeFlags } from "@/lib/at-risk";
-import { computeGradeAggregates } from "@/lib/aggregate";
+import { computeGradeAggregates, computeSchoolWideAggregate } from "@/lib/aggregate";
 
-export default async function AggregatePage() {
+const TREND_WINDOWS = [7, 14, 30, 90] as const;
+
+export default async function AggregatePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ window?: string }>;
+}) {
+  const { window: windowParam } = await searchParams;
+  const parsedWindow = Number.parseInt(windowParam ?? "7", 10);
+  const trendWindowDays = (TREND_WINDOWS as readonly number[]).includes(parsedWindow) ? parsedWindow : 7;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -80,16 +90,20 @@ export default async function AggregatePage() {
 
   const gradeAggregates = computeGradeAggregates(profiles ?? [], completionByUser, atRiskCountByGrade);
 
-  // Trend vs. ~7 days ago: pick the closest snapshot at or before that date
-  // per grade (cron may not run exactly every day, so don't require an exact
-  // date match) and diff against today's live numbers.
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  // Trend vs. N days ago (default 7, selectable up to 90 -- Software_Timeline.md
+  // 5m's "extend to a longer rolling window once enough snapshot history
+  // accumulates"): pick the closest snapshot at or before that date per grade
+  // (cron may not run exactly every day, so don't require an exact date
+  // match) and diff against today's live numbers. A window longer than the
+  // school's actual snapshot history just yields no matching snapshot --
+  // AggregateClient already renders that as no trend shown, not an error.
+  const windowStart = new Date();
+  windowStart.setDate(windowStart.getDate() - trendWindowDays);
   const { data: pastSnapshots, error: snapshotsError } = await supabase
     .from("aggregate_snapshots")
     .select("grade_level, snapshot_date, avg_timeline_completion_pct, at_risk_count")
     .eq("school_id", counselor.school_id)
-    .lte("snapshot_date", sevenDaysAgo.toISOString().slice(0, 10))
+    .lte("snapshot_date", windowStart.toISOString().slice(0, 10))
     .order("snapshot_date", { ascending: false });
 
   if (snapshotsError) console.error("counselor aggregate snapshots query failed:", snapshotsError);
@@ -125,7 +139,10 @@ export default async function AggregatePage() {
       <AggregateClient
         totalStudents={(profiles ?? []).length}
         gradeAggregates={gradeAggregates}
+        schoolWide={computeSchoolWideAggregate(gradeAggregates)}
         topSchools={topSchools}
+        trendWindowDays={trendWindowDays}
+        trendWindowOptions={[...TREND_WINDOWS]}
       />
     </CounselorNavShell>
   );

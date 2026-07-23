@@ -20,9 +20,21 @@ export default async function MatchesPrepPage() {
   const inlineFields = missing.filter((f) => INLINE_TEXT_FIELDS.includes(f));
   const linkOutFields = missing.filter((f) => !INLINE_TEXT_FIELDS.includes(f));
 
+  const { count: activeMatchCount, error: activeMatchCountError } = await supabase
+    .from("school_matches")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("is_active", true);
+
+  if (activeMatchCountError) console.error("matches prep active match count query failed:", activeMatchCountError);
+
   return (
     <NavShell>
-      <MatchesPrepClient inlineFields={inlineFields} linkOutFields={linkOutFields} />
+      <MatchesPrepClient
+        inlineFields={inlineFields}
+        linkOutFields={linkOutFields}
+        isRegenerate={!!activeMatchCount}
+      />
     </NavShell>
   );
 }

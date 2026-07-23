@@ -47,9 +47,12 @@ interface Profile {
   legacy_school: string | null;
   phone_number: string | null;
   sms_opt_in: boolean;
+  share_narrative_with_counselor: boolean;
   mentor_opt_in: boolean;
   mentor_bio: string | null;
   internships_research: string | null;
+  public_portfolio_enabled: boolean;
+  public_portfolio_token: string | null;
 }
 
 export default function ProfileClient({
@@ -92,6 +95,7 @@ export default function ProfileClient({
   const [majors, setMajors] = useState<string[]>(initialMajors.selected);
   const [majorOther, setMajorOther] = useState(initialMajors.other);
   const [smsOptIn, setSmsOptIn] = useState(profile.sms_opt_in);
+  const [shareNarrativeWithCounselor, setShareNarrativeWithCounselor] = useState(profile.share_narrative_with_counselor);
   const [financialAidNeed, setFinancialAidNeed] = useState<boolean | null>(profile.financial_aid_need);
   const [firstGen, setFirstGen] = useState<boolean | null>(profile.first_gen);
   const [activities, setActivities] = useState<string[]>(
@@ -102,6 +106,10 @@ export default function ProfileClient({
   const [deleting, setDeleting] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [portfolioEnabled, setPortfolioEnabled] = useState(profile.public_portfolio_enabled);
+  const [portfolioToken, setPortfolioToken] = useState(profile.public_portfolio_token);
+  const [portfolioSaving, setPortfolioSaving] = useState(false);
+  const [portfolioCopied, setPortfolioCopied] = useState(false);
 
   function updateActivity(idx: number, value: string) {
     setActivities((prev) => prev.map((a, i) => (i === idx ? value : a)));
@@ -113,6 +121,33 @@ export default function ProfileClient({
 
   function removeActivity(idx: number) {
     setActivities((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  async function handlePortfolioToggle(next: boolean) {
+    setPortfolioSaving(true);
+    try {
+      const res = await fetch("/api/profile/portfolio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: next }),
+      });
+      const d = await res.json();
+      if (res.ok) {
+        setPortfolioEnabled(d.enabled);
+        setPortfolioToken(d.url ? (d.url.split("/portfolio/")[1] ?? null) : portfolioToken);
+      }
+    } finally {
+      setPortfolioSaving(false);
+    }
+  }
+
+  function handlePortfolioCopy() {
+    if (!portfolioToken) return;
+    const url = `${window.location.origin}/portfolio/${portfolioToken}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setPortfolioCopied(true);
+      setTimeout(() => setPortfolioCopied(false), 2000);
+    });
   }
 
   async function handleDeleteAccount() {
@@ -180,6 +215,7 @@ export default function ProfileClient({
         internships_research: form.internships_research || null,
         phone_number: form.phone_number || null,
         sms_opt_in: smsOptIn && !!form.phone_number,
+        share_narrative_with_counselor: shareNarrativeWithCounselor,
         sms_opt_in_at: smsOptIn && form.phone_number ? new Date().toISOString() : null,
         last_profile_check_at: new Date().toISOString(),
       })
@@ -360,6 +396,7 @@ export default function ProfileClient({
           </div>
           <div>
             <label htmlFor="pf-class-rank" className="block text-sm text-text-gray mb-1">Class rank</label>
+            <p className="text-xs text-text-gray/70 mb-1">Most high schools no longer report class rank — leave blank if yours doesn't.</p>
             <input
               id="pf-class-rank"
               type="text"
@@ -502,6 +539,21 @@ export default function ProfileClient({
                 I agree to receive deadline reminders, weekly essay prompts, and odds updates by text
                 message at the number above. Message and data rates may apply. Consent is not
                 required to use Kairos. Reply STOP at any time to opt out.
+              </span>
+            </label>
+          </div>
+          <div>
+            <label className="flex items-start gap-2 text-xs text-text-gray leading-relaxed">
+              <input
+                type="checkbox"
+                checked={shareNarrativeWithCounselor}
+                onChange={(e) => setShareNarrativeWithCounselor(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                Share my Narrative Builder throughline and essay feedback history with my counselor
+                (if I have one). Off by default — turning this on lets them see your qualitative work,
+                not just deadlines and matches.
               </span>
             </label>
           </div>
@@ -710,9 +762,45 @@ export default function ProfileClient({
         <div className="bg-card border border-border rounded-2xl p-5 mb-6">
           <ShareLinksManager />
         </div>
+
+        <div className="bg-card border border-border rounded-2xl p-5 mb-6">
+          <p className="text-text font-medium text-sm mb-1">Public Portfolio</p>
+          <p className="text-text-gray text-xs mb-3">
+            A clean, shareable page with your name, activities, throughline, and interests — good for
+            scholarship applications, a LinkedIn-style profile, or a recommender request. Never includes
+            grades, test scores, financial details, essays, or school lists. Off by default.
+          </p>
+          <label className="flex items-center gap-2 mb-3">
+            <input
+              type="checkbox"
+              checked={portfolioEnabled}
+              disabled={portfolioSaving}
+              onChange={(e) => handlePortfolioToggle(e.target.checked)}
+            />
+            <span className="text-sm text-text">Make my portfolio public</span>
+          </label>
+          {portfolioEnabled && portfolioToken && (
+            <div className="flex items-center gap-2">
+              <input
+                readOnly
+                value={`${typeof window !== "undefined" ? window.location.origin : ""}/portfolio/${portfolioToken}`}
+                className="flex-1 rounded-xl bg-bg border border-border px-3 py-2 text-text-gray text-xs truncate"
+              />
+              <button
+                onClick={handlePortfolioCopy}
+                className="text-sm rounded-xl border border-border text-text-gray hover:text-text px-3 py-2 shrink-0"
+              >
+                {portfolioCopied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mt-4 pt-6 border-t border-border">
+        <Link href="/profile/data" className="text-text-gray text-sm hover:text-text underline underline-offset-2 block mb-4">
+          Download my data
+        </Link>
         {!confirmingDelete ? (
           <button
             onClick={() => setConfirmingDelete(true)}
@@ -723,7 +811,9 @@ export default function ProfileClient({
         ) : (
           <div className="bg-red-tint border border-border rounded-2xl p-4">
             <p className="text-text text-sm mb-3">
-              This permanently deletes your profile, school matches, and timeline. This cannot be undone.
+              This permanently deletes your entire Kairos account — profile, matches, timeline, essay
+              feedback history, activity evaluations, scholarship tracker, and everything else. This cannot
+              be undone.
             </p>
             {deleteError && <p className="text-red text-sm mb-3">{deleteError}</p>}
             <div className="flex gap-3">

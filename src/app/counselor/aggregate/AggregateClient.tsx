@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import type { GradeAggregate } from "@/lib/aggregate";
+import type { GradeAggregate, SchoolWideAggregate } from "@/lib/aggregate";
 
 export type { GradeAggregate };
 
@@ -15,20 +15,73 @@ export interface SchoolTally {
 export default function AggregateClient({
   totalStudents,
   gradeAggregates,
+  schoolWide,
   topSchools,
+  trendWindowDays,
+  trendWindowOptions,
 }: {
   totalStudents: number;
   gradeAggregates: GradeAggregate[];
+  schoolWide: SchoolWideAggregate;
   topSchools: SchoolTally[];
+  trendWindowDays: number;
+  trendWindowOptions: number[];
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const trendLabel = trendWindowDays === 7 ? "vs last week" : `vs ${trendWindowDays} days ago`;
 
   return (
     <div className="px-5 md:px-8 py-8 max-w-3xl mx-auto w-full">
       <h1 className="font-serif text-2xl text-text mb-1">Class-Level Overview</h1>
-      <p className="text-text-gray text-sm mb-8">
+      <p className="text-text-gray text-sm mb-6">
         Aggregate patterns across all {totalStudents} student{totalStudents === 1 ? "" : "s"} at your school.
       </p>
+
+      <div className="flex items-center gap-2 mb-8">
+        <span className="text-text-gray text-xs">Trend window:</span>
+        {trendWindowOptions.map((w) => (
+          <Link
+            key={w}
+            href={`/counselor/aggregate?window=${w}`}
+            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+              w === trendWindowDays ? "bg-primary text-bg border-primary" : "border-border text-text-gray hover:text-text"
+            }`}
+          >
+            {w}d
+          </Link>
+        ))}
+      </div>
+
+      {/* Whole-school rollup (Software_Timeline.md 8), distinct from the
+          per-grade cards below -- useful for a board presentation or annual
+          report where per-grade granularity isn't the point. Cross-*year*
+          comparisons aren't possible yet (no admissions-cycle-partitioned
+          history), so this is cross-grade only for now. */}
+      <div className="bg-card border border-border rounded-2xl p-5 mb-8">
+        <p className="text-text font-medium text-sm mb-3">Whole school</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+          <div>
+            <p className="text-text-gray text-xs mb-1">Students</p>
+            <p className="font-serif text-xl text-text">{schoolWide.studentCount}</p>
+          </div>
+          <div>
+            <p className="text-text-gray text-xs mb-1">Average GPA</p>
+            <p className="font-serif text-xl text-text">{schoolWide.avgGpa ?? "—"}</p>
+          </div>
+          <div>
+            <p className="text-text-gray text-xs mb-1">Avg. timeline completion</p>
+            <p className="font-serif text-xl text-text">
+              {schoolWide.avgTimelineCompletionPct !== null ? `${schoolWide.avgTimelineCompletionPct}%` : "—"}
+            </p>
+          </div>
+          <div>
+            <p className="text-text-gray text-xs mb-1">At risk</p>
+            <p className={`font-serif text-xl ${schoolWide.atRiskCount > 0 ? "text-red" : "text-text"}`}>
+              {schoolWide.atRiskCount}
+            </p>
+          </div>
+        </div>
+      </div>
 
       <h2 className="text-text font-medium text-sm mb-3">By grade</h2>
       <div className="grid sm:grid-cols-2 gap-4 mb-10">
@@ -54,7 +107,7 @@ export default function AggregateClient({
                     <span className={g.trendCompletionDelta > 0 ? "text-green" : "text-red"}>
                       {" "}
                       ({g.trendCompletionDelta > 0 ? "+" : ""}
-                      {g.trendCompletionDelta}pt vs last week)
+                      {g.trendCompletionDelta}pt {trendLabel})
                     </span>
                   )}
                 </p>
@@ -65,7 +118,7 @@ export default function AggregateClient({
                     <span className={g.trendAtRiskDelta < 0 ? "text-green" : "text-red"}>
                       {" "}
                       ({g.trendAtRiskDelta > 0 ? "+" : ""}
-                      {g.trendAtRiskDelta} vs last week)
+                      {g.trendAtRiskDelta} {trendLabel})
                     </span>
                   )}
                 </p>

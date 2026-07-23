@@ -111,6 +111,21 @@ export default function TaskDetailClient({ item }: { item: TimelineItem }) {
         </ul>
       </div>
 
+      {/* Minimum Common App deep-link (Section 9d) -- Kairos has no per-item
+          section mapping today, so this only fires for tasks that plausibly
+          involve submitting something through Common App itself, and points
+          at its general dashboard rather than a fabricated deep section. */}
+      {/COMMON APP|APPLICATION|ESSAY|RECOMMEND|TRANSCRIPT|SUBMIT/i.test(item.title) && (
+        <a
+          href="https://apply.commonapp.org/dashboard"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-center text-primary hover:text-primary-hover text-sm underline underline-offset-2 mb-6 -mt-3"
+        >
+          Continue in Common App →
+        </a>
+      )}
+
       <button
         onClick={completed ? handleMarkIncomplete : handleComplete}
         disabled={saving}

@@ -1,7 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { createClient } from "@/lib/supabase/client";
+import CareerQuiz from "@/components/CareerQuiz";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -15,7 +17,14 @@ interface CareerPath {
   employer_types: string[];
   median_salary: string;
   summary: string;
+  confidence?: "low" | "moderate" | "high";
 }
+
+const CONFIDENCE_LABEL: Record<string, string> = {
+  high: "High confidence",
+  moderate: "Moderate confidence",
+  low: "Low confidence — less established data for this pairing",
+};
 
 export default function CareerPathClient({
   matches,
@@ -27,6 +36,67 @@ export default function CareerPathClient({
   preselectedSchool: string | null;
 }) {
   const reduceMotion = useReducedMotion();
+  const supabase = createClient();
+  const [addedToMatches, setAddedToMatches] = useState(false);
+  const [addingToMatches, setAddingToMatches] = useState(false);
+
+  async function addExploredSchoolToMatches(name: string, summary: string) {
+    setAddingToMatches(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setAddingToMatches(false);
+      return;
+    }
+    const MANUAL_NOTE = "This school was added manually, so an AI assessment isn't available.";
+    const { error } = await supabase.from("school_matches").insert({
+      user_id: user.id,
+      school_name: name,
+      category: "target",
+      percentage: 50,
+      why_text: `Added from Career Path exploration: ${summary}`,
+      factors: {
+        gpa_comparison: MANUAL_NOTE,
+        course_rigor: MANUAL_NOTE,
+        ec_strength: MANUAL_NOTE,
+        major_fit: MANUAL_NOTE,
+        social_fit: MANUAL_NOTE,
+      },
+      is_active: true,
+      is_manual: true,
+    });
+    setAddingToMatches(false);
+    if (!error) setAddedToMatches(true);
+  }
+  // Section 9e follow-up: tying the CareerQuiz -> Career Path suggestion back
+  // into the student's actual profile so it can inform Matches/Timeline too.
+  // Mirrors the existing "Looks like a fit -- add to matches?" pattern above,
+  // but the signal here is the *major*, not a custom school: explicit
+  // confirmation, additive (append, never overwrite intended_major).
+  const [addedMajorToProfile, setAddedMajorToProfile] = useState(false);
+  const [addingMajorToProfile, setAddingMajorToProfile] = useState(false);
+
+  async function addExploringMajorToIntendedMajors(major: string) {
+    setAddingMajorToProfile(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setAddingMajorToProfile(false);
+      return;
+    }
+    const current = intendedMajor ?? [];
+    if (!current.includes(major)) {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ intended_major: [...current, major] })
+        .eq("user_id", user.id);
+      if (error) {
+        setAddingMajorToProfile(false);
+        return;
+      }
+    }
+    setAddingMajorToProfile(false);
+    setAddedMajorToProfile(true);
+  }
+
   const preselectedMatch = preselectedSchool && matches.some((m) => m.school_name === preselectedSchool);
   const [selected, setSelected] = useState(
     preselectedMatch ? (preselectedSchool as string) : matches[0]?.school_name ?? ""
@@ -36,6 +106,23 @@ export default function CareerPathClient({
   const [careerPath, setCareerPath] = useState<CareerPath | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Cached results have no natural "regenerate" trigger today (re-clicking
+  // "See Career Path" just returns the cache instantly) -- this shows an
+  // optional feedback field once a result is loaded, and forces a fresh,
+  // non-cached fetch when used, so a student can ask for something different
+  // on a school they've already loaded this session.
+  const [showRegen, setShowRegen] = useState(false);
+  const [regenFeedback, setRegenFeedback] = useState("");
+
+  // Interest-quiz exploration (Software_Timeline.md 9e): reuses the existing
+  // onboarding CareerQuiz component (a deterministic, RIASEC-adjacent
+  // interest -> major mapper) here too, since it previously only ever ran
+  // once during onboarding for undecided students and was never tied back
+  // into Career Path or persisted anywhere. Picking a suggestion here is a
+  // one-off exploration -- it does NOT change the student's actual declared
+  // intended_major, only what's sent for this Career Path request.
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [exploringMajor, setExploringMajor] = useState<string | null>(null);
 
   // Re-selecting a school you already loaded this session shouldn't refire
   // the API call and full loading state -- cache per school name.
@@ -43,23 +130,37 @@ export default function CareerPathClient({
 
   const schoolName = (useCustom ? customSchool : selected).trim();
 
-  async function fetchCareerPath(name: string): Promise<CareerPath | null> {
-    const cached = cache.current.get(name);
-    if (cached) return cached;
+  async function fetchCareerPath(
+    name: string,
+    opts?: { feedback?: string; forceRefresh?: boolean; majorOverride?: string }
+  ): Promise<CareerPath | null> {
+    const cacheName = opts?.majorOverride ? `${name}::${opts.majorOverride}` : name;
+    if (!opts?.forceRefresh) {
+      const cached = cache.current.get(cacheName);
+      if (cached) return cached;
+    }
     const res = await fetch("/api/career-path", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ schoolName: name }),
+      body: JSON.stringify({
+        schoolName: name,
+        regenFeedback: opts?.feedback || undefined,
+        majorOverride: opts?.majorOverride ? [opts.majorOverride] : undefined,
+      }),
     });
     if (!res.ok) return null;
     const data: CareerPath = await res.json();
-    cache.current.set(name, data);
+    cache.current.set(cacheName, data);
     return data;
   }
 
   async function handleLoad() {
     if (!schoolName) return;
-    const cached = cache.current.get(schoolName);
+    setShowRegen(false);
+    setRegenFeedback("");
+    setAddedToMatches(false);
+    const cacheName = exploringMajor ? `${schoolName}::${exploringMajor}` : schoolName;
+    const cached = cache.current.get(cacheName);
     if (cached) {
       setCareerPath(cached);
       setError(null);
@@ -68,7 +169,7 @@ export default function CareerPathClient({
     setLoading(true);
     setError(null);
     setCareerPath(null);
-    const result = await fetchCareerPath(schoolName);
+    const result = await fetchCareerPath(schoolName, { majorOverride: exploringMajor ?? undefined });
     if (!result) {
       setError("Couldn't load career path. Please try again.");
       setLoading(false);
@@ -78,13 +179,58 @@ export default function CareerPathClient({
     setLoading(false);
   }
 
-  // Compare mode: up to 3 schools side by side.
-  const [compareMode, setCompareMode] = useState(false);
-  const [compareSelection, setCompareSelection] = useState<string[]>([]);
+  async function handleRegenerate() {
+    if (!schoolName) return;
+    setLoading(true);
+    setError(null);
+    const result = await fetchCareerPath(schoolName, {
+      feedback: regenFeedback.trim() || undefined,
+      forceRefresh: true,
+      majorOverride: exploringMajor ?? undefined,
+    });
+    if (!result) {
+      setError("Couldn't regenerate career path. Please try again.");
+      setLoading(false);
+      return;
+    }
+    setCareerPath(result);
+    setLoading(false);
+    setRegenFeedback("");
+    setShowRegen(false);
+  }
+
+  // Compare mode: up to 3 schools side by side. Persisted to localStorage
+  // (selection + mode only, not results -- those are cheap to re-fetch and
+  // re-running the AI call automatically on page load would be surprising)
+  // so navigating away and back doesn't silently drop an in-progress
+  // comparison the student was still building.
+  const COMPARE_STORAGE_KEY = "kairos_career_path_compare";
+  const [compareMode, setCompareMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const raw = localStorage.getItem(COMPARE_STORAGE_KEY);
+      return raw ? (JSON.parse(raw).mode ?? false) : false;
+    } catch {
+      return false;
+    }
+  });
+  const [compareSelection, setCompareSelection] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = localStorage.getItem(COMPARE_STORAGE_KEY);
+      return raw ? (JSON.parse(raw).selection ?? []) : [];
+    } catch {
+      return [];
+    }
+  });
   const [compareCustomInput, setCompareCustomInput] = useState("");
   const [compareResults, setCompareResults] = useState<Record<string, CareerPath | "error"> | null>(null);
   const [compareLoading, setCompareLoading] = useState(false);
   const MAX_COMPARE = 3;
+
+  useEffect(() => {
+    localStorage.setItem(COMPARE_STORAGE_KEY, JSON.stringify({ mode: compareMode, selection: compareSelection }));
+  }, [compareMode, compareSelection]);
 
   function toggleCompareSchool(name: string) {
     setCompareSelection((prev) =>
@@ -115,9 +261,41 @@ export default function CareerPathClient({
 
   return (
     <div>
-      <p className="text-text-gray text-xs mb-4">
+      <p className="text-text-gray text-xs mb-1">
         Major: <span className="text-text">{intendedMajor?.length ? intendedMajor.join(", ") : "Undecided"}</span>
       </p>
+
+      {!intendedMajor?.length && !exploringMajor && (
+        <button onClick={() => setShowQuiz(true)} className="text-primary text-xs hover:text-primary-hover mb-3">
+          Not sure yet? Take a quick interest quiz →
+        </button>
+      )}
+      {exploringMajor && (
+        <p className="text-text-gray text-xs mb-3">
+          Exploring as <span className="text-text">{exploringMajor}</span> (not saved as your actual major){" "}
+          <button
+            onClick={() => {
+              setExploringMajor(null);
+              setCareerPath(null);
+              setAddedMajorToProfile(false);
+            }}
+            className="text-primary hover:text-primary-hover underline underline-offset-2"
+          >
+            Clear
+          </button>
+        </p>
+      )}
+      {showQuiz && (
+        <CareerQuiz
+          onClose={() => setShowQuiz(false)}
+          onSelectMajor={(major) => {
+            setExploringMajor(major);
+            setCareerPath(null);
+            setAddedMajorToProfile(false);
+            setShowQuiz(false);
+          }}
+        />
+      )}
 
       <div className="flex gap-2 mb-4">
         <button
@@ -304,6 +482,7 @@ export default function CareerPathClient({
             <p className="text-text-gray text-xs">
               AI-generated general patterns for this major at {schoolName}, not specific to named
               individuals or guaranteed outcomes.
+              {careerPath.confidence && ` · ${CONFIDENCE_LABEL[careerPath.confidence]}`}
             </p>
             <p className="text-text-gray text-sm leading-relaxed">{careerPath.summary}</p>
             <div>
@@ -326,6 +505,80 @@ export default function CareerPathClient({
               <p className="text-text font-medium text-sm mb-1">Median salary</p>
               <p className="text-text-gray text-sm">{careerPath.median_salary}</p>
             </div>
+
+            {exploringMajor && (
+              <div className="pt-2 border-t border-border">
+                {addedMajorToProfile ? (
+                  <p className="text-text-gray text-xs">Added {exploringMajor} to your intended majors ✓</p>
+                ) : (
+                  <button
+                    onClick={() => addExploringMajorToIntendedMajors(exploringMajor)}
+                    disabled={addingMajorToProfile}
+                    className="text-primary text-sm hover:text-primary-hover disabled:opacity-40"
+                  >
+                    {addingMajorToProfile
+                      ? "Adding…"
+                      : `Looks like a fit — add ${exploringMajor} to your intended majors?`}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {useCustom && (
+              <div className="pt-2 border-t border-border">
+                {addedToMatches ? (
+                  <p className="text-text-gray text-xs">Added {schoolName} to your matches ✓</p>
+                ) : (
+                  <button
+                    onClick={() => addExploredSchoolToMatches(schoolName, careerPath.summary)}
+                    disabled={addingToMatches}
+                    className="text-primary text-sm hover:text-primary-hover disabled:opacity-40"
+                  >
+                    {addingToMatches ? "Adding…" : `Looks like a fit — add ${schoolName} to your matches?`}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {showRegen ? (
+              <div className="pt-2 border-t border-border space-y-2">
+                <label htmlFor="career-regen-feedback" className="block text-text font-medium text-sm">
+                  What should change? <span className="text-text-gray font-normal">(optional)</span>
+                </label>
+                <textarea
+                  id="career-regen-feedback"
+                  value={regenFeedback}
+                  onChange={(e) => setRegenFeedback(e.target.value)}
+                  rows={2}
+                  maxLength={1000}
+                  placeholder="e.g. too generic, want more on grad-school paths"
+                  className="w-full rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary resize-none"
+                />
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { setShowRegen(false); setRegenFeedback(""); }}
+                    disabled={loading}
+                    className="text-text-gray text-sm hover:text-text disabled:opacity-40"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleRegenerate}
+                    disabled={loading}
+                    className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-4 py-2 text-sm disabled:opacity-50"
+                  >
+                    {loading ? "Regenerating..." : "Regenerate"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowRegen(true)}
+                className="text-primary text-sm hover:text-primary-hover pt-2 border-t border-border w-full text-left"
+              >
+                Not quite right? Regenerate
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

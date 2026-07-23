@@ -53,15 +53,15 @@ export async function GET(
 
   const userId = link.user_id;
 
-  const [profileRes, matchesRes, timelineRes] = await Promise.all([
+  const [profileRes, matchesRes, timelineRes, timelineTotalRes, timelineDoneRes] = await Promise.all([
     service
       .from("profiles")
-      .select("grade_level, intended_major, current_school")
+      .select("grade_level, intended_major, current_school, display_name")
       .eq("user_id", userId)
       .single(),
     service
       .from("school_matches")
-      .select("school_name, category, percentage, why_text")
+      .select("id, school_name, category, percentage, why_text")
       .eq("user_id", userId)
       .eq("is_active", true)
       .order("category"),
@@ -72,17 +72,47 @@ export async function GET(
       .eq("completed", false)
       .order("due_date", { ascending: true })
       .limit(20),
+    service.from("timeline_items").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    service.from("timeline_items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("completed", true),
   ]);
 
   if (profileRes.error) console.error("shared token profile query failed:", profileRes.error);
   if (matchesRes.error) console.error("shared token matches query failed:", matchesRes.error);
   if (timelineRes.error) console.error("shared token timeline query failed:", timelineRes.error);
+  if (timelineTotalRes.error) console.error("shared token timeline total query failed:", timelineTotalRes.error);
+  if (timelineDoneRes.error) console.error("shared token timeline done query failed:", timelineDoneRes.error);
 
-  // Fetch display name from auth.users metadata via admin API
-  const { data: userData, error: userDataError } = await service.auth.admin.getUserById(userId);
-  if (userDataError) console.error("shared token getUserById failed:", userDataError);
-  const displayName: string =
-    (userData?.user?.user_metadata?.full_name as string | undefined) ?? "Student";
+  const timelineTotal = timelineTotalRes.count ?? 0;
+  const timelineDone = timelineDoneRes.count ?? 0;
+  const timelineProgressPct = timelineTotal > 0 ? Math.round((timelineDone / timelineTotal) * 100) : null;
+
+  // Reads straight off profiles.display_name rather than an
+  // auth.admin.getUserById() round-trip -- same fix as the recommender page
+  // for the same unreliable fan-out pattern.
+  const displayName: string = profileRes.data?.display_name?.trim() || "Student";
+
+  // This token's own prior reactions, so a returning parent sees what they
+  // already left rather than a blank form. Scoped to this token only --
+  // a token never sees another share link's reactions.
+  const matchIds = (matchesRes.data ?? []).map((m) => m.id);
+  let reactionsByMatch: Record<string, { reaction: string | null; comment: string | null }> = {};
+  if (matchIds.length > 0) {
+    const { data: reactionsData, error: reactionsErr } = await service
+      .from("shared_list_reactions")
+      .select("school_match_id, reaction, comment, created_at")
+      .eq("share_token", token)
+      .in("school_match_id", matchIds)
+      .order("created_at", { ascending: false });
+
+    if (reactionsErr) console.error("shared token reactions query failed:", reactionsErr);
+
+    reactionsByMatch = {};
+    for (const r of reactionsData ?? []) {
+      if (!reactionsByMatch[r.school_match_id]) {
+        reactionsByMatch[r.school_match_id] = { reaction: r.reaction, comment: r.comment };
+      }
+    }
+  }
 
   return NextResponse.json({
     student: {
@@ -92,6 +122,8 @@ export async function GET(
       intended_major: profileRes.data?.intended_major ?? null,
     },
     matches: matchesRes.data ?? [],
+    reactions: reactionsByMatch,
     upcoming_tasks: timelineRes.data ?? [],
+    timeline_progress_pct: timelineProgressPct,
   });
 }

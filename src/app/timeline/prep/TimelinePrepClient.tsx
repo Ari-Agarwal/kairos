@@ -7,9 +7,11 @@ import FeaturePrepFlow from "@/components/FeaturePrepFlow";
 export default function TimelinePrepClient({
   inlineFields,
   linkOutFields,
+  isRegenerate,
 }: {
   inlineFields: string[];
   linkOutFields: string[];
+  isRegenerate: boolean;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -31,7 +33,7 @@ export default function TimelinePrepClient({
         const { error: updateError } = await supabase.from("profiles").update(patch).eq("user_id", user.id);
         if (updateError) return { error: updateError.message };
       } catch {
-        return { error: "Failed to save your answers. Please try again." };
+        return { error: "Couldn't save your answers just now — check your connection and try again." };
       }
     }
 
@@ -42,16 +44,16 @@ export default function TimelinePrepClient({
       const res = await fetch("/api/timeline/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feedback: feedback.trim() || undefined }),
+        body: JSON.stringify({ feedback: feedback.trim() || undefined, isRegenerate }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        return { error: body.error ?? "Failed to generate. Please try again." };
+        return { error: body.error ?? "We hit a snag starting your timeline — try again, or check back in a few minutes if it keeps happening." };
       }
       router.push("/timeline");
       return {};
     } catch {
-      return { error: "Failed to generate. Please try again." };
+      return { error: "We hit a snag starting your timeline — check your connection and try again." };
     }
   }
 
@@ -62,8 +64,12 @@ export default function TimelinePrepClient({
       subheading="A few quick questions, then we'll build your plan."
       inlineFields={inlineFields}
       linkOutFields={linkOutFields}
-      feedbackQuestion="Anything you'd like your timeline to focus on?"
-      feedbackPlaceholder="e.g. more focus on financial aid deadlines, or a lighter fall schedule"
+      feedbackQuestion={isRegenerate ? "What should change from your current timeline?" : "Anything you'd like your timeline to focus on?"}
+      feedbackPlaceholder={
+        isRegenerate
+          ? "e.g. missing a deadline, wrong order, too many items at once"
+          : "e.g. more focus on financial aid deadlines, or a lighter fall schedule"
+      }
       completeLabel="Generate Timeline"
       generatingLabel="Mapping out your timeline..."
       onComplete={handleComplete}

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import MissingFieldInputs from "@/components/MissingFieldInputs";
 import { FIELD_LABELS } from "@/lib/mini-onboarding-fields";
+import { track } from "@/lib/analytics";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -62,6 +63,16 @@ export default function FeaturePrepFlow({
   const progressPercent = Math.round(((step + 1) / totalRounds) * 100);
   const currentRoundFilled = isFeedbackRound || !required || hasValue(values[inlineFields[step]]);
 
+  // Drop-off tracking (Software_Timeline.md 6b) -- this mini-onboarding flow
+  // (matches/timeline prep) previously fired no analytics events at all,
+  // unlike the primary onboarding's onboarding_step_viewed/onboarding_completed.
+  // Same event shape, tagged by `heading` since each caller passes a distinct
+  // one, so funnel drop-off can be measured per round without an extra prop.
+  useEffect(() => {
+    track("mini_onboarding_step_viewed", { flow: heading, step, total_steps: totalRounds });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
   function goNext() {
     setStep((s) => Math.min(totalRounds - 1, s + 1));
   }
@@ -79,6 +90,7 @@ export default function FeaturePrepFlow({
         setSubmitting(false);
         return;
       }
+      track("mini_onboarding_completed", { flow: heading, rounds_completed: totalRounds });
       // On success, onComplete is responsible for navigating away (this is a
       // dedicated pre-generate route, not an in-place panel) -- stay in the
       // "submitting" state until that navigation actually happens.
@@ -86,7 +98,7 @@ export default function FeaturePrepFlow({
       // Any unhandled field left blank shouldn't be able to hang this in the
       // "submitting" spinner forever with no feedback -- always surface a
       // recoverable error instead.
-      setError("Something went wrong. Please try again.");
+      setError("Something went wrong on our end — your answers are still here, so just try again.");
       setSubmitting(false);
     }
   }
@@ -195,7 +207,16 @@ export default function FeaturePrepFlow({
           )}
         </motion.div>
 
-        {error && <p role="alert" className="text-red text-sm">{error}</p>}
+        {error && (
+          <div>
+            <p role="alert" className="text-red text-sm">{error}</p>
+            {error.toLowerCase().includes("upgrade to premium") && (
+              <Link href="/upgrade" className="text-primary text-sm hover:text-primary-hover underline underline-offset-2">
+                See Premium plans →
+              </Link>
+            )}
+          </div>
+        )}
 
         <div className="flex gap-3">
           {step > 0 && (

@@ -169,6 +169,34 @@ export default function MethodologyPage() {
           </p>
         </section>
 
+        <section>
+          <h2 className="text-text font-medium mb-2">How scholarship &ldquo;fit&rdquo; tiers work</h2>
+          <p>
+            Unlike admissions odds above, a scholarship&apos;s Strong Fit / Possible / Reach label is{" "}
+            <span className="text-text">not AI-generated</span> — it&apos;s a plain rule check against the same
+            profile fields (first-generation status, financial aid need, intended major, ROTC-style
+            extracurriculars) matched against each scholarship&apos;s stated eligibility text. Strong Fit means
+            two or more of those factors clearly line up; Possible means exactly one does; Reach means
+            nothing in your profile confirms eligibility — which is a statement about missing information,
+            not a claim that you don&apos;t qualify. This rule-based approach never hides a scholarship outright,
+            since a missed match costs real money in a way a false one doesn&apos;t; always confirm the real
+            requirements on the scholarship&apos;s official page before assuming a tier either way.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-text font-medium mb-2">Where school photos and scholarship logos come from</h2>
+          <p>
+            College photos on your match cards and school pages, and sponsor logos on scholarship cards, are
+            both pulled from Wikipedia&apos;s public API — free, no paid image service involved. Each lookup is
+            checked against the school or organization name before it&apos;s used (a loose or ambiguous match is
+            rejected rather than shown), and results are cached for 90 days since neither a campus photo nor
+            an organization&apos;s logo changes often. When no matching image exists on Wikipedia, a school card
+            falls back to a plainly-styled initial letter (dashed border, dimmer fill) rather than something
+            that could be mistaken for a real photo; a scholarship card with no matching logo simply omits it.
+          </p>
+        </section>
+
       </div>
     </div>
   );

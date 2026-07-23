@@ -7,6 +7,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
 import { isTrustedOrigin } from "@/lib/origin-check";
 import { getNarrativeContextText } from "@/lib/narrative-context";
+import { containsCrisisLanguage, getCrisisResource } from "@/lib/crisis-check";
 
 export async function POST(req: Request) {
   if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -36,6 +37,7 @@ export async function POST(req: Request) {
 
   let supplementPrompt: string;
   let school: string | undefined;
+  let regenFeedback: string | undefined;
 
   try {
     const body = await req.json();
@@ -45,10 +47,19 @@ export async function POST(req: Request) {
       school = requireString(body.school, "School name", 200);
       rejectScriptTags(school, "School name");
     }
+    if (body.regenFeedback !== undefined && body.regenFeedback !== "") {
+      regenFeedback = requireString(body.regenFeedback, "Feedback", 1_000);
+      rejectScriptTags(regenFeedback, "Feedback");
+    }
   } catch (e) {
     if (e instanceof ValidationError) return NextResponse.json({ error: e.message }, { status: 400 });
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
+
+  const crisisResource =
+    containsCrisisLanguage(supplementPrompt) || (regenFeedback ? containsCrisisLanguage(regenFeedback) : false)
+      ? getCrisisResource()
+      : null;
 
   const profileSummary = [
     profile?.grade_level ? `Grade: ${profile.grade_level}` : null,
@@ -63,8 +74,11 @@ export async function POST(req: Request) {
     .join("\n");
 
   const narrativeContext = await getNarrativeContextText(supabase, user.id);
+  const regenBlock = regenFeedback
+    ? `\n\nThe student was asked "what should change from the last angles?" on a regenerate and said: "${regenFeedback}" -- address this directly (e.g. propose genuinely different angles, not a rephrasing of the same ones) rather than repeating similar suggestions.`
+    : "";
 
-  const userContent = `Supplement prompt${school ? ` (${school})` : ""}:\n${supplementPrompt}\n\nStudent profile:\n${profileSummary || "No profile data available."}${narrativeContext ? `\n\n${narrativeContext}` : ""}`;
+  const userContent = `Supplement prompt${school ? ` (${school})` : ""}:\n${supplementPrompt}\n\nStudent profile:\n${profileSummary || "No profile data available."}${narrativeContext ? `\n\n${narrativeContext}` : ""}${regenBlock}`;
 
   flagAnomalousUsage("essay/brainstorm", user.id);
   const t0 = Date.now();
@@ -79,7 +93,7 @@ export async function POST(req: Request) {
     logAiUsage("essay/brainstorm", user.id, MODEL, t0, response);
     const text = response.content.find((b) => b.type === "text")?.text ?? "";
     const parsed = extractJson<{ angles: { title: string; framing: string }[] }>(text);
-    return NextResponse.json(parsed);
+    return NextResponse.json({ ...parsed, crisis_resource: crisisResource });
   } catch (err) {
     logAiUsage("essay/brainstorm", user.id, MODEL, t0, err instanceof Error ? err : new Error(String(err)));
     return NextResponse.json({ error: "Failed to generate brainstorm. Please try again." }, { status: 502 });

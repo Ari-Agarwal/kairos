@@ -6,6 +6,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
 import { isTrustedOrigin } from "@/lib/origin-check";
 import { canAccessFeature } from "@/lib/access";
+import { containsCrisisLanguage, getCrisisResource } from "@/lib/crisis-check";
 
 interface InterviewFeedback {
   score: number;
@@ -55,18 +56,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Mock Interview is a Premium feature." }, { status: 403 });
   }
 
+  const VALID_CATEGORIES = ["General", "Why This School", "Behavioral", "Extracurricular"];
   let question: string;
   let answer: string;
+  let category: string | null;
   try {
     const body = await req.json();
     question = requireString(body.question, "Question", 2000);
     answer = requireString(body.answer, "Answer", 10000);
     rejectScriptTags(question, "Question");
     rejectScriptTags(answer, "Answer");
+    category = typeof body.category === "string" && VALID_CATEGORIES.includes(body.category) ? body.category : null;
   } catch (e) {
     if (e instanceof ValidationError) return NextResponse.json({ error: e.message }, { status: 400 });
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
+
+  const crisisResource = containsCrisisLanguage(answer) ? getCrisisResource() : null;
 
   flagAnomalousUsage("interview-feedback", user.id);
   // Two attempts, same rationale as interview/question -- a single transient
@@ -94,9 +100,10 @@ export async function POST(req: Request) {
         strengths: feedback.strengths,
         improvements: feedback.improvements,
         summary: feedback.one_line_summary,
+        category,
       });
 
-      return NextResponse.json(feedback);
+      return NextResponse.json({ ...feedback, crisis_resource: crisisResource });
     } catch (err) {
       logAiUsage("interview-feedback", user.id, MODEL, t0, err instanceof Error ? err : new Error(String(err)));
       lastErr = err;

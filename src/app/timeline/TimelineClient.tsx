@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Repeat } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { buildBulkIcs, downloadIcs } from "@/lib/ics";
 
@@ -17,6 +17,8 @@ interface TimelineItem {
   is_strategic: boolean;
   completed: boolean;
   why_text: string;
+  is_recurring: boolean;
+  is_financial_aid: boolean;
 }
 
 function sortItems(items: TimelineItem[]): TimelineItem[] {
@@ -26,6 +28,63 @@ function sortItems(items: TimelineItem[]): TimelineItem[] {
     if (!b.due_date) return -1;
     return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
   });
+}
+
+const CLUSTER_WINDOW_DAYS = 5;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+interface DeadlineCluster {
+  items: TimelineItem[];
+  start: string;
+  end: string;
+}
+
+// Flags when 2+ incomplete, dated deadlines land within CLUSTER_WINDOW_DAYS
+// of each other -- e.g. two Nov 1 EA schools plus a scholarship -- so a
+// student sees the pile-up coming instead of being surprised by it. Simple
+// sequential grouping (sorted ascending, chain while the gap to the
+// previous item stays within the window) rather than a fixed calendar-week
+// bucket, since a cluster can span a boundary (e.g. Oct 30-Nov 3).
+function findDeadlineClusters(items: TimelineItem[]): DeadlineCluster[] {
+  const dated = items
+    .filter((i) => i.due_date && !i.completed)
+    .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
+
+  const clusters: DeadlineCluster[] = [];
+  let current: TimelineItem[] = [];
+
+  for (const item of dated) {
+    if (current.length === 0) {
+      current = [item];
+      continue;
+    }
+    const prev = current[current.length - 1];
+    const gapDays = (new Date(item.due_date!).getTime() - new Date(prev.due_date!).getTime()) / MS_PER_DAY;
+    if (gapDays <= CLUSTER_WINDOW_DAYS) {
+      current.push(item);
+    } else {
+      if (current.length >= 2) {
+        clusters.push({ items: current, start: current[0].due_date!, end: current[current.length - 1].due_date! });
+      }
+      current = [item];
+    }
+  }
+  if (current.length >= 2) {
+    clusters.push({ items: current, start: current[0].due_date!, end: current[current.length - 1].due_date! });
+  }
+  return clusters;
+}
+
+function formatClusterDate(iso: string): string {
+  return new Date(iso + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+// Usage-based upsell trigger (Software_Timeline.md 6c): hitting the regen
+// cap is a natural, non-annoying moment to surface /upgrade -- the API
+// error message already says "Upgrade to Premium," but it was rendered as
+// plain text with no actual link.
+function isRegenCapError(message: string): boolean {
+  return message.toLowerCase().includes("upgrade to premium");
 }
 
 function formatDue(due: string): string {
@@ -40,12 +99,14 @@ export default function TimelineClient({
   youAreHereId,
   remaining,
   initialJobStatus,
+  checkinStreakWeeks,
 }: {
   items: TimelineItem[];
   isPremium: boolean;
   youAreHereId: string | null;
   remaining: number | null;
   initialJobStatus: "pending" | null;
+  checkinStreakWeeks: number;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -76,7 +137,7 @@ export default function TimelineClient({
       } else if (data.status === "error") {
         if (pollRef.current) clearInterval(pollRef.current);
         setJobPending(false);
-        setJobError(data.error_message ?? "Failed to generate. Please try again.");
+        setJobError(data.error_message ?? "We hit a snag putting your timeline together — try regenerating, or check back in a few minutes if it keeps happening.");
       }
     }, 3000);
     return () => {
@@ -84,6 +145,8 @@ export default function TimelineClient({
     };
   }, [jobPending, router]);
   const [editing, setEditing] = useState(false);
+  const [dismissedClusters, setDismissedClusters] = useState<Record<number, boolean>>({});
+  const deadlineClusters = findDeadlineClusters(items);
   const [newTitle, setNewTitle] = useState("");
   const [newDueDate, setNewDueDate] = useState("");
   const [adding, setAdding] = useState(false);
@@ -93,6 +156,42 @@ export default function TimelineClient({
   const [editDueDate, setEditDueDate] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+
+  // Celebratory moment (Software_Timeline.md sec. 15): a brief, tasteful beat
+  // when a milestone is marked complete. Only fires for the first few
+  // completions so it stays genuine rather than becoming identical fanfare
+  // on someone's 50th checked item -- see CELEBRATION_LIMIT below.
+  const CELEBRATION_LIMIT = 3;
+  const [celebrateItemId, setCelebrateItemId] = useState<string | null>(null);
+  const [celebrationMessage, setCelebrationMessage] = useState<string | null>(null);
+  const celebrationTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    const timers = celebrationTimers.current;
+    return () => {
+      timers.forEach(clearTimeout);
+    };
+  }, []);
+
+  function triggerCelebration(itemId: string) {
+    let count = 0;
+    try {
+      count = Number(localStorage.getItem("kairos_timeline_celebrations") ?? "0");
+    } catch {
+      // localStorage unavailable (private mode, etc.) -- skip celebration, not critical
+    }
+    if (count >= CELEBRATION_LIMIT) return;
+    try {
+      localStorage.setItem("kairos_timeline_celebrations", String(count + 1));
+    } catch {
+      // ignore
+    }
+    const messages = ["Nice — one step closer.", "Done. Momentum builds.", "That's one more behind you."];
+    setCelebrateItemId(itemId);
+    setCelebrationMessage(messages[count] ?? messages[0]);
+    celebrationTimers.current.push(setTimeout(() => setCelebrateItemId(null), 700));
+    celebrationTimers.current.push(setTimeout(() => setCelebrationMessage(null), 2200));
+  }
 
   function startEdit(item: TimelineItem) {
     setEditingId(item.id);
@@ -137,6 +236,7 @@ export default function TimelineClient({
   async function handleToggleComplete(item: TimelineItem) {
     const completed = !item.completed;
     setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, completed } : i)));
+    if (completed) triggerCelebration(item.id);
     const { error } = await supabase.from("timeline_items").update({ completed }).eq("id", item.id);
     if (error) {
       // revert on failure
@@ -212,7 +312,16 @@ export default function TimelineClient({
         <p className="text-text-gray text-xs mb-4">
           {isPremium ? "Unlimited regenerations" : `${remaining} regeneration${remaining === 1 ? "" : "s"} left this week`}
         </p>
-        {jobError && <p role="alert" className="text-red text-sm mb-3">{jobError}</p>}
+        {jobError && (
+          <div className="mb-3">
+            <p role="alert" className="text-red text-sm">{jobError}</p>
+            {isRegenCapError(jobError) && (
+              <Link href="/upgrade" className="text-primary text-sm hover:text-primary-hover underline underline-offset-2">
+                See Premium plans →
+              </Link>
+            )}
+          </div>
+        )}
         <button
           onClick={handleGenerate}
           disabled={regenDisabled}
@@ -245,6 +354,11 @@ export default function TimelineClient({
       {jobError && (
         <div className="mb-5 rounded-xl border border-red/30 bg-red-tint px-4 py-3">
           <p className="text-red text-sm">{jobError}</p>
+          {isRegenCapError(jobError) && (
+            <Link href="/upgrade" className="text-primary text-sm hover:text-primary-hover underline underline-offset-2">
+              See Premium plans →
+            </Link>
+          )}
         </div>
       )}
       <div className="flex items-center justify-between mb-1">
@@ -282,6 +396,11 @@ export default function TimelineClient({
       <div className="mb-1 flex items-center justify-between">
         <p className="text-text-gray text-xs">
           {completedCount} of {total} milestone{total === 1 ? "" : "s"} complete
+          {checkinStreakWeeks >= 2 && (
+            <span className="ml-2 text-secondary">
+              · {checkinStreakWeeks} week{checkinStreakWeeks === 1 ? "" : "s"} checking in
+            </span>
+          )}
         </p>
         <p className="text-text-gray text-xs">
           {isPremium ? "Unlimited regenerations" : `${remaining} regen${remaining === 1 ? "" : "s"} left`}
@@ -295,6 +414,28 @@ export default function TimelineClient({
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
         />
       </div>
+
+      {deadlineClusters.map((cluster, idx) =>
+        dismissedClusters[idx] ? null : (
+          <div key={idx} className="mb-4 rounded-xl border border-red/30 bg-red-tint px-4 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="text-sm">
+                <p className="text-text font-medium">
+                  {cluster.items.length} deadlines land close together ({formatClusterDate(cluster.start)}
+                  {cluster.start !== cluster.end ? `–${formatClusterDate(cluster.end)}` : ""})
+                </p>
+                <p className="text-text-gray text-xs mt-0.5">{cluster.items.map((i) => i.title).join(", ")}</p>
+              </div>
+              <button
+                onClick={() => setDismissedClusters((p) => ({ ...p, [idx]: true }))}
+                className="text-text-gray hover:text-text text-xs px-2 shrink-0"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )
+      )}
 
       {editing && (
         <div className="bg-card border border-border rounded-2xl p-4 mb-6 space-y-3">
@@ -450,9 +591,9 @@ export default function TimelineClient({
                         }}
                         aria-label={item.completed ? "Mark incomplete" : "Mark complete"}
                         aria-pressed={item.completed}
-                        className={`pointer-events-auto shrink-0 w-4 h-4 rounded-full border-2 transition-colors ${
+                        className={`pointer-events-auto shrink-0 w-4 h-4 rounded-full border-2 transition-[transform,background-color,border-color] duration-200 ease-out motion-reduce:transition-colors ${
                           item.completed ? "bg-text-gray border-text-gray" : "border-border hover:border-primary"
-                        }`}
+                        } ${celebrateItemId === item.id ? "scale-125 motion-reduce:scale-100" : "scale-100"}`}
                       />
                       <p className={`font-medium text-[15px] truncate ${item.completed ? "text-text-gray line-through" : "text-text"}`}>
                         {item.title}
@@ -466,6 +607,18 @@ export default function TimelineClient({
                   </div>
                   {item.due_date && (
                     <p className="text-text-gray text-xs mb-1.5">Due {formatDue(item.due_date)}</p>
+                  )}
+                  {item.is_recurring && (
+                    <p className="text-secondary text-xs mb-1.5 flex items-center gap-1">
+                      <Repeat className="size-3" />
+                      Ongoing — not a one-time task
+                    </p>
+                  )}
+                  {item.is_financial_aid && (
+                    <p className="text-primary text-xs mb-1.5 flex items-center gap-1 font-medium">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary" />
+                      Financial aid deadline — missing this can affect aid eligibility, not just admission
+                    </p>
                   )}
                   {isHere && (
                     <p className="text-text text-xs font-medium mb-1.5 flex items-center gap-1.5">
@@ -506,6 +659,19 @@ export default function TimelineClient({
           );
         })}
       </div>
+      {celebrationMessage && (
+        <motion.div
+          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-full bg-primary text-bg text-sm font-medium px-4 py-2 shadow-lg"
+        >
+          {celebrationMessage}
+        </motion.div>
+      )}
     </div>
   );
 }

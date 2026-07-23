@@ -12,7 +12,7 @@ export default async function ActivityEvalPage() {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("subscription_tier, extracurriculars")
+    .select("subscription_tier, extracurriculars, activity_hours")
     .eq("user_id", user.id)
     .maybeSingle();
   if (profileError) console.error("activities evaluate profile query failed:", profileError);
@@ -20,6 +20,7 @@ export default async function ActivityEvalPage() {
 
   const isPremium = profile.subscription_tier === "premium";
   const activities: string[] = profile.extracurriculars ?? [];
+  const activityHours: Record<string, number> = (profile.activity_hours as Record<string, number> | null) ?? {};
 
   return (
     <NavShell>
@@ -49,7 +50,7 @@ export default async function ActivityEvalPage() {
             </Link>
           </div>
         ) : (
-          <ActivityEvalClient activities={activities} />
+          <ActivityEvalClient activities={activities} activityHours={activityHours} />
         )}
       </div>
     </NavShell>

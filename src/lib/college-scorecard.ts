@@ -11,6 +11,7 @@ export interface CollegeStats {
   costOfAttendance: number | null; // sticker-price cost of attendance (USD/yr)
   medianDebt: number | null; // median federal debt at completion (USD)
   medianEarnings10yr: number | null; // median earnings 10 yrs after entry, school-wide (USD/yr)
+  fetchedAt: string | null; // when this data was last verified against College Scorecard (6g data-freshness)
 }
 
 const OWNERSHIP_LABELS: Record<number, string> = {
@@ -91,6 +92,7 @@ async function fetchFromScorecard(schoolName: string): Promise<CollegeStats | nu
     costOfAttendance: result["latest.cost.attendance.academic_year"] ?? null,
     medianDebt: result["latest.aid.median_debt.completers.overall"] ?? null,
     medianEarnings10yr: result["latest.earnings.10_yrs_after_entry.median"] ?? null,
+    fetchedAt: new Date().toISOString(),
   };
 }
 
@@ -122,6 +124,7 @@ export async function getCollegeStats(schoolName: string): Promise<CollegeStats 
           costOfAttendance: cached.cost_of_attendance ?? null,
           medianDebt: cached.median_debt ?? null,
           medianEarnings10yr: cached.median_earnings_10yr ?? null,
+          fetchedAt: cached.fetched_at,
         }
       : null;
   }
@@ -142,6 +145,7 @@ export async function getCollegeStats(schoolName: string): Promise<CollegeStats 
             costOfAttendance: cached.cost_of_attendance ?? null,
             medianDebt: cached.median_debt ?? null,
             medianEarnings10yr: cached.median_earnings_10yr ?? null,
+            fetchedAt: cached.fetched_at,
           }
         : null;
     }

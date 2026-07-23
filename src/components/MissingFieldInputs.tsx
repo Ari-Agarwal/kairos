@@ -5,6 +5,7 @@ import {
   CAMPUS_SIZES,
   CAMPUS_SETTINGS,
   FIELD_PLACEHOLDERS,
+  FIELD_HINTS,
   MULTI_SELECT_FIELDS,
 } from "@/lib/mini-onboarding-fields";
 
@@ -30,6 +31,9 @@ export default function MissingFieldInputs({
         return (
           <div key={field}>
             <label className="block text-xs text-text-gray mb-1">{FIELD_LABELS[field]}</label>
+            {FIELD_HINTS[field] && (
+              <p className="text-xs text-text-gray/70 mb-1">{FIELD_HINTS[field]}</p>
+            )}
             {isMultiSelect ? (
               <div className="flex flex-wrap gap-2" role="group" aria-label={FIELD_LABELS[field]}>
                 {options.map((o) => (

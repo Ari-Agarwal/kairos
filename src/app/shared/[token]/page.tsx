@@ -1,5 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import ReactionPanel from "./ReactionPanel";
 
 const CATEGORY_STYLES: Record<string, { badge: string; label: string }> = {
   reach:  { badge: "bg-red-tint text-red",                         label: "Reach"  },
@@ -13,6 +14,11 @@ interface Match {
   category: string;
   percentage: number;
   why_text: string;
+}
+
+interface Reaction {
+  reaction: "up" | "down" | null;
+  comment: string | null;
 }
 
 interface Task {
@@ -40,20 +46,47 @@ async function getSnapshot(token: string) {
 
   const userId = link.user_id;
 
-  const [profileRes, matchesRes, timelineRes, userData] = await Promise.all([
-    service.from("profiles").select("grade_level, intended_major, current_school").eq("user_id", userId).single(),
+  const [profileRes, matchesRes, timelineRes, timelineTotalRes, timelineDoneRes] = await Promise.all([
+    service.from("profiles").select("grade_level, intended_major, current_school, display_name").eq("user_id", userId).single(),
     service.from("school_matches").select("id, school_name, category, percentage, why_text").eq("user_id", userId).eq("is_active", true).order("category"),
     service.from("timeline_items").select("title, due_date, school_tags, completed").eq("user_id", userId).eq("completed", false).order("due_date", { ascending: true }).limit(20),
-    service.auth.admin.getUserById(userId),
+    service.from("timeline_items").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    service.from("timeline_items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("completed", true),
   ]);
+
+  const matchIds = (matchesRes.data ?? []).map((m) => m.id);
+  const reactionsByMatch: Record<string, Reaction> = {};
+  if (matchIds.length > 0) {
+    const { data: reactionsData, error: reactionsErr } = await service
+      .from("shared_list_reactions")
+      .select("school_match_id, reaction, comment, created_at")
+      .eq("share_token", token)
+      .in("school_match_id", matchIds)
+      .order("created_at", { ascending: false });
+
+    if (reactionsErr) console.error("shared view reactions query failed:", reactionsErr);
+
+    for (const r of reactionsData ?? []) {
+      if (!reactionsByMatch[r.school_match_id]) {
+        reactionsByMatch[r.school_match_id] = { reaction: r.reaction, comment: r.comment };
+      }
+    }
+  }
 
   if (profileRes.error) console.error("shared view profile query failed:", profileRes.error);
   if (matchesRes.error) console.error("shared view matches query failed:", matchesRes.error);
   if (timelineRes.error) console.error("shared view timeline query failed:", timelineRes.error);
-  if (userData.error) console.error("shared view getUserById failed:", userData.error);
+  if (timelineTotalRes.error) console.error("shared view timeline total query failed:", timelineTotalRes.error);
+  if (timelineDoneRes.error) console.error("shared view timeline done query failed:", timelineDoneRes.error);
 
-  const displayName: string =
-    (userData.data?.user?.user_metadata?.full_name as string | undefined) ?? "Student";
+  const timelineTotal = timelineTotalRes.count ?? 0;
+  const timelineDone = timelineDoneRes.count ?? 0;
+  const timelineProgressPct = timelineTotal > 0 ? Math.round((timelineDone / timelineTotal) * 100) : null;
+
+  // Reads straight off profiles.display_name rather than an
+  // auth.admin.getUserById() round-trip -- same fix as the recommender page
+  // for the same unreliable fan-out pattern.
+  const displayName: string = profileRes.data?.display_name?.trim() || "Student";
 
   return {
     student: {
@@ -63,7 +96,9 @@ async function getSnapshot(token: string) {
       intended_major: profileRes.data?.intended_major ?? null,
     },
     matches: (matchesRes.data ?? []) as Match[],
+    reactions: reactionsByMatch,
     upcoming_tasks: (timelineRes.data ?? []) as Task[],
+    timeline_progress_pct: timelineProgressPct,
   };
 }
 
@@ -85,7 +120,7 @@ export default async function SharedView({
     return <StatusPage message="This shared link has expired. Ask the student to send a new one." />;
   }
 
-  const { student, matches, upcoming_tasks } = snapshot;
+  const { student, matches, reactions, upcoming_tasks, timeline_progress_pct } = snapshot;
 
   const firstName = student.display_name.split(" ")[0];
 
@@ -93,13 +128,24 @@ export default async function SharedView({
     <div className="min-h-screen bg-bg text-text">
       <div className="max-w-2xl mx-auto px-5 py-10">
         <div className="mb-8">
-          <p className="text-text-gray text-xs uppercase tracking-widest mb-2">Read-only · Shared by student</p>
+          <p className="text-text-gray text-xs uppercase tracking-widest mb-2">Shared by student · React to a school below</p>
           <h1 className="font-serif text-3xl text-text mb-1">{student.display_name}&apos;s College List</h1>
           <p className="text-text-gray text-sm">
             {[student.grade_level, student.current_school, student.intended_major?.length ? `Applying for ${student.intended_major.join(", ")}` : null]
               .filter(Boolean)
               .join(" · ")}
           </p>
+          {timeline_progress_pct !== null && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs text-text-gray mb-1">
+                <span>Timeline progress</span>
+                <span>{timeline_progress_pct}%</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-border/60">
+                <div className="h-full rounded-full bg-primary" style={{ width: `${timeline_progress_pct}%` }} />
+              </div>
+            </div>
+          )}
         </div>
 
         <section className="mb-10">
@@ -121,7 +167,8 @@ export default async function SharedView({
                         </span>
                       </div>
                     </div>
-                    <p className="text-text-gray text-sm leading-relaxed">{m.why_text}</p>
+                    <p className="text-text-gray text-sm leading-relaxed mb-3">{m.why_text}</p>
+                    <ReactionPanel token={token} schoolMatchId={m.id} initial={reactions[m.id] ?? null} />
                   </div>
                 );
               })}
@@ -156,7 +203,7 @@ export default async function SharedView({
 
         <p className="text-text-gray text-xs text-center border-t border-border pt-6">
           Admission odds are AI-generated estimates based on the student&apos;s profile and general acceptance data — not a guarantee of any outcome.
-          This is a read-only view shared by {student.display_name}. Powered by Kairos.
+          This view is shared by {student.display_name}; grades, scores, financial details, and essays are never included. Powered by Kairos.
         </p>
       </div>
     </div>

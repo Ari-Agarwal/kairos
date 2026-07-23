@@ -55,3 +55,11 @@ export const FIELD_PLACEHOLDERS: Record<string, string> = {
   legacy_school: "e.g. legacy at Duke (parent alum), or none",
   internships_research: "e.g. summer research internship in a campus bio lab",
 };
+
+// Shown under a field to explain why it's worth answering even though it's
+// skippable — class_rank specifically flagged (Jul 21 focus-group follow-up)
+// since most US high schools no longer report rank, so the field would
+// otherwise read as a blocking ask for data many students simply don't have.
+export const FIELD_HINTS: Record<string, string> = {
+  class_rank: "Most high schools no longer report class rank — leave blank if yours doesn't.",
+};

@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CrisisResourceBanner, type CrisisResource } from "@/components/CrisisResourceBanner";
 
 interface InterviewFeedback {
   score: number;
   strengths: string[];
   improvements: string[];
   one_line_summary: string;
+  crisis_resource?: CrisisResource | null;
 }
 
 interface SessionHistoryEntry {
@@ -19,6 +21,18 @@ interface SessionHistoryEntry {
 
 const CATEGORIES = ["General", "Why This School", "Behavioral", "Extracurricular"] as const;
 type Category = (typeof CATEGORIES)[number];
+
+// Mirrors NarrativeBuilderClient's QUESTIONS keys/labels -- kept as a small
+// local copy rather than a shared import so a strong interview answer can be
+// routed to the question it best fits without coupling the two components.
+const NARRATIVE_QUESTIONS = [
+  { key: "moment", label: "A specific formative moment" },
+  { key: "revealed", label: "What that moment revealed" },
+  { key: "pattern", label: "Where that pattern shows up elsewhere" },
+  { key: "struggle", label: "A struggle or setback" },
+  { key: "differentiator", label: "What sets them apart" },
+  { key: "direction", label: "Where they want to take this" },
+] as const;
 
 interface SpeechRecognitionResultLike {
   transcript: string;
@@ -49,6 +63,10 @@ function getSpeechRecognition(): SpeechRecognitionLike | null {
 export default function MockInterviewClient() {
   const [question, setQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState("");
+  const [showNarrativePicker, setShowNarrativePicker] = useState(false);
+  const [narrativeQuestionKey, setNarrativeQuestionKey] = useState<(typeof NARRATIVE_QUESTIONS)[number]["key"]>(
+    NARRATIVE_QUESTIONS[0].key
+  );
   const [listening, setListening] = useState(false);
   const [feedback, setFeedback] = useState<InterviewFeedback | null>(null);
   const [loadingQuestion, setLoadingQuestion] = useState(false);
@@ -60,6 +78,12 @@ export default function MockInterviewClient() {
   const [history, setHistory] = useState<SessionHistoryEntry[] | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  // "New question" is the only regenerate action here -- shown once a
+  // question is already displayed, so a student who felt the last one was
+  // too generic/repetitive/off-topic can say so rather than just hoping the
+  // next random pull is better.
+  const [regenFeedback, setRegenFeedback] = useState("");
+  const [showRegenField, setShowRegenField] = useState(false);
 
   async function toggleHistory() {
     if (showHistory) {
@@ -90,7 +114,7 @@ export default function MockInterviewClient() {
     setTtsSupported("speechSynthesis" in window);
   }, []);
 
-  async function getQuestion() {
+  async function getQuestion(feedbackForRegen?: string) {
     setLoadingQuestion(true);
     setError(null);
     setFeedback(null);
@@ -98,15 +122,17 @@ export default function MockInterviewClient() {
     const res = await fetch("/api/interview/question", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ category }),
+      body: JSON.stringify({ category, regenFeedback: feedbackForRegen?.trim() || undefined }),
     });
     setLoadingQuestion(false);
     if (!res.ok) {
-      setError("Couldn't get a question. Please try again.");
+      setError("We hit a snag pulling up a question — try again in a moment.");
       return;
     }
     const data = await res.json();
     setQuestion(data.question);
+    setRegenFeedback("");
+    setShowRegenField(false);
     if (ttsSupported) {
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(new SpeechSynthesisUtterance(data.question));
@@ -152,11 +178,11 @@ export default function MockInterviewClient() {
     const res = await fetch("/api/interview/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question, answer }),
+      body: JSON.stringify({ question, answer, category }),
     });
     setLoadingFeedback(false);
     if (!res.ok) {
-      setError("Couldn't generate feedback. Please try again.");
+      setError("We hit a snag scoring your answer — try again in a moment.");
       return;
     }
     setFeedback(await res.json());
@@ -177,9 +203,12 @@ export default function MockInterviewClient() {
       <p className="text-text-gray text-sm mb-2 leading-relaxed">
         Practice answering a real admissions interview question out loud, then get direct feedback.
       </p>
-      <p className="text-text-gray text-xs mb-6 leading-relaxed">
+      <p className="text-text-gray text-xs mb-2 leading-relaxed">
         Your voice is converted to text entirely in your browser — audio is never sent to or stored
         on our servers, only the text you see below.{!speechSupported && " Voice input isn't supported in this browser; type your answer instead."}
+      </p>
+      <p className="text-text-gray text-xs mb-6 leading-relaxed">
+        Questions and feedback are AI-generated (sent to our AI provider, Anthropic) — a starting point for practice, not a verdict on a real interview.
       </p>
 
       {showHistory && (
@@ -222,7 +251,7 @@ export default function MockInterviewClient() {
             ))}
           </div>
           <button
-            onClick={getQuestion}
+            onClick={() => getQuestion()}
             disabled={loadingQuestion}
             className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-4 py-2.5 disabled:opacity-50"
           >
@@ -265,18 +294,57 @@ export default function MockInterviewClient() {
               {loadingFeedback ? "Scoring…" : "Get feedback"}
             </button>
             <button
-              onClick={getQuestion}
+              onClick={() => getQuestion()}
               disabled={loadingQuestion}
               className="rounded-xl border border-border text-text-gray hover:text-text text-sm px-4 py-2"
             >
-              New question
+              {loadingQuestion ? "Loading…" : "New question"}
             </button>
           </div>
+
+          {showRegenField ? (
+            <div className="mt-3">
+              <label htmlFor="interview-regen-feedback" className="block text-text-gray text-xs mb-1">
+                What should change about the question? (optional)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="interview-regen-feedback"
+                  value={regenFeedback}
+                  onChange={(e) => setRegenFeedback(e.target.value)}
+                  maxLength={500}
+                  placeholder="e.g. too generic, already asked something similar"
+                  className="flex-1 rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary"
+                />
+                <button
+                  onClick={() => getQuestion(regenFeedback)}
+                  disabled={loadingQuestion}
+                  className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-4 py-2 disabled:opacity-50"
+                >
+                  Go
+                </button>
+                <button
+                  onClick={() => { setShowRegenField(false); setRegenFeedback(""); }}
+                  className="text-text-gray text-sm hover:text-text px-2"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowRegenField(true)}
+              className="text-primary text-xs hover:text-primary-hover mt-2"
+            >
+              This one wasn&apos;t great? Tell us why
+            </button>
+          )}
         </div>
       )}
 
       {error && <p className="text-red text-sm mb-4">{error}</p>}
 
+      {feedback && <CrisisResourceBanner resource={feedback.crisis_resource} />}
       {feedback && (
         <div className="bg-card border border-border rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
@@ -300,6 +368,43 @@ export default function MockInterviewClient() {
               ))}
             </ul>
           </div>
+
+          {feedback.score >= 8 && (
+            <div className="mt-4 pt-3 border-t border-border">
+              {showNarrativePicker ? (
+                <div className="space-y-2">
+                  <label htmlFor="narrative-question-key" className="block text-text-gray text-xs">
+                    Which narrative question does this answer best fit?
+                  </label>
+                  <select
+                    id="narrative-question-key"
+                    value={narrativeQuestionKey}
+                    onChange={(e) => setNarrativeQuestionKey(e.target.value as typeof narrativeQuestionKey)}
+                    className="w-full rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary"
+                  >
+                    {NARRATIVE_QUESTIONS.map((q) => (
+                      <option key={q.key} value={q.key}>
+                        {q.label}
+                      </option>
+                    ))}
+                  </select>
+                  <a
+                    href={`/narrative?seed_key=${narrativeQuestionKey}&seed_text=${encodeURIComponent(answer)}`}
+                    className="inline-block rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-4 py-2 text-sm"
+                  >
+                    Use this answer
+                  </a>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowNarrativePicker(true)}
+                  className="text-primary text-sm hover:text-primary-hover"
+                >
+                  Strong answer — use it in Narrative Builder?
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

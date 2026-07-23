@@ -7,6 +7,7 @@ import { MIN_COHORT_SIZE } from "@/lib/cohort-types";
 import { AnimatePresence, motion } from "framer-motion";
 import FactorCard from "./FactorCard";
 import { createClient } from "@/lib/supabase/client";
+import ReportDataIssueButton from "@/components/ReportDataIssueButton";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -57,6 +58,7 @@ interface CollegeStats {
   costOfAttendance: number | null;
   medianDebt: number | null;
   medianEarnings10yr: number | null;
+  fetchedAt: string | null;
 }
 
 interface CollegePhoto {
@@ -116,8 +118,8 @@ export default function SchoolDetailClient({
 
       <div className="flex items-center gap-4 mb-6">
         {!photo && (
-          <div className="size-14 rounded-2xl bg-card border border-border flex items-center justify-center shrink-0">
-            <span className="font-serif text-xl text-text">{match.school_name.charAt(0)}</span>
+          <div className="size-14 rounded-2xl bg-secondary-tint border border-dashed border-border flex items-center justify-center shrink-0">
+            <span className="font-serif text-xl text-secondary">{match.school_name.charAt(0)}</span>
           </div>
         )}
         <div className="flex-1 flex items-center justify-between gap-4">
@@ -231,6 +233,15 @@ export default function SchoolDetailClient({
                     </Link>
                   </p>
                 )}
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  {stats.fetchedAt && (
+                    <p className="text-text-gray/70 text-xs">
+                      Data last verified{" "}
+                      {new Date(stats.fetchedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </p>
+                  )}
+                  <ReportDataIssueButton contentType="school_stats" label="This looks wrong" />
+                </div>
                 {aidNeed === null && !aidNudgeDismissed && (
                   <div className="bg-bg border border-border rounded-xl p-3 mb-3 flex items-center justify-between gap-3 flex-wrap">
                     <p className="text-text text-sm">Will financial aid affect where you apply?</p>

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getAnthropic, MODEL, NARRATIVE_SYNTHESIS_PROMPT, extractJson } from "@/lib/anthropic";
+import { getAnthropic, MODEL, PROMPT_VERSION, NARRATIVE_SYNTHESIS_PROMPT, extractJson } from "@/lib/anthropic";
 import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isTrustedOrigin } from "@/lib/origin-check";
 import { rejectScriptTags, ValidationError } from "@/lib/validate";
+import { containsCrisisLanguage, getCrisisResource } from "@/lib/crisis-check";
 
 // Unlike requireString, an empty answer is allowed here -- questions in this
 // flow are optional (a student can skip one they don't have an answer for),
@@ -27,6 +28,7 @@ interface NarrativeSynthesis {
   differentiator: string;
   essay_angles: { title: string; framing: string }[];
   gaps: string[];
+  suggested_activities: string[];
 }
 
 export async function POST(req: Request) {
@@ -41,6 +43,7 @@ export async function POST(req: Request) {
   }
 
   let answers: Answers;
+  let regenFeedback: string | null = null;
   try {
     const body = await req.json();
     const parsed = {} as Answers;
@@ -53,10 +56,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Answer at least one question." }, { status: 400 });
     }
     answers = parsed;
+
+    // Optional meta-feedback from the quick-edit regenerate path -- lets a
+    // student steer a new synthesis ("too generic," "lean into leadership")
+    // even when they haven't changed any of the six answers themselves.
+    const rawRegenFeedback = optionalAnswer(body?.regenFeedback, "Feedback", 1000);
+    rejectScriptTags(rawRegenFeedback, "Feedback");
+    regenFeedback = rawRegenFeedback.trim() || null;
   } catch (e) {
     if (e instanceof ValidationError) return NextResponse.json({ error: e.message }, { status: 400 });
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
+
+  const crisisResource =
+    Object.values(answers).some((v) => containsCrisisLanguage(v)) ||
+    (regenFeedback ? containsCrisisLanguage(regenFeedback) : false)
+      ? getCrisisResource()
+      : null;
+
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("extracurriculars")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const existingActivities: string[] = existingProfile?.extracurriculars ?? [];
 
   const QUESTION_LABELS: Record<QuestionKey, string> = {
     moment: "Formative moment",
@@ -70,7 +93,11 @@ export async function POST(req: Request) {
   const userMessage = QUESTION_KEYS
     .filter((key) => answers[key].trim())
     .map((key, i) => `${i + 1}. ${QUESTION_LABELS[key]}: ${answers[key]}`)
-    .join("\n");
+    .join("\n") + (regenFeedback
+      ? `\n\nThe student was asked "what should change about the synthesis?" on a regenerate and said: "${regenFeedback}" -- treat this as a direct correction to the previous synthesis (e.g. if they said "too generic," push for more specific, concrete language) rather than a general steer.`
+      : "") + (existingActivities.length > 0
+      ? `\n\nThe student's activities list already includes: ${existingActivities.join("; ")}. Do not suggest any of these again in suggested_activities -- only surface something genuinely new.`
+      : "");
 
   flagAnomalousUsage("narrative/generate", user.id);
   const t0 = Date.now();
@@ -105,7 +132,9 @@ export async function POST(req: Request) {
       growth_arc: synthesis.growth_arc,
       differentiator: synthesis.differentiator,
       essay_angles: synthesis.essay_angles,
+      suggested_activities: synthesis.suggested_activities ?? [],
       updated_at: new Date().toISOString(),
+      prompt_version: PROMPT_VERSION,
     },
     { onConflict: "user_id" }
   );
@@ -115,5 +144,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Generated but failed to save your narrative." }, { status: 500 });
   }
 
-  return NextResponse.json(synthesis);
+  return NextResponse.json({ ...synthesis, crisis_resource: crisisResource });
 }

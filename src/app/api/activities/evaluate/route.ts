@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getAnthropic, MODEL, ACTIVITY_EVAL_PROMPT, extractJson } from "@/lib/anthropic";
+import { getAnthropic, MODEL, PROMPT_VERSION, ACTIVITY_EVAL_PROMPT, extractJson } from "@/lib/anthropic";
 import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
 import { canAccessFeature } from "@/lib/access";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -53,14 +53,23 @@ export async function POST(req: Request) {
   }
 
   let activitiesText: string;
+  let regenFeedback: string | undefined;
   try {
     const body = await req.json();
     activitiesText = requireString(body.activitiesText, "Activities", 10_000);
     rejectScriptTags(activitiesText, "Activities");
+    if (body.regenFeedback !== undefined && body.regenFeedback !== "") {
+      regenFeedback = requireString(body.regenFeedback, "Feedback", 1_000);
+      rejectScriptTags(regenFeedback, "Feedback");
+    }
   } catch (e) {
     if (e instanceof ValidationError) return NextResponse.json({ error: e.message }, { status: 400 });
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
+
+  const regenBlock = regenFeedback
+    ? `\n\nThe student was asked "what should change from the last evaluation?" on a regenerate and said: "${regenFeedback}" -- address this directly rather than repeating a similar evaluation.`
+    : "";
 
   flagAnomalousUsage("activities/evaluate", user.id);
   const t0 = Date.now();
@@ -70,7 +79,7 @@ export async function POST(req: Request) {
       max_tokens: 1024,
       thinking: { type: "disabled" },
       system: ACTIVITY_EVAL_PROMPT,
-      messages: [{ role: "user", content: activitiesText }],
+      messages: [{ role: "user", content: activitiesText + regenBlock }],
     });
     logAiUsage("activities/evaluate", user.id, MODEL, t0, response);
     const text = response.content.find((b) => b.type === "text")?.text ?? "";
@@ -88,6 +97,7 @@ export async function POST(req: Request) {
       score_rationale: parsed.score_rationale,
       suggestions: parsed.suggestions,
       per_activity: parsed.per_activity ?? null,
+      prompt_version: PROMPT_VERSION,
     });
     if (historyError) console.error("activity evaluation history insert failed:", historyError);
 

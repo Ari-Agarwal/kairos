@@ -16,10 +16,17 @@ async function getRecommenderData(token: string) {
   if (recError) console.error("recommender token lookup failed:", recError);
   if (!rec) return null;
 
-  const { data: userData, error: userDataError } = await service.auth.admin.getUserById(rec.user_id);
-  if (userDataError) console.error("recommender getUserById failed:", userDataError);
-  const fullName: string =
-    (userData?.user?.user_metadata?.full_name as string | undefined) ?? "the student";
+  // Reads straight off profiles.display_name rather than an
+  // auth.admin.getUserById() round-trip -- the same fix already applied
+  // across the counselor-facing pages (Section 4) for the same unreliable
+  // fan-out pattern; this page was the one spot it was missed.
+  const { data: profile, error: profileError } = await service
+    .from("profiles")
+    .select("display_name")
+    .eq("user_id", rec.user_id)
+    .maybeSingle();
+  if (profileError) console.error("recommender profile lookup failed:", profileError);
+  const fullName = profile?.display_name?.trim() || "the student";
   const firstName = fullName.split(" ")[0];
 
   const brag = (rec.brag_sheet ?? {}) as Record<string, string>;
@@ -59,7 +66,7 @@ export default async function RecommenderPage({
             Recommendation Letter · Shared by student
           </p>
           <h1 className="font-serif text-3xl text-text mb-1">
-            Hello, {recommender_name.split(" ")[0]}
+            Hello, {recommender_name}
           </h1>
           <p className="text-text-gray text-sm">
             {student_first_name} has asked you to write a recommendation letter for their college applications.

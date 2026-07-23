@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { sendSms, deadlineReminderBody, weeklyEssayPromptBody, scholarshipAlertBody } from "@/lib/sms";
-import { getAllScholarships, isLikelyMatch } from "@/lib/scholarships";
+import { sendSms, deadlineReminderBody, weeklyEssayPromptBody, scholarshipAlertBody, scholarshipDeadlineSoonBody } from "@/lib/sms";
+import { getAllScholarships, isLikelyMatch, deadlineSortKey } from "@/lib/scholarships";
 
 // Bound how much history a profile accumulates -- this is a "don't repeat
 // yourself" list, not an audit log, so it's fine to forget the oldest entries
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
   const { data: optedIn, error: optedInError } = await supabase
     .from("profiles")
     .select(
-      "user_id, phone_number, sms_notification_prefs, first_gen, financial_aid_need, intended_major, extracurriculars, notified_scholarship_names"
+      "user_id, phone_number, sms_notification_prefs, first_gen, financial_aid_need, intended_major, extracurriculars, notified_scholarship_names, notified_scholarship_deadlines"
     )
     .eq("sms_opt_in", true)
     .not("phone_number", "is", null);
@@ -43,6 +43,9 @@ export async function GET(req: Request) {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().slice(0, 10);
   const isMonday = new Date().getUTCDay() === 1;
+  const now = new Date();
+  const currentMonth = now.getUTCMonth();
+  const nextMonth = (currentMonth + 1) % 12;
 
   let sent = 0;
   for (const row of optedIn) {
@@ -98,6 +101,44 @@ export async function GET(req: Request) {
             .update({ notified_scholarship_names: updated })
             .eq("user_id", row.user_id);
           if (updateError) console.error("send-nudges notified_scholarship_names update failed:", updateError);
+        }
+      }
+    }
+
+    // Deadline-closing-soon nudge, same weekly cadence -- only for
+    // scholarships the student has actually saved (not every match), since
+    // "closing soon" is only actionable for something they're already
+    // tracking. deadline_window is an approximate month range, not a real
+    // date, so "soon" means its first-mentioned month is this month or next.
+    if (isMonday && prefs?.scholarship_alerts !== false) {
+      const { data: saved, error: savedError } = await supabase
+        .from("scholarship_tracker")
+        .select("scholarship_name")
+        .eq("user_id", row.user_id)
+        .eq("status", "saved");
+      if (savedError) console.error("send-nudges scholarship_tracker query failed:", savedError);
+
+      const alreadyNotifiedDeadlines = new Set((row.notified_scholarship_deadlines as string[] | null) ?? []);
+      const savedNames = new Set((saved ?? []).map((r) => r.scholarship_name));
+      const closingSoon = getAllScholarships().find((s) => {
+        if (!savedNames.has(s.name) || alreadyNotifiedDeadlines.has(s.name)) return false;
+        const month = deadlineSortKey(s.deadline_window);
+        return month === currentMonth || month === nextMonth;
+      });
+
+      if (closingSoon) {
+        const result = await sendSms(
+          row.phone_number as string,
+          scholarshipDeadlineSoonBody(closingSoon.name, closingSoon.deadline_window)
+        );
+        if (result.sent) {
+          sent++;
+          const updated = [...alreadyNotifiedDeadlines, closingSoon.name].slice(-MAX_NOTIFIED_SCHOLARSHIPS);
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({ notified_scholarship_deadlines: updated })
+            .eq("user_id", row.user_id);
+          if (updateError) console.error("send-nudges notified_scholarship_deadlines update failed:", updateError);
         }
       }
     }

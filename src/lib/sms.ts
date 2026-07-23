@@ -51,3 +51,7 @@ export function oddsUpdateBody(schoolName: string, category: string): string {
 export function scholarshipAlertBody(scholarshipName: string): string {
   return `Kairos: we found a scholarship that fits your profile — "${scholarshipName}". Check it out in your Scholarships tab. Reply STOP to opt out.`;
 }
+
+export function scholarshipDeadlineSoonBody(scholarshipName: string, deadlineWindow: string): string {
+  return `Kairos: "${scholarshipName}" is closing soon (${deadlineWindow}) — confirm the exact date and apply if you haven't yet. Reply STOP to opt out.`;
+}

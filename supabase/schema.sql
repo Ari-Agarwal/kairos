@@ -19,20 +19,44 @@ create table counselors (
 create table profiles (
   user_id uuid references auth.users primary key,
   grade_level text check (grade_level in ('Freshman','Sophomore','Junior','Senior')) not null,
-  gpa decimal not null,
-  intended_major text not null,
+  unweighted_gpa decimal not null,
+  weighted_gpa decimal not null,
+  intended_major text[] not null,
   current_school text not null,
   extracurriculars text[],
-  schools_already_considering text not null,
+  schools_already_considering text,
   test_scores jsonb,
-  campus_size_pref text check (campus_size_pref in ('Small','Medium','Large','No preference')) not null,
-  campus_setting_pref text check (campus_setting_pref in ('Urban','Suburban','Rural','No preference')) not null,
+  campus_size_pref text[],
+  campus_setting_pref text[],
   subscription_tier text check (subscription_tier in ('free','premium')) default 'free' not null,
   stripe_customer_id text unique,
   school_id uuid references schools(school_id),
   counselor_id uuid references counselors(counselor_id),
   last_login_at timestamptz,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  interests text,
+  premium_notify_requested boolean not null default false,
+  financial_aid_need boolean,
+  budget_ceiling numeric,
+  sat_score int,
+  act_score int,
+  class_rank text,
+  ap_ib_count int,
+  career_goals text,
+  geographic_pref text,
+  first_gen boolean,
+  legacy_school text,
+  last_profile_check_at timestamptz not null default now(),
+  phone_number text check (char_length(phone_number) <= 20),
+  sms_opt_in boolean not null default false,
+  sms_opt_in_at timestamptz,
+  sms_notification_prefs jsonb not null default '{"deadline_reminders": true, "weekly_essay_prompt": true, "odds_updates": true}',
+  mentor_opt_in boolean not null default false,
+  mentor_bio text check (char_length(mentor_bio) <= 1000),
+  internships_research text,
+  achievements text,
+  display_name text,
+  notified_scholarship_names text[] not null default '{}'
 );
 
 create table school_matches (
@@ -44,6 +68,7 @@ create table school_matches (
   why_text text not null,
   factors jsonb not null,
   is_active boolean default true,
+  is_manual boolean not null default false,
   created_at timestamptz default now()
 );
 
@@ -92,6 +117,10 @@ create table college_stats_cache (
   acceptance_rate numeric,
   enrollment integer,
   ownership text,
+  avg_net_price integer,
+  cost_of_attendance integer,
+  median_debt numeric,
+  median_earnings_10yr integer,
   found boolean not null default true,
   fetched_at timestamptz default now() not null
 );
