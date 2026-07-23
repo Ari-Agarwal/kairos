@@ -52,3 +52,7 @@ recovery-codes.txt
 # eval harness output (Software_Timeline.md Section 6a) — real API-call
 # results, regenerated per run, not meant to be checked in
 /scripts/eval/results/
+
+# scholarship pipeline output (Software_Timeline.md Section 1) — patches and
+# freshness reports, regenerated per run, not meant to be checked in
+/scripts/scholarships/output/

@@ -79,7 +79,7 @@ export default function OnboardingChat({ onCancel }: { onCancel: () => void }) {
       });
       const body = await res.json();
       if (!res.ok) {
-        setError(body.error ?? "Something went wrong. Please try again.");
+        setError(body.error ?? "We hit a snag reading that — mind trying again?");
         setSending(false);
         return;
       }
@@ -87,7 +87,7 @@ export default function OnboardingChat({ onCancel }: { onCancel: () => void }) {
       setReadyToSubmit(!!body.ready_to_submit && isDraftComplete(body.fields ?? {}));
       setMessages((prev) => [...prev, { role: "assistant", content: body.reply_to_student }]);
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("We hit a snag reading that — mind trying again?");
     } finally {
       setSending(false);
     }

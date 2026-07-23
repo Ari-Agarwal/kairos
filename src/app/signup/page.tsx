@@ -29,6 +29,29 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
     try {
+      // App-level stand-in for Supabase's Pro-only "Leaked Password
+      // Protection" toggle -- checks against HaveIBeenPwned before creating
+      // the account. Fails open (lets signup proceed) if the check itself
+      // errors, so a HIBP outage never blocks a legitimate signup.
+      try {
+        const checkRes = await fetch("/api/auth/check-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password }),
+        });
+        if (checkRes.ok) {
+          const { pwned } = await checkRes.json();
+          if (pwned) {
+            showError(
+              "This password has appeared in a known data breach — please choose a different one."
+            );
+            return;
+          }
+        }
+      } catch (checkErr) {
+        console.error("Pwned-password check failed, proceeding with signup:", checkErr);
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,

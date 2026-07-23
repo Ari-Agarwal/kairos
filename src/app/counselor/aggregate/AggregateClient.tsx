@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { GradeAggregate, SchoolWideAggregate } from "@/lib/aggregate";
+import { MatchesEmptyArt } from "@/components/EmptyStateIllustration";
 
 export type { GradeAggregate };
 
@@ -131,7 +132,8 @@ export default function AggregateClient({
       <h2 className="text-text font-medium text-sm mb-3">Most-matched schools across your students</h2>
       {topSchools.length === 0 ? (
         <div className="bg-card border border-border rounded-2xl p-6 text-center">
-          <p className="text-text-gray text-sm">No active matches yet across your roster.</p>
+          <MatchesEmptyArt />
+          <p className="text-text-gray text-sm mt-1">No active matches yet across your roster.</p>
         </div>
       ) : (
         <div className="bg-card border border-border rounded-2xl p-5 space-y-1">

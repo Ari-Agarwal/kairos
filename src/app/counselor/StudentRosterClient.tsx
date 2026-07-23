@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { RosterStudent } from "./page";
+import { StudentsEmptyArt } from "@/components/EmptyStateIllustration";
 
 const STATUS_STYLES: Record<RosterStudent["status"], string> = {
   "On Track": "bg-green-tint text-green",
@@ -43,6 +44,22 @@ export default function StudentRosterClient({
 }) {
   const router = useRouter();
   const [queryInput, setQueryInput] = useState(goalQuery);
+  // First-run help banner (Software_Timeline.md Section 8) -- counselor tools
+  // have accumulated real complexity (severity weighting, snoozing, aggregate
+  // trends) with no equivalent to the student-facing onboarding flow. A
+  // dismissible banner, gated on localStorage, is the lightweight version of
+  // that: shown once, gone for good once dismissed, no separate tour/modal
+  // flow needed. Lazy initializer only reads localStorage (safe to run twice
+  // under Strict Mode) -- no setState-in-effect, matching the pattern already
+  // established in MatchesPrepClient/MatchListClient for one-shot flags.
+  const [showFirstRunHelp, setShowFirstRunHelp] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem("kairos_counselor_help_dismissed") !== "true"
+  );
+
+  function dismissFirstRunHelp() {
+    localStorage.setItem("kairos_counselor_help_dismissed", "true");
+    setShowFirstRunHelp(false);
+  }
 
   function navigate(next: { grade?: string; status?: string; q?: string; sort?: string }) {
     const params = new URLSearchParams({
@@ -154,6 +171,35 @@ export default function StudentRosterClient({
   return (
     <div className="px-5 md:px-8 py-8 max-w-4xl mx-auto w-full">
       <h1 className="font-serif text-2xl text-text mb-2">Student Roster</h1>
+
+      {showFirstRunHelp && (
+        <div className="bg-card border border-border rounded-2xl p-4 mb-6 text-sm text-text-gray leading-relaxed relative">
+          <button
+            onClick={dismissFirstRunHelp}
+            aria-label="Dismiss"
+            className="absolute top-3 right-3 text-text-gray hover:text-text text-xs"
+          >
+            Dismiss
+          </button>
+          <p className="text-text font-medium mb-1.5">New here? A few things worth knowing:</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>
+              <strong>At-risk severity</strong> is weighted, not just a count of flags — never logged in weighs most,
+              then long inactivity, then no active matches, then overdue items/incomplete profile, added together.
+            </li>
+            <li>
+              <strong>Snoozing</strong> a flagged student hides them from the main at-risk list for 14 days without
+              changing what&apos;s actually flagged — it&apos;s for &ldquo;I&apos;ve handled this,&rdquo; not
+              &ldquo;this isn&apos;t a real issue.&rdquo;
+            </li>
+            <li>
+              <strong>Aggregate trends</strong> compare today&apos;s numbers to a snapshot from your chosen window back
+              (7/14/30/90 days) — a school with under that much history just won&apos;t show a trend yet, which is
+              expected, not a bug.
+            </li>
+          </ul>
+        </div>
+      )}
 
       {/* Home-screen summary (Software_Timeline.md 8) -- previously a counselor
           had to check /counselor/at-risk and /counselor/review-requests
@@ -411,7 +457,10 @@ export default function StudentRosterClient({
           );
         })}
         {filtered.length === 0 && (
-          <p className="text-text-gray text-sm text-center py-10">No students match these filters.</p>
+          <div className="text-center py-6">
+            <StudentsEmptyArt />
+            <p className="text-text-gray text-sm mt-1">No students match these filters.</p>
+          </div>
         )}
       </div>
 

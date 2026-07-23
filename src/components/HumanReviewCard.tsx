@@ -46,7 +46,7 @@ export default function HumanReviewCard() {
     });
     const json = await res.json();
     if (!res.ok) {
-      setError(json.error ?? "Something went wrong.");
+      setError(json.error ?? "Couldn't send that — mind trying again?");
       setSubmitting(false);
       return;
     }
@@ -116,7 +116,7 @@ export default function HumanReviewCard() {
               disabled={submitting || !notes.trim()}
               className="flex-1 rounded-xl bg-primary hover:bg-primary-hover disabled:opacity-50 transition-colors text-bg font-medium text-sm px-4 py-2"
             >
-              {submitting ? "Submitting…" : "Submit"}
+              {submitting ? "Sending…" : "Send request"}
             </button>
           </div>
         </div>

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import { crossFeatureWhyText } from "@/lib/cross-feature-why";
+import CrossFeatureToast from "@/components/CrossFeatureToast";
 import { CrisisResourceBanner, type CrisisResource } from "@/components/CrisisResourceBanner";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -82,6 +84,7 @@ export default function NarrativeBuilderClient({
   const supabase = createClient();
   const reduceMotion = useReducedMotion();
   const [addedAngles, setAddedAngles] = useState<Record<number, boolean>>({});
+  const [showTimelineToast, setShowTimelineToast] = useState(false);
   const [addingAngle, setAddingAngle] = useState<number | null>(null);
   const [addedActivities, setAddedActivities] = useState<Record<number, boolean>>({});
   const [dismissedActivities, setDismissedActivities] = useState<Record<number, boolean>>({});
@@ -155,12 +158,13 @@ export default function NarrativeBuilderClient({
       tier: "free",
       is_strategic: true,
       completed: false,
-      why_text: `Suggested by your Narrative Builder throughline. ${angle.framing}`,
+      why_text: crossFeatureWhyText("Narrative Builder throughline", angle.framing),
       what_to_do: ["Start a draft in Essay Feedback using this angle", "Get AI feedback and revise"],
     });
     setAddingAngle(null);
     if (error) return;
     setAddedAngles((p) => ({ ...p, [index]: true }));
+    setShowTimelineToast(true);
   }
   const differentiatorIndex = QUESTIONS.findIndex((q) => q.key === "differentiator");
   const seedIndex = validSeed ? QUESTIONS.findIndex((q) => q.key === validSeed.key) : -1;
@@ -483,6 +487,11 @@ export default function NarrativeBuilderClient({
 
   return (
     <div>
+      <CrossFeatureToast
+        message="Added to your Timeline."
+        show={showTimelineToast}
+        onDone={() => setShowTimelineToast(false)}
+      />
       <p className="text-text-gray text-xs bg-secondary-tint border border-border rounded-xl px-4 py-2.5 mb-5">
         Kairos helps you brainstorm and critique — you write the essay.
       </p>

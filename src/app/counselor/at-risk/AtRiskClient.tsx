@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import SendReminderButton from "@/components/SendReminderButton";
 import InfoTooltip from "@/components/InfoTooltip";
+import { AllClearArt } from "@/components/EmptyStateIllustration";
 
 export interface FlaggedStudent {
   user_id: string;
@@ -12,6 +13,7 @@ export interface FlaggedStudent {
   grade_level: string;
   reasons: string[];
   snoozedUntil: string | null;
+  snoozedBy: string | null;
 }
 
 const SNOOZE_DAYS = 14;
@@ -78,7 +80,7 @@ export default function AtRiskClient({ students: initialStudents }: { students: 
         {isSnoozed ? (
           <div className="flex items-center gap-3">
             <p className="text-text-gray text-xs">
-              Snoozed until{" "}
+              Snoozed{s.snoozedBy && s.snoozedBy !== "you" ? ` by ${s.snoozedBy}` : ""} until{" "}
               {s.snoozedUntil &&
                 new Date(s.snoozedUntil).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
             </p>
@@ -118,7 +120,8 @@ export default function AtRiskClient({ students: initialStudents }: { students: 
 
       {visible.length === 0 ? (
         <div className="bg-card border border-border rounded-2xl p-6 text-center mb-4">
-          <p className="text-text-gray text-sm">No students currently flagged. Everyone&apos;s on track.</p>
+          <AllClearArt />
+          <p className="text-text-gray text-sm mt-1">No students currently flagged. Everyone&apos;s on track.</p>
         </div>
       ) : (
         <div className="space-y-3 mb-4">

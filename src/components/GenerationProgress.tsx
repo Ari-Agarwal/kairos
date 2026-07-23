@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import GenerationThinking, { MATCHES_THINKING } from "@/components/GenerationThinking";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const CAP = 92;
@@ -10,7 +11,7 @@ const TAU_MS = 12000; // time constant -- ~92% reached around 30s, matching real
 // Simulated progress: no real progress events exist for these AI calls (which
 // now take 20-30s+ with extended thinking), so we approach a cap on a
 // realistic time-based curve rather than a static spinner.
-export default function GenerationProgress() {
+export default function GenerationProgress({ messages = MATCHES_THINKING }: { messages?: string[] }) {
   const [pct, setPct] = useState(4);
 
   useEffect(() => {
@@ -31,6 +32,7 @@ export default function GenerationProgress() {
           transition={{ duration: 0.25, ease: EASE }}
         />
       </div>
+      <GenerationThinking messages={messages} className="text-text-gray text-xs text-center mt-3" />
     </div>
   );
 }

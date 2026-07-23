@@ -56,15 +56,29 @@ export default async function AtRiskPage() {
     }
   }
 
+  // School-wide: any counselor's dismissal on a shared student is visible to
+  // all counselors at the school (Software_Timeline.md Section 1, Counselor
+  // tools -- multi-counselor coordination), not just the dismisser's own.
   const { data: dismissals, error: dismissalsError } = await supabase
     .from("at_risk_dismissals")
-    .select("student_user_id, dismissed_until")
-    .eq("counselor_id", counselor.counselor_id)
+    .select("student_user_id, dismissed_until, counselor_id")
     .gt("dismissed_until", new Date().toISOString());
 
   if (dismissalsError) console.error("at-risk dismissals query failed:", dismissalsError);
 
+  const dismisserIds = [...new Set((dismissals ?? []).map((d) => d.counselor_id))];
+  const { data: dismissers } = dismisserIds.length
+    ? await supabase.from("counselors").select("counselor_id, name").in("counselor_id", dismisserIds)
+    : { data: [] };
+  const dismisserNameById = new Map((dismissers ?? []).map((c) => [c.counselor_id, c.name as string]));
+
   const dismissedUntilByUser = new Map((dismissals ?? []).map((d) => [d.student_user_id, d.dismissed_until]));
+  const dismissedByUser = new Map(
+    (dismissals ?? []).map((d) => [
+      d.student_user_id,
+      d.counselor_id === counselor.counselor_id ? "you" : dismisserNameById.get(d.counselor_id) ?? null,
+    ])
+  );
 
   const flagged = computeFlags(profiles ?? [], matchCountByUser, overdueByUser);
   const sortedFlagged: FlaggedStudent[] = flagged.map((s) => ({
@@ -73,6 +87,7 @@ export default async function AtRiskPage() {
     grade_level: s.grade_level,
     reasons: s.reasons,
     snoozedUntil: dismissedUntilByUser.get(s.user_id) ?? null,
+    snoozedBy: dismissedByUser.get(s.user_id) ?? null,
   }));
 
   return (

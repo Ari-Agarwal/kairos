@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import { HistoryEmptyArt } from "@/components/EmptyStateIllustration";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -159,7 +160,10 @@ export default function ActivityEvalClient({
           {loadingHistory ? (
             <p className="text-text-gray text-sm">Loading history…</p>
           ) : !history || history.length === 0 ? (
-            <p className="text-text-gray text-sm">No past evaluations yet.</p>
+            <div className="text-center py-2">
+              <HistoryEmptyArt />
+              <p className="text-text-gray text-sm mt-1">No past evaluations yet.</p>
+            </div>
           ) : (
             history.map((h) => (
               <div key={h.id} className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2">

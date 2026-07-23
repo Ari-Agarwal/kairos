@@ -8,6 +8,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import FactorCard from "./FactorCard";
 import { createClient } from "@/lib/supabase/client";
 import ReportDataIssueButton from "@/components/ReportDataIssueButton";
+import { getReaderPriorities } from "@/lib/reader-priorities";
+import NetPriceEstimateSection from "@/components/NetPriceEstimateSection";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -75,12 +77,14 @@ export default function SchoolDetailClient({
   photo,
   cohortStats,
   financialAidNeed,
+  hasFinancialInfo,
 }: {
   match: Match;
   stats: CollegeStats | null;
   photo: CollegePhoto | null;
   cohortStats: CohortStats | null;
   financialAidNeed: boolean | null;
+  hasFinancialInfo: boolean;
 }) {
   const [tab, setTab] = useState<"info" | "breakdown" | "outcomes">("info");
   const [aidNeed, setAidNeed] = useState(financialAidNeed);
@@ -242,6 +246,7 @@ export default function SchoolDetailClient({
                   )}
                   <ReportDataIssueButton contentType="school_stats" label="This looks wrong" />
                 </div>
+                <NetPriceEstimateSection schoolName={match.school_name} hasFinancialInfo={hasFinancialInfo} />
                 {aidNeed === null && !aidNudgeDismissed && (
                   <div className="bg-bg border border-border rounded-xl p-3 mb-3 flex items-center justify-between gap-3 flex-wrap">
                     <p className="text-text text-sm">Will financial aid affect where you apply?</p>
@@ -301,7 +306,7 @@ export default function SchoolDetailClient({
                 .
               </p>
             )}
-            <p className="text-text-gray text-sm">
+            <p className="text-text-gray text-sm mb-5">
               Your personalized estimate for this school, grounded in your actual profile,
               not a generic school-wide number, is on the{" "}
               <button onClick={() => setTab("breakdown")} className="text-text underline underline-offset-2 hover:text-primary">
@@ -309,6 +314,30 @@ export default function SchoolDetailClient({
               </button>
               .
             </p>
+
+            {(() => {
+              const guidance = getReaderPriorities(stats?.acceptanceRate ?? null, stats?.ownership ?? null);
+              return (
+                <div className="border-t border-border pt-5">
+                  <p className="text-text font-medium text-sm mb-1">What readers typically weigh</p>
+                  <p className="text-text-gray text-xs mb-3">
+                    General guidance based on publicly reported patterns (Common Data Set factor-importance
+                    reporting, published admissions-office guidance) for <strong>{guidance.tierLabel.toLowerCase()}</strong> —
+                    not specific to {match.school_name}&apos;s actual committee and not a claim that any real
+                    admissions officer reviewed your application.
+                  </p>
+                  <p className="text-text-gray text-sm mb-3">{guidance.summary}</p>
+                  <ul className="space-y-2">
+                    {guidance.factors.map((f) => (
+                      <li key={f.factor} className="text-sm">
+                        <span className="text-text font-medium">{f.factor}:</span>{" "}
+                        <span className="text-text-gray">{f.note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })()}
           </motion.div>
         )}
 

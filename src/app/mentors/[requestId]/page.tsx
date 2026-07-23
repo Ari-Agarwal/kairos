@@ -22,13 +22,14 @@ export default async function MentorThreadPage({ params }: { params: Promise<{ r
 
   const { data: messages, error: messagesError } = await supabase
     .from("mentor_messages")
-    .select("id, sender_id, body, created_at")
+    .select("id, sender_id, body, message_type, created_at")
     .eq("request_id", requestId)
     .order("created_at", { ascending: true });
 
   if (messagesError) console.error("mentor thread messages query failed:", messagesError);
 
   const otherUserId = request.mentee_id === user.id ? request.mentor_id : request.mentee_id;
+  const isMentor = request.mentor_id === user.id;
 
   return (
     <NavShell>
@@ -38,6 +39,7 @@ export default async function MentorThreadPage({ params }: { params: Promise<{ r
         initialMessages={messages ?? []}
         currentUserId={user.id}
         otherUserId={otherUserId}
+        isMentor={isMentor}
       />
     </NavShell>
   );

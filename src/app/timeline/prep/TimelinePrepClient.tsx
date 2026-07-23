@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import FeaturePrepFlow from "@/components/FeaturePrepFlow";
+import { TIMELINE_THINKING } from "@/components/GenerationThinking";
 
 export default function TimelinePrepClient({
   inlineFields,
@@ -72,6 +73,7 @@ export default function TimelinePrepClient({
       }
       completeLabel="Generate Timeline"
       generatingLabel="Mapping out your timeline..."
+      thinkingMessages={TIMELINE_THINKING}
       onComplete={handleComplete}
     />
   );

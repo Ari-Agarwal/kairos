@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CrisisResourceBanner, type CrisisResource } from "@/components/CrisisResourceBanner";
+import { HistoryEmptyArt } from "@/components/EmptyStateIllustration";
 
 interface InterviewFeedback {
   score: number;
@@ -74,6 +75,18 @@ export default function MockInterviewClient() {
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const processedResultCount = useRef(0);
+  // Session-local audio/video review (Section 1 backlog): recorded with
+  // MediaRecorder alongside the existing browser-only speech-to-text, kept
+  // entirely client-side (object URL, never uploaded) so a student can
+  // play back their own pacing/filler words next to the transcript. There's
+  // no blob-storage backend wired up for this app, so this deliberately
+  // stays session-local rather than inventing a new upload pipeline.
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+  const [recordingSupported, setRecordingSupported] = useState(false);
+  const [recordingKind, setRecordingKind] = useState<"video" | "audio" | null>(null);
+  const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
   const [category, setCategory] = useState<Category>("General");
   const [history, setHistory] = useState<SessionHistoryEntry[] | null>(null);
   const [showHistory, setShowHistory] = useState(false);
@@ -112,7 +125,62 @@ export default function MockInterviewClient() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSpeechSupported(getSpeechRecognition() !== null);
     setTtsSupported("speechSynthesis" in window);
+    setRecordingSupported(
+      typeof window !== "undefined" &&
+        "MediaRecorder" in window &&
+        !!navigator.mediaDevices?.getUserMedia
+    );
   }, []);
+
+  // Revoke the object URL on unmount / when a new recording replaces it, so
+  // we don't leak the blob for the life of the tab.
+  useEffect(() => {
+    return () => {
+      if (playbackUrl) URL.revokeObjectURL(playbackUrl);
+    };
+  }, [playbackUrl]);
+
+  async function startRecording() {
+    if (!recordingSupported) return;
+    try {
+      let stream: MediaStream;
+      let kind: "video" | "audio" = "video";
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      } catch {
+        // Camera denied/unavailable -- fall back to audio-only rather than
+        // failing the whole review feature.
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        kind = "audio";
+      }
+      mediaStreamRef.current = stream;
+      recordedChunksRef.current = [];
+      const recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recordedChunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: kind === "video" ? "video/webm" : "audio/webm" });
+        setPlaybackUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return URL.createObjectURL(blob);
+        });
+        mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+        mediaStreamRef.current = null;
+      };
+      mediaRecorderRef.current = recorder;
+      setRecordingKind(kind);
+      recorder.start();
+    } catch (err) {
+      console.error("Mock interview recording failed to start:", err);
+      setRecordingKind(null);
+    }
+  }
+
+  function stopRecording() {
+    mediaRecorderRef.current?.stop();
+    mediaRecorderRef.current = null;
+  }
 
   async function getQuestion(feedbackForRegen?: string) {
     setLoadingQuestion(true);
@@ -133,6 +201,11 @@ export default function MockInterviewClient() {
     setQuestion(data.question);
     setRegenFeedback("");
     setShowRegenField(false);
+    setPlaybackUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setRecordingKind(null);
     if (ttsSupported) {
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(new SpeechSynthesisUtterance(data.question));
@@ -142,11 +215,13 @@ export default function MockInterviewClient() {
   function toggleListening() {
     if (listening) {
       recognitionRef.current?.stop();
+      stopRecording();
       setListening(false);
       return;
     }
     const recognition = getSpeechRecognition();
     if (!recognition) return;
+    if (recordingSupported) startRecording();
     recognition.continuous = true;
     recognition.interimResults = false;
     recognition.lang = "en-US";
@@ -206,6 +281,7 @@ export default function MockInterviewClient() {
       <p className="text-text-gray text-xs mb-2 leading-relaxed">
         Your voice is converted to text entirely in your browser — audio is never sent to or stored
         on our servers, only the text you see below.{!speechSupported && " Voice input isn't supported in this browser; type your answer instead."}
+        {recordingSupported && " If you allow camera/mic access, we'll also keep a recording for you to play back — it stays on your device for this session only and is never uploaded."}
       </p>
       <p className="text-text-gray text-xs mb-6 leading-relaxed">
         Questions and feedback are AI-generated (sent to our AI provider, Anthropic) — a starting point for practice, not a verdict on a real interview.
@@ -216,7 +292,10 @@ export default function MockInterviewClient() {
           {loadingHistory ? (
             <p className="text-text-gray text-sm">Loading history…</p>
           ) : !history || history.length === 0 ? (
-            <p className="text-text-gray text-sm">No past sessions yet.</p>
+            <div className="text-center py-2">
+              <HistoryEmptyArt />
+              <p className="text-text-gray text-sm mt-1">No past sessions yet.</p>
+            </div>
           ) : (
             history.map((h) => (
               <div key={h.id} className="rounded-xl border border-border px-3 py-2">
@@ -352,6 +431,20 @@ export default function MockInterviewClient() {
             <p className="font-serif text-2xl text-text">{feedback.score}/10</p>
           </div>
           <p className="text-text text-sm mb-4">{feedback.one_line_summary}</p>
+
+          {playbackUrl && (
+            <div className="mb-4">
+              <p className="text-text-gray text-xs mb-1">
+                Your {recordingKind === "video" ? "recording" : "audio"} — listen for pacing and filler words
+              </p>
+              {recordingKind === "video" ? (
+                <video src={playbackUrl} controls className="w-full rounded-xl border border-border max-h-64" />
+              ) : (
+                <audio src={playbackUrl} controls className="w-full" />
+              )}
+            </div>
+          )}
+
           <div className="mb-3">
             <p className="text-text-gray text-xs mb-1">Strengths</p>
             <ul className="space-y-1">

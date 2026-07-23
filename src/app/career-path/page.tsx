@@ -6,6 +6,7 @@ import NavShell from "@/components/NavShell";
 import { canAccessFeature } from "@/lib/access";
 import LockedCard from "../essay-feedback/LockedCard";
 import CareerPathClient from "./CareerPathClient";
+import { getCollegePhoto } from "@/lib/college-photo";
 
 export const metadata = { title: "Career Path — Kairos" };
 
@@ -37,6 +38,14 @@ export default async function CareerPathPage({
 
   const isPremium = canAccessFeature({ subscription_tier: profile.subscription_tier }, "career_path_explorer");
 
+  // Same primary Wikipedia photo used on Matches, here keyed by school name
+  // (not match id) since Career Path's compare view also accepts free-typed
+  // custom school names that don't have a match row.
+  const photoEntries = isPremium
+    ? await Promise.all((matches ?? []).map(async (m) => [m.school_name, await getCollegePhoto(m.school_name)] as const))
+    : [];
+  const photos = Object.fromEntries(photoEntries);
+
   return (
     <NavShell>
       <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
@@ -66,6 +75,7 @@ export default async function CareerPathPage({
             matches={matches ?? []}
             intendedMajor={profile.intended_major}
             preselectedSchool={preselectedSchool ?? null}
+            photos={photos}
           />
         )}
       </div>

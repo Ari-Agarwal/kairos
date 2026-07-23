@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CrisisResourceBanner, type CrisisResource } from "@/components/CrisisResourceBanner";
 
@@ -56,6 +56,59 @@ function diffWords(before: string, after: string): DiffToken[] {
   return tokens;
 }
 
+interface AnnotatedSegment {
+  text: string;
+  marker: number | null;
+}
+
+// Ties each feedback item's quoted line back to a location in the draft, so
+// feedback can render as inline margin-style annotations (Software_Timeline.md
+// Section 5h) instead of one flat block disconnected from the text it's
+// about. Both essay-feedback prompts (plain and rubric) tag items with a
+// verbatim "quote" -- this just locates that substring in the submitted
+// draft. A quote that can't be found verbatim (unusual, but possible if the
+// model paraphrases slightly) is simply left unhighlighted; the comment
+// itself still renders normally in the list, just without a location marker.
+function buildAnnotatedDraft(
+  essay: string,
+  feedback: FeedbackItem[]
+): { segments: AnnotatedSegment[]; markerForIndex: Map<number, number> } {
+  const matches: { start: number; end: number; feedbackIndex: number }[] = [];
+  feedback.forEach((f, i) => {
+    const quote = f.quote?.trim();
+    if (!quote || quote.length < 4) return;
+    let idx = essay.indexOf(quote);
+    if (idx === -1) idx = essay.toLowerCase().indexOf(quote.toLowerCase());
+    if (idx !== -1) matches.push({ start: idx, end: idx + quote.length, feedbackIndex: i });
+  });
+
+  // Sort by position in the draft, then drop any overlaps (keep whichever
+  // comes first) so two quotes can never highlight the same characters.
+  matches.sort((a, b) => a.start - b.start);
+  const ordered: typeof matches = [];
+  let lastEnd = -1;
+  for (const m of matches) {
+    if (m.start >= lastEnd) {
+      ordered.push(m);
+      lastEnd = m.end;
+    }
+  }
+
+  const markerForIndex = new Map<number, number>();
+  ordered.forEach((m, i) => markerForIndex.set(m.feedbackIndex, i + 1));
+
+  const segments: AnnotatedSegment[] = [];
+  let cursor = 0;
+  for (const m of ordered) {
+    if (m.start > cursor) segments.push({ text: essay.slice(cursor, m.start), marker: null });
+    segments.push({ text: essay.slice(m.start, m.end), marker: markerForIndex.get(m.feedbackIndex) ?? null });
+    cursor = m.end;
+  }
+  if (cursor < essay.length) segments.push({ text: essay.slice(cursor), marker: null });
+
+  return { segments, markerForIndex };
+}
+
 const DIMENSION_COLORS: Record<string, string> = {
   Specificity: "text-primary",
   Voice: "text-premium",
@@ -94,6 +147,11 @@ export default function EssayFeedbackClient() {
   const [school, setSchool] = useState("");
   const [supplementPrompt, setSupplementPrompt] = useState("");
   const [feedback, setFeedback] = useState<FeedbackItem[] | null>(null);
+  // The draft text as it was when feedback was generated -- quotes are
+  // located against this snapshot, not the live textarea, so a student who
+  // keeps editing after getting feedback doesn't see markers silently drift
+  // to the wrong spot.
+  const [annotatedEssay, setAnnotatedEssay] = useState("");
   const [isRubric, setIsRubric] = useState(false);
   const [angles, setAngles] = useState<BrainstormAngle[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -169,6 +227,7 @@ export default function EssayFeedbackClient() {
     }
     const data = await res.json();
     setFeedback(data.feedback);
+    setAnnotatedEssay(essay);
     setIsRubric(!!data.rubric);
     setCrisisResource(data.crisis_resource ?? null);
     setLoading(false);
@@ -209,6 +268,11 @@ export default function EssayFeedbackClient() {
   }
 
   const canSubmit = mode === "feedback" ? !!essay.trim() : !!supplementPrompt.trim();
+
+  const { segments: annotatedSegments, markerForIndex } = useMemo(
+    () => (feedback && annotatedEssay ? buildAnnotatedDraft(annotatedEssay, feedback) : { segments: [], markerForIndex: new Map<number, number>() }),
+    [feedback, annotatedEssay]
+  );
 
   return (
     <div>
@@ -385,6 +449,30 @@ export default function EssayFeedbackClient() {
               <p className={`text-xs mb-3 ${wordCount(essay) > COMMON_APP_WORD_LIMIT ? "text-red" : "text-text-gray"}`}>
                 {wordCount(essay)} / {COMMON_APP_WORD_LIMIT} words (Common App personal statement limit — supplements vary)
               </p>
+
+              {feedback && annotatedSegments.length > 0 && markerForIndex.size > 0 && (
+                <div className="mb-4">
+                  <p className="text-text-gray text-xs font-medium uppercase tracking-wide mb-2">
+                    Annotated draft {essay !== annotatedEssay && <span className="normal-case font-normal">(from the version you submitted — keep editing above)</span>}
+                  </p>
+                  <div className="rounded-2xl bg-card border border-border px-4 py-3 text-text text-sm leading-relaxed whitespace-pre-wrap">
+                    {annotatedSegments.map((seg, i) =>
+                      seg.marker ? (
+                        <mark
+                          key={i}
+                          id={`draft-marker-${seg.marker}`}
+                          className="bg-amber-tint text-text rounded px-0.5"
+                        >
+                          {seg.text}
+                          <sup className="text-primary font-semibold ml-0.5">{seg.marker}</sup>
+                        </mark>
+                      ) : (
+                        <span key={i}>{seg.text}</span>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
             </>
           )}
 
@@ -479,10 +567,20 @@ export default function EssayFeedbackClient() {
                     Narrative conflict
                   </span>
                 )}
-                <p className="text-primary text-sm font-medium mb-1">
+                <p className="text-primary text-sm font-medium mb-1 flex items-center gap-1.5">
+                  {markerForIndex.has(idx) && (
+                    <a
+                      href={`#draft-marker-${markerForIndex.get(idx)}`}
+                      className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-tint text-primary text-[10px] font-semibold shrink-0"
+                      aria-label={`Jump to this line in your draft (annotation ${markerForIndex.get(idx)})`}
+                      title="Jump to this line in your draft"
+                    >
+                      {markerForIndex.get(idx)}
+                    </a>
+                  )}
                   {isNarrativeContradiction ? f.label.replace("Contradicts your narrative:", "").trim() : f.label}
                 </p>
-                {isRubric && f.quote && (
+                {f.quote && (
                   <p className="text-text-gray text-xs italic border-l-2 border-border pl-3 mb-2">&quot;{f.quote}&quot;</p>
                 )}
                 <p className="text-text-gray text-sm leading-relaxed">{f.text}</p>

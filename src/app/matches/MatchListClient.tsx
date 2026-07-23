@@ -11,6 +11,7 @@ import AidAppealModal from "./AidAppealModal";
 import LociModal from "./LociModal";
 import { MatchesEmptyArt } from "@/components/EmptyStateIllustration";
 import { downloadCollegeListPdf } from "@/lib/college-list-pdf";
+import InfoTooltip from "@/components/InfoTooltip";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -423,8 +424,12 @@ export default function MatchListClient({
 
   return (
     <div className="px-5 md:px-8 py-8 max-w-3xl mx-auto w-full">
-      <p className="text-text-gray text-xs mb-3">
+      <p className="text-text-gray text-xs mb-3 flex items-center gap-1.5">
         Tap any card to see the school&apos;s info, percentage breakdown, and career path.
+        <InfoTooltip
+          label="What do reach/target/safety mean?"
+          text="Reach: admission is uncertain even for a strong applicant. Target: your stats are in line with typically-admitted students. Safety: admission is likely based on your stats. These are estimates, not guarantees."
+        />
       </p>
 
       <div className="flex items-center justify-between mb-3 mt-3">

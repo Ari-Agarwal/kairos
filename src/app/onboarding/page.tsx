@@ -76,6 +76,15 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const [errorKey, setErrorKey] = useState(0);
 
+  // Section 1 "Showcase / demo polish" aha moment: a short live synthesis of
+  // the round-0 open-ended answers, shown once right after that round. Fetch
+  // fires in the background the moment the student advances past round 0 so
+  // it's usually ready by the time they've read the round-1 fields; fails
+  // soft (reflection stays null) since this is purely cosmetic.
+  const [reflection, setReflection] = useState<string | null>(null);
+  const [reflectionLoading, setReflectionLoading] = useState(false);
+  const [reflectionShown, setReflectionShown] = useState(false);
+
   function showError(message: string) {
     setError(message);
     setErrorKey((k) => k + 1);
@@ -166,6 +175,19 @@ export default function OnboardingPage() {
       return;
     }
     setError(null);
+    if (step === 0 && !reflectionShown) {
+      setReflectionShown(true);
+      setReflectionLoading(true);
+      fetch("/api/onboarding/reflect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interests, mattersToYou, beyondTranscript }),
+      })
+        .then((res) => (res.ok ? res.json() : { reflection: null }))
+        .then((body) => setReflection(body?.reflection ?? null))
+        .catch(() => setReflection(null))
+        .finally(() => setReflectionLoading(false));
+    }
     setDirection(1);
     setStep((s) => s + 1);
   }
@@ -681,6 +703,26 @@ export default function OnboardingPage() {
           a personalized application timeline on the other side.
         </p>
       </motion.div>
+
+      {!useChatIntake && step === 1 && reflectionShown && (reflectionLoading || reflection) && (
+        <motion.div
+          initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: EASE }}
+          className="bg-card border border-primary/30 rounded-2xl px-5 py-4 mb-6"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="text-xs font-medium text-primary uppercase tracking-wide mb-1.5">
+            Already noticing something
+          </p>
+          {reflectionLoading ? (
+            <p className="text-text-gray text-sm animate-pulse">Reading back through what you shared...</p>
+          ) : (
+            <p className="text-text text-sm leading-relaxed italic">&ldquo;{reflection}&rdquo;</p>
+          )}
+        </motion.div>
+      )}
 
       {useChatIntake ? (
         <>

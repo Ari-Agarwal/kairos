@@ -292,7 +292,7 @@ export default function ShareChancesCard({ data, onClose }: ShareChancesCardProp
         </p>
 
         {status === "error" && (
-          <p role="alert" className="text-red text-xs">Something went wrong. Please try again.</p>
+          <p role="alert" className="text-red text-xs">Couldn&rsquo;t put that image together — give it another try.</p>
         )}
 
         <div className="flex gap-2 pt-1">

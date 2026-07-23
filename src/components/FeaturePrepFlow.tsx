@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import MissingFieldInputs from "@/components/MissingFieldInputs";
 import { FIELD_LABELS } from "@/lib/mini-onboarding-fields";
 import { track } from "@/lib/analytics";
+import GenerationThinking, { MATCHES_THINKING } from "@/components/GenerationThinking";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -28,6 +29,7 @@ export default function FeaturePrepFlow({
   feedbackPlaceholder,
   completeLabel,
   generatingLabel,
+  thinkingMessages = MATCHES_THINKING,
   onComplete,
   required = false,
 }: {
@@ -40,6 +42,7 @@ export default function FeaturePrepFlow({
   feedbackPlaceholder: string;
   completeLabel: string;
   generatingLabel: string;
+  thinkingMessages?: string[];
   onComplete: (values: Record<string, string | string[]>, feedback: string) => Promise<{ error?: string }>;
   // When true, every inline-field round must be filled before advancing and
   // the "Skip these questions" escape hatch is removed entirely -- used for
@@ -106,7 +109,8 @@ export default function FeaturePrepFlow({
   if (submitting) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-6 text-center min-h-[60vh]">
-        <p role="status" className="font-serif text-2xl text-text mb-6">{generatingLabel}</p>
+        <p role="status" className="font-serif text-2xl text-text mb-3">{generatingLabel}</p>
+        <GenerationThinking messages={thinkingMessages} className="text-text-gray text-sm mb-3" />
         <div className="h-1.5 w-64 max-w-full rounded-full bg-secondary-tint overflow-hidden">
           <motion.div
             className="h-full w-1/3 rounded-full bg-gradient-to-r from-primary to-primary-deep"

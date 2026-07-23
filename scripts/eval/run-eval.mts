@@ -25,6 +25,7 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import {
   MODEL,
+  PROMPT_VERSION,
   schoolMatchingPrompt,
   ESSAY_FEEDBACK_PROMPT,
   NARRATIVE_SYNTHESIS_PROMPT,
@@ -204,9 +205,18 @@ async function main() {
 
   const resultsDir = join(__dirname, "results");
   mkdirSync(resultsDir, { recursive: true });
+  const output = { promptVersion: PROMPT_VERSION, ranAt: new Date().toISOString(), summary: { totalChecks, totalPassed }, results };
   const filename = join(resultsDir, `eval-${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
-  writeFileSync(filename, JSON.stringify({ summary: { totalChecks, totalPassed }, results }, null, 2));
+  writeFileSync(filename, JSON.stringify(output, null, 2));
   console.log(`Results written to ${filename}`);
+
+  // Regression guard (Software_Timeline.md Section 1, item 1): every run also
+  // refreshes "latest.json" so compare-eval.mts always has a well-known file
+  // to diff against a saved baseline, without the caller needing to know the
+  // timestamped filename. Promote a run to the baseline explicitly with
+  // `npm run eval:baseline` -- baseline.json is never overwritten by a plain
+  // `npm run eval` run, only by that explicit promotion step.
+  writeFileSync(join(resultsDir, "latest.json"), JSON.stringify(output, null, 2));
 
   if (totalPassed < totalChecks) process.exit(1);
 }

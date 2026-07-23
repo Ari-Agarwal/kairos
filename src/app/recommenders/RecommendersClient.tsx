@@ -64,7 +64,7 @@ export default function RecommendersClient({ initialRecommenders, origin }: Prop
         body: JSON.stringify({ recommender_name: newName, recommender_email: newEmail || undefined, relationship: newRel }),
       });
       const body = await res.json();
-      if (!res.ok) { setFormError(body.error ?? "Failed to add recommender."); return; }
+      if (!res.ok) { setFormError(body.error ?? "Couldn't add that recommender — mind trying again?"); return; }
       setRecommenders(prev => [body.recommender, ...prev]);
       setNewName(""); setNewEmail(""); setNewRel("");
       setAdding(false);

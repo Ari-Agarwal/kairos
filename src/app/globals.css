@@ -47,6 +47,37 @@
   --amber-glow-shadow: rgba(42, 46, 48, 0.25);
 }
 
+/* Optional student accent-color preference (Software_Timeline.md Section 15,
+   "personalization beyond function"). Stamped as data-accent on <html> by
+   AccentColorSync.tsx, driven by profiles.accent_color. Only the brand-accent
+   hue (--primary/--amber, which are deliberately the same value already) is
+   ever overridden here -- --red (reach-tier/errors), --premium (premium
+   tier), and --green (safety-tier) stay untouched by every option, so tier
+   distinction keeps reading by shade/label and the two reserved single-job
+   hues never get reassigned a second meaning. "forest" (the default above)
+   needs no override block since it just is today's --primary. */
+:root[data-accent="navy"] {
+  --primary: #2C4A6E;
+  --primary-deep: #1B2F47;
+  --primary-hover: #3F6389;
+  --amber: #2C4A6E;
+  --amber-tint: rgba(44, 74, 110, 0.1);
+  --amber-text-on-tint: #1B2F47;
+  --amber-glow-ring: rgba(44, 74, 110, 0.4);
+  --amber-glow-ring-fade: rgba(44, 74, 110, 0);
+}
+
+:root[data-accent="mustard"] {
+  --primary: #8C6A19;
+  --primary-deep: #5F4710;
+  --primary-hover: #A6821F;
+  --amber: #8C6A19;
+  --amber-tint: rgba(140, 106, 25, 0.1);
+  --amber-text-on-tint: #5F4710;
+  --amber-glow-ring: rgba(140, 106, 25, 0.4);
+  --amber-glow-ring-fade: rgba(140, 106, 25, 0);
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-card: var(--card);

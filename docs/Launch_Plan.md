@@ -341,20 +341,34 @@ A second pass flagged 7 gaps before this plan was ready to run against: (1) ad a
 
 ---
 
+## P1 — Naming decision (kairosadmissions vs. alternatives)
+
+**This is now the single blocker on actually starting the content posting journey.** Confirmed Jul 23: it's not just Manychat/Metricool gated on this — the TikTok and Instagram accounts themselves don't exist yet under any name, and nothing can post until they do. Everything downstream is queued and waiting:
+- TikTok + Instagram account creation (the accounts to post *to*)
+- Manychat rename (currently `@join.telos`)
+- Metricool channel connections (currently "No networks connected")
+- n8n Cloud provisioning (auto-posting glue layer)
+
+Six of eight Week 1 videos are finished and sitting in `~/Downloads`, Notion calendar is fully updated and accurate, Reddit is live — **the only thing standing between "everything's ready" and "actually posting" is this decision.**
+
+---
+
 ## What Ari needs to do
 
 Everything below is blocked on an account, a purchase, physical action, or sending something on Ari's behalf — nothing else is left in the Content section.
 
-- [x] ~~Add heading/text overlays to the 3 captured GIFs and convert to TikTok-ready MP4~~ **Done (Jul 23)** — burned in via ffmpeg/Pillow (CapCut wasn't needed; scripted overlay was more precise for the exact §11 timing). `kairos-mon-match-reveal.mp4`, `kairos-tue-timeline-populate.mp4`, `kairos-sat-narrative-builder.mp4` are in `~/Downloads`, ready to post once reviewed.
-- [ ] **Wed stat-card + Sun before/after videos are on hold.** Ari opted out of any credit-card spend (free trial requires a card even at $0), so Higgsfield is off the table for now. Scripts are ready in §5.5 whenever a card-free option comes up, or Ari decides differently. **Still on hold (checked Jul 23)** — to be revisited with the Higgsfield/Manychat/Metricool batch.
-- [x] ~~Send the r/chanceme mod-message~~ **Sent by Ari (Jul 21). No mod response as of Jul 23** — treating as a non-response rather than a decline. Decision needed: post anyway without explicit mod sign-off, try r/ApplyingToCollege or r/APStudents instead, or wait longer.
+- [x] ~~Add heading/text overlays to the captured GIFs and convert to TikTok-ready MP4~~ **Done (Jul 23)** — burned in via ffmpeg/Pillow (CapCut wasn't needed; scripted overlay was more precise for the exact §11 timing). `kairos-mon-match-reveal.mp4`, `kairos-tue-timeline-populate.mp4`, `kairos-sat-narrative-builder.mp4` are in `~/Downloads`, ready to post once reviewed.
+- [x] ~~Wed stat-card~~ **Done (Jul 23)** — Higgsfield turned out to be unnecessary: it's a no-face animated stat graphic, not a UI recording, so built self-contained via ffmpeg/Pillow. `kairos-wed-stat-card.mp4` ready.
+- [x] ~~Sun before/after + Mon-wk2 timeline reassurance~~ **Done (Jul 23)** — captured as real screen recordings of the live app (Playwright against localhost, timeline + matches pages), overlays burned in same as the others. `kairos-sun-before-after.mp4`, `kairos-mon-wk2-timeline.mp4` ready. **Higgsfield is no longer needed for any Week 1 slot** — every video that was scripted for it got built a different way instead.
+- [ ] **Thu (object b-roll) + Fri (stitch) still need Ari.** Thu needs real phone/notebook footage; Fri needs a real trending admissions-anxiety TikTok found and stitched that week (~15-20 min, can't be pre-scripted). Only two slots left with no path but Ari's hands.
+- [x] ~~Send the r/chanceme mod-message~~ **Sent by Ari (Jul 21). No mod response ever came.** Posted anyway per Ari's call (Jul 23) — live now, Notion row marked "Posted."
 - [x] ~~Finalize the creator outreach drafts~~ **Done (Jul 23)** — §9 now has three personalized messages (Gohar, Gabby, StudyForYouBestie) each referencing that creator's actual content angle from §0.7, instead of one generic template. Still gated on having a demo to show — Week 2, not now.
-- [x] ~~Set up a Notion account/database and paste in the content calendar scaffold~~ **Done (Jul 21).** Built directly in Ari's Notion workspace: "Kairos Content Calendar" database with Platform/Status/Post Date/Performance Notes columns, all 9 Week 1 rows populated with actual dates (Jul 27–Aug 3, 2026). Status options renamed to Idea/Ready/Posted per §5's scheme. Row 9 (Reddit) already marked "Ready" since the mod-message went out. **Verified live (Jul 22)** — all 8 TikTok/IG rows still "Idea," Reddit row still "Ready."
-- [ ] **Pick and set up a scheduler** — Metricool/Later recommended over native TikTok/IG APIs (§ open item 2) — then configure the n8n glue layer. **Blocked (Jul 21):** Metricool account created and logged in, but connecting Instagram/TikTok/etc. channels needs OAuth authorization on each platform — Ari opted to hold off until the account naming decision (same blocker as Manychat above). n8n Cloud hasn't been provisioned yet either — holding off on that too since its whole job (auto-posting to the same social accounts) is blocked on the same naming decision. Provisioning n8n is a new-account signup, which needs Ari to do directly regardless. **Still blocked (checked Jul 22)** — Metricool connections page shows "No networks connected."
-- [ ] **Set up Manychat** (IG comment-to-DM automation) and paste in the lead-magnet copy (§10). **Blocked (Jul 21):** connected account is `@join.telos`, not Kairos-branded — Ari's holding off on any renaming until the product name is settled (don't delete/remake the account, just rename later once decided). Also can't go live regardless until there's an actual Week 1 post to attach the comment-trigger to. **Still blocked (checked Jul 22)** — workspace still shows as "Telos," 1 connected channel, 0 of 3 first-step automations completed.
+- [x] ~~Set up a Notion account/database and paste in the content calendar scaffold~~ **Done (Jul 21), fully synced Jul 23.** All 6 finished videos marked "Ready" with notes on what shipped, Reddit row marked "Posted," Thu/Fri rows note exactly what footage is still needed.
+- [ ] **Pick and set up a scheduler** — Metricool/Later recommended over native TikTok/IG APIs (§ open item 2) — then configure the n8n glue layer. **Blocked on the P1 naming decision above.** Metricool account created and logged in, but connecting channels needs the accounts to exist first.
+- [ ] **Set up Manychat** (IG comment-to-DM automation) and paste in the lead-magnet copy (§10). **Blocked on the P1 naming decision above** — connected account is `@join.telos`, holding rename until the name's settled. Tuesday's script CTA ("Comment TIMELINE") depends on this being live — post Tuesday's video after Manychat's ready, or swap its CTA to plain "link in bio" if it needs to go out sooner.
 - [x] ~~Set up the Resend nurture sequence~~ **All 4 emails are live in code (Jul 21).** Emails 1 & 3 (confirmation, referral-milestone) fire directly from `/api/waitlist`. Emails 2 & 4 (1-week content, pre-launch reminder) run via a new daily cron — [route.ts](../src/app/api/cron/waitlist-nurture/route.ts), registered in `vercel.json`, same `CRON_SECRET` bearer-auth pattern as the existing `send-nudges`/`aggregate-snapshot` crons. Idempotent via `nurture_day7_sent_at`/`nurture_prelaunch_sent_at` flags ([migration_038](../supabase/migration_038_waitlist_nurture.sql)). Verified the route is reachable and auth-gated locally; **migration_038 run by Ari (Jul 21)** — the nurture cron is fully live.
   - [ ] No Manychat/Resend dashboard setup needed for any of the 4 nurture emails now — only IG's comment-to-DM *trigger* (a separate thing from the emails) still needs Manychat.
-- [ ] **Manual 1:1 recruiting** — per §0.5/§6, get 10-20 students onto Kairos in person this week; this was always Ari's job, not something automatable.
+- [ ] **Manual 1:1 recruiting** — per §0.5/§6, get 10-20 students onto Kairos in person this week; this was always Ari's job, not something automatable. Not blocked on naming — can start anytime.
 - [x] ~~Run the waitlist test-signup cleanup SQL~~ **Done (Jul 23)** — removed 2 rows (`email-test-verify@example.com`, `email-test-referred@example.com`).
 
 ---

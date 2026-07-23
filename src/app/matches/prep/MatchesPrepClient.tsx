@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import FeaturePrepFlow from "@/components/FeaturePrepFlow";
+import { MATCHES_THINKING } from "@/components/GenerationThinking";
 
 export default function MatchesPrepClient({
   inlineFields,
@@ -86,6 +87,7 @@ export default function MatchesPrepClient({
       }
       completeLabel="Generate Matches"
       generatingLabel="Building your personalized list..."
+      thinkingMessages={MATCHES_THINKING}
       onComplete={handleComplete}
       required
     />

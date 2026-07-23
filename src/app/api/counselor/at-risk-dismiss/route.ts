@@ -72,10 +72,13 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "studentUserId is required." }, { status: 400 });
   }
 
+  // Any counselor at the student's school can un-snooze, not just the one
+  // who snoozed it -- there's no per-student ownership model in this app,
+  // and RLS now scopes at_risk_dismissals writes by shared school rather
+  // than by individual counselor (Software_Timeline.md Section 1).
   const { error } = await supabase
     .from("at_risk_dismissals")
     .delete()
-    .eq("counselor_id", counselor.counselor_id)
     .eq("student_user_id", studentUserId);
 
   if (error) {

@@ -9,6 +9,8 @@ import CountUp from "@/components/CountUp";
 import { checkFeeWaiverEligibility } from "@/lib/fee-waiver";
 import ShareLinksManager from "@/components/ShareLinksManager";
 import { MAJORS } from "@/lib/mini-onboarding-fields";
+import { ACCENT_COLORS, applyAccentColor, type AccentColorId } from "@/lib/accent-color";
+import FinancialAidConsentSection from "@/components/FinancialAidConsentSection";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const CAMPUS_SIZES = ["Small", "Medium", "Large", "No preference"];
@@ -54,6 +56,12 @@ interface Profile {
   internships_research: string | null;
   public_portfolio_enabled: boolean;
   public_portfolio_token: string | null;
+  accent_color: string | null;
+  financial_aid_info_consent: boolean;
+  financial_aid_income_bracket: string | null;
+  financial_aid_state: string | null;
+  financial_aid_family_size: number | null;
+  avatar_url: string | null;
 }
 
 export default function ProfileClient({
@@ -112,6 +120,56 @@ export default function ProfileClient({
   const [portfolioToken, setPortfolioToken] = useState(profile.public_portfolio_token);
   const [portfolioSaving, setPortfolioSaving] = useState(false);
   const [portfolioCopied, setPortfolioCopied] = useState(false);
+  const [accentColor, setAccentColor] = useState<AccentColorId>(
+    (profile.accent_color as AccentColorId) || "forest"
+  );
+  const [accentSaving, setAccentSaving] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(profile.avatar_url);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+
+  const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+  const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+  async function handleAvatarUpload(file: File) {
+    setAvatarError(null);
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      setAvatarError("Please upload a JPG, PNG, or WEBP image.");
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      setAvatarError("Image must be under 5MB.");
+      return;
+    }
+    setAvatarUploading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setAvatarUploading(false);
+      return;
+    }
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${user.id}/avatar-${crypto.randomUUID()}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from("profile-photos")
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (uploadError) {
+      setAvatarError("Couldn't upload that photo — please try again.");
+      setAvatarUploading(false);
+      return;
+    }
+    const { data: publicUrlData } = supabase.storage.from("profile-photos").getPublicUrl(path);
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ avatar_url: publicUrlData.publicUrl })
+      .eq("user_id", user.id);
+    if (updateError) {
+      setAvatarError("Photo uploaded but couldn't be saved to your profile — please try again.");
+      setAvatarUploading(false);
+      return;
+    }
+    setAvatarUrl(publicUrlData.publicUrl);
+    setAvatarUploading(false);
+  }
 
   function updateActivity(idx: number, value: string) {
     setActivities((prev) => prev.map((a, i) => (i === idx ? value : a)));
@@ -141,6 +199,19 @@ export default function ProfileClient({
     } finally {
       setPortfolioSaving(false);
     }
+  }
+
+  async function handleAccentChange(id: AccentColorId) {
+    if (id === accentColor || accentSaving) return;
+    setAccentSaving(true);
+    // Apply immediately so it feels instant, not gated on the round-trip.
+    applyAccentColor(id);
+    setAccentColor(id);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("profiles").update({ accent_color: id }).eq("user_id", user.id);
+    }
+    setAccentSaving(false);
   }
 
   function handlePortfolioCopy() {
@@ -691,20 +762,52 @@ export default function ProfileClient({
       transition={{ duration: 0.35, ease: EASE }}
       className="px-5 md:px-8 py-8 max-w-xl mx-auto w-full"
     >
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="font-serif text-2xl text-text">{displayName}</h1>
-          <p className="text-text-gray text-sm">
-            {profile.grade_level} · {profile.current_school} · {profile.intended_major?.length ? profile.intended_major.join(", ") : "Major undecided"}
-          </p>
+      <div className="flex items-start justify-between mb-6 gap-4">
+        <div className="flex items-center gap-4 min-w-0">
+          <label className="relative shrink-0 cursor-pointer group" aria-label="Upload profile photo">
+            <div className="size-14 rounded-full bg-secondary-tint border border-border overflow-hidden flex items-center justify-center text-text-gray font-serif text-lg">
+              {avatarUploading ? (
+                <span className="animate-pulse text-xs">…</span>
+              ) : avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- external Supabase Storage URL, not a local/optimizable asset
+                <img src={avatarUrl} alt="" className="size-full object-cover" />
+              ) : (
+                <span aria-hidden="true">{displayName.charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+            <span className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/30 transition-colors motion-reduce:transition-none flex items-center justify-center text-[10px] text-bg opacity-0 group-hover:opacity-100">
+              Edit
+            </span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleAvatarUpload(file);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          <div className="min-w-0">
+            <h1 className="font-serif text-2xl text-text truncate">{displayName}</h1>
+            <p className="text-text-gray text-sm truncate">
+              {profile.grade_level} · {profile.current_school} · {profile.intended_major?.length ? profile.intended_major.join(", ") : "Major undecided"}
+            </p>
+          </div>
         </div>
         <button
           onClick={() => setEditing(true)}
-          className="rounded-xl border border-border text-text-gray hover:text-text text-sm px-4 py-2"
+          className="rounded-xl border border-border text-text-gray hover:text-text text-sm px-4 py-2 shrink-0"
         >
           Edit
         </button>
       </div>
+      {avatarError && (
+        <p role="alert" className="text-red text-xs -mt-4 mb-4">
+          {avatarError}
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-3 mb-6">
         {stats.map((stat, i) => (
@@ -780,6 +883,40 @@ export default function ProfileClient({
         <div className="bg-card border border-border rounded-2xl p-5 mb-6">
           <ShareLinksManager />
         </div>
+
+        <div className="bg-card border border-border rounded-2xl p-5 mb-6">
+          <p className="text-text font-medium text-sm mb-1">Accent color</p>
+          <p className="text-text-gray text-xs mb-3">
+            Make Kairos feel a little more yours. This only changes the accent shade — tier
+            colors, alerts, and premium stay exactly where they are.
+          </p>
+          <div className="flex gap-3">
+            {ACCENT_COLORS.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => handleAccentChange(c.id)}
+                disabled={accentSaving}
+                aria-pressed={accentColor === c.id}
+                aria-label={c.label}
+                title={c.label}
+                className={`w-9 h-9 rounded-full border-2 transition-transform ${
+                  accentColor === c.id ? "border-text scale-110" : "border-border hover:scale-105"
+                } disabled:opacity-50`}
+                style={{ backgroundColor: c.swatch }}
+              />
+            ))}
+          </div>
+        </div>
+
+        <FinancialAidConsentSection
+          profile={{
+            financial_aid_info_consent: profile.financial_aid_info_consent,
+            financial_aid_income_bracket: profile.financial_aid_income_bracket,
+            financial_aid_state: profile.financial_aid_state,
+            financial_aid_family_size: profile.financial_aid_family_size,
+          }}
+        />
 
         <div className="bg-card border border-border rounded-2xl p-5 mb-6">
           <p className="text-text font-medium text-sm mb-1">Public Portfolio</p>

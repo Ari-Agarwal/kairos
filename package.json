@@ -10,7 +10,11 @@
     "test": "vitest run --exclude '**/*.integration.test.ts'",
     "test:integration": "vitest run src/**/*.integration.test.ts",
     "test:e2e": "playwright test",
-    "eval": "node scripts/eval/run-eval.mts"
+    "eval": "node scripts/eval/run-eval.mts",
+    "eval:compare": "node scripts/eval/compare-eval.mts",
+    "eval:baseline": "node scripts/eval/compare-eval.mts --promote",
+    "scholarships:validate": "node scripts/scholarships/validate-candidates.mts",
+    "scholarships:freshness": "node scripts/scholarships/check-freshness.mts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",

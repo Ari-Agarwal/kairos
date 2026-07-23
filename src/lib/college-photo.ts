@@ -7,6 +7,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 // with an infobox photo, covering close to the same population College
 // Scorecard already covers.
 const WIKI_API_BASE = "https://en.wikipedia.org/api/rest_v1/page/summary";
+const WIKI_MEDIA_BASE = "https://en.wikipedia.org/api/rest_v1/page/media-list";
 const WIKI_SEARCH_BASE = "https://en.wikipedia.org/w/api.php";
 // Required by Wikipedia's API usage policy -- unauthenticated/anonymous
 // User-Agents are more aggressively rate-limited and can be blocked outright.
@@ -73,7 +74,44 @@ async function searchBestTitle(schoolName: string): Promise<string | null> {
   return typeof title === "string" ? title : null;
 }
 
-async function fetchFromWikipedia(schoolName: string): Promise<CollegePhoto | null> {
+interface WikiMediaItem {
+  type?: string;
+  title?: string;
+  srcset?: { src: string; scale?: string }[];
+  original?: { source: string; width: number; height: number };
+}
+
+// Second, distinct image from the same Wikipedia page -- the "campus vibe"
+// slot. Pulled from the page's media list (all images on the page, not just
+// the infobox one) and filtered down to real photos: skip icons/logos/maps/
+// seals and skip whichever file is already used as the primary photo.
+async function fetchSecondaryFromWikipedia(title: string, primaryImageUrl: string): Promise<WikiMediaItem | null> {
+  const res = await fetch(`${WIKI_MEDIA_BASE}/${encodeURIComponent(title)}`, {
+    headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const items: WikiMediaItem[] = Array.isArray(data?.items) ? data.items : [];
+
+  const primaryFile = decodeURIComponent(primaryImageUrl.split("/").pop() ?? "");
+  const SKIP_PATTERN = /(logo|icon|seal|crest|coat.?of.?arms|\.svg$|locator|map)/i;
+
+  for (const item of items) {
+    if (item.type !== "image") continue;
+    const fileName = item.title?.replace(/^File:/, "") ?? "";
+    if (!fileName || SKIP_PATTERN.test(fileName)) continue;
+    if (decodeURIComponent(fileName) === primaryFile) continue;
+    const src = item.original?.source ?? item.srcset?.[item.srcset.length - 1]?.src;
+    if (!src) continue;
+    return {
+      title: item.title,
+      original: item.original ?? { source: src.startsWith("http") ? src : `https:${src}`, width: 0, height: 0 },
+    };
+  }
+  return null;
+}
+
+async function fetchFromWikipedia(schoolName: string): Promise<{ primary: CollegePhoto; secondary: CollegePhoto | null } | null> {
   let summary = await fetchSummary(schoolName);
 
   if (!summary || summary.type === "disambiguation" || (!summary.thumbnail && !summary.originalimage)) {
@@ -89,17 +127,56 @@ async function fetchFromWikipedia(schoolName: string): Promise<CollegePhoto | nu
   const image = summary.originalimage ?? summary.thumbnail;
   if (!image) return null;
 
-  return {
+  const attributionUrl = summary.content_urls?.desktop?.page ?? `https://en.wikipedia.org/wiki/${encodeURIComponent(summary.title)}`;
+
+  const primary: CollegePhoto = {
     imageUrl: image.source,
     width: image.width ?? null,
     height: image.height ?? null,
     attributionText: `Photo via Wikipedia`,
-    attributionUrl: summary.content_urls?.desktop?.page ?? `https://en.wikipedia.org/wiki/${encodeURIComponent(summary.title)}`,
+    attributionUrl,
   };
+
+  let secondary: CollegePhoto | null = null;
+  try {
+    const secondaryItem = await fetchSecondaryFromWikipedia(summary.title, image.source);
+    if (secondaryItem?.original) {
+      secondary = {
+        imageUrl: secondaryItem.original.source,
+        width: secondaryItem.original.width || null,
+        height: secondaryItem.original.height || null,
+        attributionText: `Photo via Wikipedia`,
+        attributionUrl,
+      };
+    }
+  } catch (err) {
+    console.error("Wikipedia secondary college photo lookup failed:", err);
+  }
+
+  return { primary, secondary };
 }
 
 function normalizeName(name: string): string {
   return name.trim().toLowerCase();
+}
+
+function rowToPhoto(row: {
+  image_url: string; width: number | null; height: number | null; attribution_text: string; attribution_url: string;
+}): CollegePhoto {
+  return {
+    imageUrl: row.image_url,
+    width: row.width,
+    height: row.height,
+    attributionText: row.attribution_text,
+    attributionUrl: row.attribution_url,
+  };
+}
+
+export interface CollegePhotoResult {
+  primary: CollegePhoto | null;
+  // "Campus vibe" secondary image, when a second distinct usable photo exists
+  // on the same Wikipedia page. null (never fabricated) when there isn't one.
+  secondary: CollegePhoto | null;
 }
 
 // Cached in Supabase (same pattern as getCollegeStats) -- keyed by normalized
@@ -107,6 +184,12 @@ function normalizeName(name: string): string {
 // every page view. Returns null both when there's genuinely no usable photo
 // and when the lookup fails -- callers should just omit the photo either way.
 export async function getCollegePhoto(schoolName: string): Promise<CollegePhoto | null> {
+  const result = await getCollegePhotos(schoolName);
+  return result.primary;
+}
+
+// Full result including the secondary "campus vibe" slot (Section 1 backlog).
+export async function getCollegePhotos(schoolName: string): Promise<CollegePhotoResult> {
   const key = normalizeName(schoolName);
   const supabase = createServiceClient();
 
@@ -120,46 +203,55 @@ export async function getCollegePhoto(schoolName: string): Promise<CollegePhoto 
 
   const isFresh = cached && Date.now() - new Date(cached.fetched_at).getTime() < CACHE_TTL_MS;
   if (isFresh) {
-    return cached.found
-      ? {
-          imageUrl: cached.image_url,
-          width: cached.width,
-          height: cached.height,
-          attributionText: cached.attribution_text,
-          attributionUrl: cached.attribution_url,
-        }
-      : null;
+    return {
+      primary: cached.found ? rowToPhoto(cached) : null,
+      secondary: cached.found && cached.secondary_image_url
+        ? rowToPhoto({
+            image_url: cached.secondary_image_url,
+            width: cached.secondary_width,
+            height: cached.secondary_height,
+            attribution_text: cached.attribution_text,
+            attribution_url: cached.attribution_url,
+          })
+        : null,
+    };
   }
 
-  let photo: CollegePhoto | null = null;
+  let fetched: { primary: CollegePhoto; secondary: CollegePhoto | null } | null = null;
   try {
-    photo = await fetchFromWikipedia(schoolName);
+    fetched = await fetchFromWikipedia(schoolName);
   } catch (err) {
     console.error("Wikipedia college photo lookup failed:", err);
     if (cached) {
-      return cached.found
-        ? {
-            imageUrl: cached.image_url,
-            width: cached.width,
-            height: cached.height,
-            attributionText: cached.attribution_text,
-            attributionUrl: cached.attribution_url,
-          }
-        : null;
+      return {
+        primary: cached.found ? rowToPhoto(cached) : null,
+        secondary: cached.found && cached.secondary_image_url
+          ? rowToPhoto({
+              image_url: cached.secondary_image_url,
+              width: cached.secondary_width,
+              height: cached.secondary_height,
+              attribution_text: cached.attribution_text,
+              attribution_url: cached.attribution_url,
+            })
+          : null,
+      };
     }
-    return null;
+    return { primary: null, secondary: null };
   }
 
   await supabase.from("college_photo_cache").upsert({
     school_name: key,
-    image_url: photo?.imageUrl ?? null,
-    width: photo?.width ?? null,
-    height: photo?.height ?? null,
-    attribution_text: photo?.attributionText ?? null,
-    attribution_url: photo?.attributionUrl ?? null,
-    found: photo !== null,
+    image_url: fetched?.primary.imageUrl ?? null,
+    width: fetched?.primary.width ?? null,
+    height: fetched?.primary.height ?? null,
+    attribution_text: fetched?.primary.attributionText ?? null,
+    attribution_url: fetched?.primary.attributionUrl ?? null,
+    secondary_image_url: fetched?.secondary?.imageUrl ?? null,
+    secondary_width: fetched?.secondary?.width ?? null,
+    secondary_height: fetched?.secondary?.height ?? null,
+    found: fetched !== null,
     fetched_at: new Date().toISOString(),
   });
 
-  return photo;
+  return { primary: fetched?.primary ?? null, secondary: fetched?.secondary ?? null };
 }

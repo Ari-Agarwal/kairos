@@ -7,6 +7,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { CalendarDays, Repeat } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { buildBulkIcs, downloadIcs } from "@/lib/ics";
+import InfoTooltip from "@/components/InfoTooltip";
+import GenerationThinking, { TIMELINE_THINKING } from "@/components/GenerationThinking";
 
 interface TimelineItem {
   id: string;
@@ -292,7 +294,8 @@ export default function TimelineClient({
             />
           </div>
           <p className="font-serif text-xl text-text mb-1">Mapping out your timeline...</p>
-          <p className="text-text-gray text-sm">This can take up to a minute. Feel free to check back.</p>
+          <GenerationThinking messages={TIMELINE_THINKING} className="text-text-gray text-sm mb-1" />
+          <p className="text-text-gray text-xs">This can take up to a minute. Feel free to check back.</p>
         </div>
       );
     }
@@ -618,6 +621,10 @@ export default function TimelineClient({
                     <p className="text-primary text-xs mb-1.5 flex items-center gap-1 font-medium">
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary" />
                       Financial aid deadline — missing this can affect aid eligibility, not just admission
+                      <InfoTooltip
+                        label="What are FAFSA and the CSS Profile?"
+                        text="FAFSA is the free federal form every family fills out to qualify for any financial aid, including loans and grants. The CSS Profile is a separate, more detailed form some colleges also require to award their own (non-federal) aid. Both use last year's tax info, not a guess about affordability."
+                      />
                     </p>
                   )}
                   {isHere && (

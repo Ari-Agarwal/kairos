@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import { crossFeatureWhyText } from "@/lib/cross-feature-why";
 import CareerQuiz from "@/components/CareerQuiz";
+import CrossFeatureToast from "@/components/CrossFeatureToast";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -26,19 +28,26 @@ const CONFIDENCE_LABEL: Record<string, string> = {
   low: "Low confidence — less established data for this pairing",
 };
 
+interface Photo {
+  imageUrl: string;
+}
+
 export default function CareerPathClient({
   matches,
   intendedMajor,
   preselectedSchool,
+  photos = {},
 }: {
   matches: Match[];
   intendedMajor: string[] | null;
   preselectedSchool: string | null;
+  photos?: Record<string, Photo | null>;
 }) {
   const reduceMotion = useReducedMotion();
   const supabase = createClient();
   const [addedToMatches, setAddedToMatches] = useState(false);
   const [addingToMatches, setAddingToMatches] = useState(false);
+  const [showMatchesToast, setShowMatchesToast] = useState(false);
 
   async function addExploredSchoolToMatches(name: string, summary: string) {
     setAddingToMatches(true);
@@ -53,7 +62,7 @@ export default function CareerPathClient({
       school_name: name,
       category: "target",
       percentage: 50,
-      why_text: `Added from Career Path exploration: ${summary}`,
+      why_text: crossFeatureWhyText("Career Path exploration", summary),
       factors: {
         gpa_comparison: MANUAL_NOTE,
         course_rigor: MANUAL_NOTE,
@@ -65,7 +74,10 @@ export default function CareerPathClient({
       is_manual: true,
     });
     setAddingToMatches(false);
-    if (!error) setAddedToMatches(true);
+    if (!error) {
+      setAddedToMatches(true);
+      setShowMatchesToast(true);
+    }
   }
   // Section 9e follow-up: tying the CareerQuiz -> Career Path suggestion back
   // into the student's actual profile so it can inform Matches/Timeline too.
@@ -74,6 +86,7 @@ export default function CareerPathClient({
   // confirmation, additive (append, never overwrite intended_major).
   const [addedMajorToProfile, setAddedMajorToProfile] = useState(false);
   const [addingMajorToProfile, setAddingMajorToProfile] = useState(false);
+  const [showMajorToast, setShowMajorToast] = useState(false);
 
   async function addExploringMajorToIntendedMajors(major: string) {
     setAddingMajorToProfile(true);
@@ -95,6 +108,7 @@ export default function CareerPathClient({
     }
     setAddingMajorToProfile(false);
     setAddedMajorToProfile(true);
+    setShowMajorToast(true);
   }
 
   const preselectedMatch = preselectedSchool && matches.some((m) => m.school_name === preselectedSchool);
@@ -261,6 +275,16 @@ export default function CareerPathClient({
 
   return (
     <div>
+      <CrossFeatureToast
+        message="Added to your Matches list."
+        show={showMatchesToast}
+        onDone={() => setShowMatchesToast(false)}
+      />
+      <CrossFeatureToast
+        message="Added to your intended majors."
+        show={showMajorToast}
+        onDone={() => setShowMajorToast(false)}
+      />
       <p className="text-text-gray text-xs mb-1">
         Major: <span className="text-text">{intendedMajor?.length ? intendedMajor.join(", ") : "Undecided"}</span>
       </p>
@@ -378,7 +402,7 @@ export default function CareerPathClient({
               disabled={compareLoading || compareSelection.length < 2}
               className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-5 py-2.5 disabled:opacity-50"
             >
-              {compareLoading ? <span role="status" aria-live="polite">Loading...</span> : "Compare"}
+              {compareLoading ? <span role="status" aria-live="polite">Comparing...</span> : "Compare"}
             </button>
           </div>
 
@@ -388,7 +412,21 @@ export default function CareerPathClient({
                 const result = compareResults[name];
                 return (
                   <div key={name} className="bg-card border border-border rounded-2xl p-4 space-y-3">
-                    <p className="font-serif text-text">{name}</p>
+                    <div className="flex items-center gap-3">
+                      {photos[name] ? (
+                        <img
+                          src={photos[name]!.imageUrl}
+                          alt=""
+                          className="size-11 rounded-xl object-cover border border-border shrink-0"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="size-11 rounded-xl bg-secondary-tint border border-dashed border-border flex items-center justify-center shrink-0">
+                          <span className="font-serif text-sm text-secondary">{name.charAt(0)}</span>
+                        </div>
+                      )}
+                      <p className="font-serif text-text">{name}</p>
+                    </div>
                     {result === "error" || !result ? (
                       <p className="text-red text-sm">Couldn&apos;t load this school.</p>
                     ) : (
@@ -458,7 +496,7 @@ export default function CareerPathClient({
           disabled={loading || !schoolName}
           className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-5 py-2.5 disabled:opacity-50"
         >
-          {loading ? <span role="status" aria-live="polite">Loading...</span> : "See Career Path"}
+          {loading ? <span role="status" aria-live="polite">Mapping out this path...</span> : "See Career Path"}
         </button>
       </div>
 

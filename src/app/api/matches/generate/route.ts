@@ -52,6 +52,35 @@ interface Profile {
   internships_research: string | null;
   applicant_type: string | null;
   accessibility_pref: string | null;
+  financial_aid_info_consent: boolean | null;
+  financial_aid_income_bracket: string | null;
+  financial_aid_state: string | null;
+  financial_aid_family_size: number | null;
+}
+
+const INCOME_BRACKET_LABELS: Record<string, string> = {
+  under_30k: "under $30,000",
+  "30k_60k": "$30,000–$60,000",
+  "60k_100k": "$60,000–$100,000",
+  "100k_150k": "$100,000–$150,000",
+  "150k_250k": "$150,000–$250,000",
+  over_250k: "over $250,000",
+  prefer_not_to_say: "prefer not to say",
+};
+
+// Only built when the student has actually opted in AND given a usable
+// income bracket -- "financial_aid_info_consent" alone (with every value
+// still null) is not enough to build a real signal. "prefer_not_to_say" is
+// explicit consent to share nothing further, so it also yields no signal.
+function affordabilitySignal(profile: Profile): string | null {
+  if (!profile.financial_aid_info_consent) return null;
+  const bracket = profile.financial_aid_income_bracket;
+  if (!bracket || bracket === "prefer_not_to_say") return null;
+  const label = INCOME_BRACKET_LABELS[bracket] ?? bracket;
+  const parts = [`household income ${label}`];
+  if (profile.financial_aid_family_size) parts.push(`family size ${profile.financial_aid_family_size}`);
+  if (profile.financial_aid_state) parts.push(`home state ${profile.financial_aid_state}`);
+  return parts.join(", ");
 }
 
 function missingFields(profile: Profile): string[] {
@@ -143,6 +172,7 @@ export async function POST(req: Request) {
   const lockedNames = new Set(lockedNamesOriginal.map((n) => n.trim().toLowerCase()));
 
   const missing = missingFields(profile);
+  const affordability = affordabilitySignal(profile);
   const userMessage = `Student profile:
 Grade level: ${profile.grade_level}
 Unweighted GPA: ${profile.unweighted_gpa}
@@ -167,6 +197,7 @@ Campus size preference: ${profile.campus_size_pref?.length ? profile.campus_size
 Campus setting preference: ${profile.campus_setting_pref?.length ? profile.campus_setting_pref.join(" or ") : "no preference given"}
 Applicant type: ${profile.applicant_type ?? "standard (first-time freshman/senior applicant)"}
 Accessibility/accommodation needs: ${profile.accessibility_pref ?? "not given"}
+${affordability ? `Estimated affordability: ${affordability} (student opted in to share this)` : ""}
 ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}
 ${lockedNames.size > 0 ? `\nThe student has locked in the following schools already on their list -- they are staying regardless of this generation, so do NOT include them in your results: ${lockedNamesOriginal.join(", ")}.` : ""}
 ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from your last list?" and said: "${feedback}" — this is feedback on the list they just saw, so treat it as a direct correction (e.g. if they said "too many reach schools," shift the new list's balance accordingly), not just a general preference.` : `The student was asked "what are you looking for in your matches?" and said: "${feedback}"`} Weigh this alongside the profile above; don't let it override hard constraints like GPA/test-score realism, but do let it steer emphasis (e.g. toward a specific region, school size, or program strength).` : ""}`;

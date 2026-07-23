@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   // query just returns empty rather than an error.
   const { data, error } = await supabase
     .from("mentor_messages")
-    .select("id, sender_id, body, created_at")
+    .select("id, sender_id, body, message_type, created_at")
     .eq("request_id", requestId)
     .order("created_at", { ascending: true });
 
@@ -40,11 +40,13 @@ export async function POST(req: Request) {
 
   let requestId: string;
   let body: string;
+  let messageType: "chat" | "review_feedback" = "chat";
   try {
     const json = await req.json();
     requestId = requireString(json.requestId, "requestId", 100);
     body = requireString(json.body, "body", 4000);
     rejectScriptTags(body, "body");
+    if (json.messageType === "review_feedback") messageType = "review_feedback";
   } catch (e) {
     if (e instanceof ValidationError) return NextResponse.json({ error: e.message }, { status: 400 });
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
@@ -68,9 +70,12 @@ export async function POST(req: Request) {
   }
 
   // RLS's "participants_send_messages" policy is the real enforcement (status
-  // must be 'accepted' and sender must be a participant); this app-layer
-  // check just gives a clearer error message than a bare RLS denial.
-  const { error } = await supabase.from("mentor_messages").insert({ request_id: requestId, sender_id: user.id, body });
+  // must be 'accepted', sender must be a participant, and only the mentor
+  // side may use message_type "review_feedback"); this app-layer check just
+  // gives a clearer error message than a bare RLS denial.
+  const { error } = await supabase
+    .from("mentor_messages")
+    .insert({ request_id: requestId, sender_id: user.id, body, message_type: messageType });
   if (error) return NextResponse.json({ error: "Failed to send message." }, { status: 500 });
 
   return NextResponse.json({ ok: true });
