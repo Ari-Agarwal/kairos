@@ -56,3 +56,13 @@ recovery-codes.txt
 # scholarship pipeline output (Software_Timeline.md Section 1) — patches and
 # freshness reports, regenerated per run, not meant to be checked in
 /scripts/scholarships/output/
+
+# local personal/tooling artifacts — not app code, never meant to be tracked
+/.obsidian/
+/.playwright-cli/
+/test-results/
+/Y Combinator/
+*.mov
+/Untitled*.base
+/Untitled*.canvas
+/2026-07-22.md
