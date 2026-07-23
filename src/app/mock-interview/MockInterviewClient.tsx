@@ -255,7 +255,7 @@ export default function MockInterviewClient() {
             disabled={loadingQuestion}
             className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-4 py-2.5 disabled:opacity-50"
           >
-            {loadingQuestion ? "Loading…" : "Start mock interview"}
+            {loadingQuestion ? <span role="status" aria-live="polite">Loading…</span> : "Start mock interview"}
           </button>
         </>
       )}
@@ -291,14 +291,14 @@ export default function MockInterviewClient() {
               disabled={loadingFeedback || !answer.trim()}
               className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-4 py-2 disabled:opacity-50"
             >
-              {loadingFeedback ? "Scoring…" : "Get feedback"}
+              {loadingFeedback ? <span role="status" aria-live="polite">Scoring…</span> : "Get feedback"}
             </button>
             <button
               onClick={() => getQuestion()}
               disabled={loadingQuestion}
               className="rounded-xl border border-border text-text-gray hover:text-text text-sm px-4 py-2"
             >
-              {loadingQuestion ? "Loading…" : "New question"}
+              {loadingQuestion ? <span role="status" aria-live="polite">Loading…</span> : "New question"}
             </button>
           </div>
 

@@ -304,7 +304,7 @@ export default function NarrativeBuilderClient({
             disabled={loading || !hasAnyAnswer}
             className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-6 py-2.5 disabled:opacity-50"
           >
-            {loading ? "Regenerating..." : "Regenerate"}
+            {loading ? <span role="status" aria-live="polite">Regenerating...</span> : "Regenerate"}
           </button>
         </div>
       </div>

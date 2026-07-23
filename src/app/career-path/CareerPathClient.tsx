@@ -378,7 +378,7 @@ export default function CareerPathClient({
               disabled={compareLoading || compareSelection.length < 2}
               className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-5 py-2.5 disabled:opacity-50"
             >
-              {compareLoading ? "Loading..." : "Compare"}
+              {compareLoading ? <span role="status" aria-live="polite">Loading...</span> : "Compare"}
             </button>
           </div>
 
@@ -458,7 +458,7 @@ export default function CareerPathClient({
           disabled={loading || !schoolName}
           className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-5 py-2.5 disabled:opacity-50"
         >
-          {loading ? "Loading..." : "See Career Path"}
+          {loading ? <span role="status" aria-live="polite">Loading...</span> : "See Career Path"}
         </button>
       </div>
 
@@ -567,7 +567,7 @@ export default function CareerPathClient({
                     disabled={loading}
                     className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-4 py-2 text-sm disabled:opacity-50"
                   >
-                    {loading ? "Regenerating..." : "Regenerate"}
+                    {loading ? <span role="status" aria-live="polite">Regenerating...</span> : "Regenerate"}
                   </button>
                 </div>
               </div>

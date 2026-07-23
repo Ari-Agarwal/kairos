@@ -56,7 +56,7 @@ export default function TalkingPointsClient({ token }: { token: string }) {
         disabled={loading}
         className="rounded-xl bg-amber hover:opacity-90 transition-opacity text-bg font-medium px-6 py-2.5 text-sm disabled:opacity-50"
       >
-        {loading ? "Generating…" : "Generate Talking Points"}
+        {loading ? <span role="status" aria-live="polite">Generating…</span> : "Generate Talking Points"}
       </button>
     </div>
   );
