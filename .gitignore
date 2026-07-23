@@ -48,3 +48,7 @@ stripe_backup_code.txt
 recovery-codes.txt
 *recovery-codes*
 *.key
+
+# eval harness output (Software_Timeline.md Section 6a) — real API-call
+# results, regenerated per run, not meant to be checked in
+/scripts/eval/results/

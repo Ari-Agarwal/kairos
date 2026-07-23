@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run --exclude '**/*.integration.test.ts'",
     "test:integration": "vitest run src/**/*.integration.test.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "eval": "node scripts/eval/run-eval.mts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",
