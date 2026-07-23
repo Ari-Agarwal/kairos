@@ -79,12 +79,20 @@ begin
     insert into auth.users (
       id, instance_id, aud, role, email, encrypted_password,
       email_confirmed_at, created_at, updated_at,
-      raw_app_meta_data, raw_user_meta_data
+      raw_app_meta_data, raw_user_meta_data,
+      confirmation_token, recovery_token, email_change,
+      email_change_token_new, email_change_token_current,
+      phone_change, phone_change_token, reauthentication_token
     ) values (
       v_user_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
       v_email, crypt('test-password-not-for-login', gen_salt('bf')),
       now(), now(), now(),
-      '{"provider":"email","providers":["email"]}', jsonb_build_object('full_name', v_name)
+      '{"provider":"email","providers":["email"]}', jsonb_build_object('full_name', v_name),
+      -- GoTrue's Go sql.Scan fails on NULL here (expects '' not NULL) -- any password-grant
+      -- login attempt against a row missing these 500s with "converting NULL to string is
+      -- unsupported", even though the row's comment above says login was never needed.
+      -- Fixed Jul 23 2026 after this exact bug broke login for all 20 seeded rows.
+      '', '', '', '', '', '', '', ''
     );
 
     insert into profiles (
