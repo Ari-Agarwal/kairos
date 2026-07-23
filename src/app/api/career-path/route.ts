@@ -122,6 +122,9 @@ export async function POST(req: Request) {
       ],
     });
     logAiUsage("career-path", user.id, MODEL, t0, response);
+    if (response.stop_reason === "max_tokens") {
+      throw new Error("Response truncated at max_tokens for career path");
+    }
     const text = response.content.find((b) => b.type === "text")?.text ?? "";
     const parsed = extractJson<{
       internships: string[];

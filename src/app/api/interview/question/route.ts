@@ -92,6 +92,9 @@ export async function POST(req: Request) {
         ],
       });
       logAiUsage("interview-question", user.id, MODEL, t0, response);
+      if (response.stop_reason === "max_tokens") {
+        throw new Error("Response truncated at max_tokens for interview question");
+      }
       const text = response.content.find((b) => b.type === "text")?.text ?? "";
       return NextResponse.json(extractJson(text));
     } catch (err) {

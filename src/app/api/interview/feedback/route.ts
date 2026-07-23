@@ -89,6 +89,9 @@ export async function POST(req: Request) {
         messages: [{ role: "user", content: `Question: ${question}\n\nStudent's answer (transcribed from speech): ${answer}` }],
       });
       logAiUsage("interview-feedback", user.id, MODEL, t0, response);
+      if (response.stop_reason === "max_tokens") {
+        throw new Error("Response truncated at max_tokens for interview feedback");
+      }
       const text = response.content.find((b) => b.type === "text")?.text ?? "";
       const feedback = extractJson<InterviewFeedback>(text);
 

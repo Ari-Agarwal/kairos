@@ -91,6 +91,9 @@ export async function POST(req: Request) {
       messages: [{ role: "user", content: userContent }],
     });
     logAiUsage("essay/brainstorm", user.id, MODEL, t0, response);
+    if (response.stop_reason === "max_tokens") {
+      throw new Error("Response truncated at max_tokens for essay brainstorm");
+    }
     const text = response.content.find((b) => b.type === "text")?.text ?? "";
     const parsed = extractJson<{ angles: { title: string; framing: string }[] }>(text);
     return NextResponse.json({ ...parsed, crisis_resource: crisisResource });
