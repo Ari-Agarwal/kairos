@@ -48,6 +48,7 @@ interface Profile {
   phone_number: string | null;
   sms_opt_in: boolean;
   share_narrative_with_counselor: boolean;
+  share_narrative_with_recommender: boolean;
   mentor_opt_in: boolean;
   mentor_bio: string | null;
   internships_research: string | null;
@@ -96,6 +97,7 @@ export default function ProfileClient({
   const [majorOther, setMajorOther] = useState(initialMajors.other);
   const [smsOptIn, setSmsOptIn] = useState(profile.sms_opt_in);
   const [shareNarrativeWithCounselor, setShareNarrativeWithCounselor] = useState(profile.share_narrative_with_counselor);
+  const [shareNarrativeWithRecommender, setShareNarrativeWithRecommender] = useState(profile.share_narrative_with_recommender);
   const [financialAidNeed, setFinancialAidNeed] = useState<boolean | null>(profile.financial_aid_need);
   const [firstGen, setFirstGen] = useState<boolean | null>(profile.first_gen);
   const [activities, setActivities] = useState<string[]>(
@@ -216,6 +218,7 @@ export default function ProfileClient({
         phone_number: form.phone_number || null,
         sms_opt_in: smsOptIn && !!form.phone_number,
         share_narrative_with_counselor: shareNarrativeWithCounselor,
+        share_narrative_with_recommender: shareNarrativeWithRecommender,
         sms_opt_in_at: smsOptIn && form.phone_number ? new Date().toISOString() : null,
         last_profile_check_at: new Date().toISOString(),
       })
@@ -554,6 +557,21 @@ export default function ProfileClient({
                 Share my Narrative Builder throughline and essay feedback history with my counselor
                 (if I have one). Off by default — turning this on lets them see your qualitative work,
                 not just deadlines and matches.
+              </span>
+            </label>
+          </div>
+          <div>
+            <label className="flex items-start gap-2 text-xs text-text-gray leading-relaxed">
+              <input
+                type="checkbox"
+                checked={shareNarrativeWithRecommender}
+                onChange={(e) => setShareNarrativeWithRecommender(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                Share my Narrative Builder highlights (throughline, core values, differentiator) on my
+                recommender&apos;s page. Off by default and separate from the counselor toggle above — a
+                recommender link doesn&apos;t require login, so this is its own opt-in.
               </span>
             </label>
           </div>

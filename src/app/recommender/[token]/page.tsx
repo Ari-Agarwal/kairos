@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import TalkingPointsClient from "./TalkingPointsClient";
+import RecommenderBriefDownload from "./RecommenderBriefDownload";
 
 async function getRecommenderData(token: string) {
   if (token.length !== 64 || !/^[0-9a-f]+$/.test(token)) return null;
@@ -22,7 +23,7 @@ async function getRecommenderData(token: string) {
   // fan-out pattern; this page was the one spot it was missed.
   const { data: profile, error: profileError } = await service
     .from("profiles")
-    .select("display_name")
+    .select("display_name, share_narrative_with_recommender")
     .eq("user_id", rec.user_id)
     .maybeSingle();
   if (profileError) console.error("recommender profile lookup failed:", profileError);
@@ -30,6 +31,27 @@ async function getRecommenderData(token: string) {
   const firstName = fullName.split(" ")[0];
 
   const brag = (rec.brag_sheet ?? {}) as Record<string, string>;
+
+  // Consent-gated the same way as the counselor-facing "Narrative & Essays"
+  // tab (migration_055) -- but a SEPARATE flag, since a recommender link is
+  // a public, no-login token surface with a different trust boundary than
+  // an authenticated counselor session.
+  let narrative: { throughline: string; core_values: string[]; differentiator: string } | null = null;
+  if (profile?.share_narrative_with_recommender) {
+    const { data: narrativeRow, error: narrativeError } = await service
+      .from("narrative_profiles")
+      .select("throughline, core_values, differentiator")
+      .eq("user_id", rec.user_id)
+      .maybeSingle();
+    if (narrativeError) console.error("recommender narrative lookup failed:", narrativeError);
+    if (narrativeRow) {
+      narrative = {
+        throughline: narrativeRow.throughline as string,
+        core_values: (narrativeRow.core_values as string[] | null) ?? [],
+        differentiator: narrativeRow.differentiator as string,
+      };
+    }
+  }
 
   return {
     student_first_name: firstName,
@@ -41,6 +63,7 @@ async function getRecommenderData(token: string) {
       anecdotes: brag.anecdotes ?? "",
       additional_context: brag.additional_context ?? "",
     },
+    narrative,
   };
 }
 
@@ -53,7 +76,7 @@ export default async function RecommenderPage({
   const data = await getRecommenderData(token);
   if (!data) notFound();
 
-  const { student_first_name, recommender_name, relationship, brag_sheet } = data;
+  const { student_first_name, recommender_name, relationship, brag_sheet, narrative } = data;
 
   const hasBrag =
     brag_sheet.activities || brag_sheet.achievements || brag_sheet.anecdotes || brag_sheet.additional_context;
@@ -75,11 +98,46 @@ export default async function RecommenderPage({
         </div>
 
         <section className="mb-8">
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <p className="text-text-gray text-xs uppercase tracking-widest mb-3">Your relationship</p>
-            <p className="text-text">{relationship}</p>
+          <div className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p className="text-text-gray text-xs uppercase tracking-widest mb-1">Your relationship</p>
+              <p className="text-text">{relationship}</p>
+            </div>
+            {(hasBrag || narrative) && (
+              <RecommenderBriefDownload
+                studentFirstName={student_first_name}
+                recommenderName={recommender_name}
+                relationship={relationship}
+                bragSheet={brag_sheet}
+                narrative={narrative}
+              />
+            )}
           </div>
         </section>
+
+        {narrative && (
+          <section className="mb-8">
+            <h2 className="font-serif text-xl text-text mb-4">Who {student_first_name} is</h2>
+            <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+              <div>
+                <p className="text-text-gray text-xs uppercase tracking-widest mb-2">Throughline</p>
+                <p className="text-text text-sm leading-relaxed">{narrative.throughline}</p>
+              </div>
+              {narrative.core_values.length > 0 && (
+                <div>
+                  <p className="text-text-gray text-xs uppercase tracking-widest mb-2">Core values</p>
+                  <p className="text-text text-sm">{narrative.core_values.join(", ")}</p>
+                </div>
+              )}
+              {narrative.differentiator && (
+                <div>
+                  <p className="text-text-gray text-xs uppercase tracking-widest mb-2">What sets them apart</p>
+                  <p className="text-text text-sm leading-relaxed">{narrative.differentiator}</p>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {hasBrag ? (
           <section className="mb-8 space-y-4">
