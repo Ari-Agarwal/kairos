@@ -18,7 +18,11 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 });
 
 const REVIEWER_EMAIL = "reviewer@kairosadmissions.com";
-const REVIEWER_PASSWORD = "AppReview2026!";
+const REVIEWER_PASSWORD = process.env.REVIEWER_ACCOUNT_PASSWORD;
+if (!REVIEWER_PASSWORD) {
+  console.error("Missing REVIEWER_ACCOUNT_PASSWORD in env. Set it in .env.local (not committed) before running.");
+  process.exit(1);
+}
 const REVIEWER_NAME = "Jordan Reviewer";
 
 const SCHOOL_INFO = {

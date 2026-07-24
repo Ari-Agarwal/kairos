@@ -75,11 +75,10 @@ Sign in with Apple is implemented per guideline 4.8 since the app also offers Go
 
 **Demo account:**
 - Email: `reviewer@kairosadmissions.com`
-- Password: `AppReview2026!`
-- Rotate this password before/after the review window if you want tighter hygiene — just rerun the seed script below with an updated password afterward.
+- Password: stored in `.env.local` as `REVIEWER_ACCOUNT_PASSWORD` (not committed — check there or the password manager entry, never paste the literal value into this file)
 
 ## Reviewer demo account
-Created via `scripts/seed-reviewer-account.mjs` (run with `node --env-file=.env.local scripts/seed-reviewer-account.mjs`), separate from `student1@test.com` (the dev-seed account used for internal screenshots/testing):
+Created via `scripts/seed-reviewer-account.mjs` (run with `REVIEWER_ACCOUNT_PASSWORD=... node --env-file=.env.local scripts/seed-reviewer-account.mjs`, or set `REVIEWER_ACCOUNT_PASSWORD` directly in `.env.local`), separate from `student1@test.com` (the dev-seed account used for internal screenshots/testing):
 - 6 school matches across reach/target/safety tiers with realistic percentages and factors
 - 6 timeline items in a mix of completed/pending states
 - 1 essay with feedback history
