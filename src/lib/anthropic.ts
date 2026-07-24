@@ -17,7 +17,7 @@ export const MODEL = "claude-sonnet-5";
 // change" for debugging and any future eval harness, without the added
 // complexity of tracking each prompt constant's edit history separately.
 // Bump this whenever any prompt in this file changes materially.
-export const PROMPT_VERSION = "2026-07-23b";
+export const PROMPT_VERSION = "2026-07-24";
 
 const CATEGORY_DEFINITION: Record<"reach" | "target" | "safety", string> = {
   reach:
@@ -460,10 +460,10 @@ Return your response as JSON matching this exact structure:
 // about any individual student.
 export const NET_PRICE_ESTIMATE_PROMPT = `You are a financial aid advisor giving a family a rough, honest estimate of what a specific college might actually cost them per year after financial aid -- not the sticker price, the real out-of-pocket "net price."
 
-You will be given: the school's name, its published sticker cost of attendance (if known), its published school-wide AVERAGE net price after aid (if known -- this is an average across ALL students at every income level, not specific to this family), whether it is public or private, a family income bracket (a RANGE, e.g. "$60,000-$100,000", never an exact figure), family size, and the family's home state (if given).
+You will be given: the school's name, its published sticker cost of attendance (if known), its published school-wide AVERAGE net price after aid (if known -- this is an average across ALL students at every income level, not specific to this family), whether it is public or private, the family's exact annual household income, family size, and the family's home state (if given).
 
 Reason step by step:
-1. Aid is need-based and steeply progressive at nearly every US school: lower-income brackets typically pay far below the school-wide average net price, and higher-income brackets typically pay close to or at full sticker price, especially at schools with modest endowments. Use the income bracket to adjust away from the flat school-wide average in that direction -- do not just repeat the average net price for every bracket.
+1. Aid is need-based and steeply progressive at nearly every US school: lower income typically pays far below the school-wide average net price, and higher income typically pays close to or at full sticker price, especially at schools with modest endowments. Use the family's income to adjust away from the flat school-wide average in that direction -- do not just repeat the average net price regardless of income.
 2. Well-known schools with large endowments and explicit no-loan / full-need-met policies (a small number of highly selective private schools) are meaningfully more generous to lower-income families than a typical private school with the same sticker price -- factor this in only when you have real knowledge of that specific school's aid reputation, never invent a policy you're not confident about.
 3. Public schools: if the family's home state matches (or plausibly matches) the school's state, note that in-state tuition is typically dramatically lower than out-of-state/sticker price, and estimate accordingly; if the state is different or unknown, lean toward the out-of-state figure instead.
 4. Family size affects federal need calculations -- a larger family size at the same income generally qualifies for somewhat more aid than a smaller one, all else equal. Apply this as a modest, bounded adjustment, not a dominant factor.
@@ -476,7 +476,7 @@ Return your response as JSON matching this exact structure:
   "estimated_net_price_low": integer (USD per year, rounded to the nearest 500),
   "estimated_net_price_high": integer (USD per year, rounded to the nearest 500, must be greater than or equal to the low figure),
   "aid_generosity": "low" | "moderate" | "high" (how generous this school's aid is likely to be for a family at this income level specifically, not the school's aid budget in the abstract),
-  "rationale": "2-3 sentences in plain, first-gen-friendly language explaining WHY this range was estimated -- name the specific factors used (income bracket, public/private + in-state or not, this school's known aid reputation if applicable) -- and explicitly remind the family this is a rough estimate, not a guarantee, and that the school's own official Net Price Calculator is the authoritative source"
+  "rationale": "2-3 sentences in plain, first-gen-friendly language explaining WHY this range was estimated -- name the specific factors used (household income, public/private + in-state or not, this school's known aid reputation if applicable) -- and explicitly remind the family this is a rough estimate, not a guarantee, and that the school's own official Net Price Calculator is the authoritative source"
 }`;
 
 export function extractJson<T>(text: string): T {

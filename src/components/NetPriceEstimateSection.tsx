@@ -9,6 +9,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import InfoTooltip from "@/components/InfoTooltip";
+import { estimateLoan, ASSUMED_ANNUAL_RATE, ASSUMED_REPAYMENT_YEARS, ASSUMED_PROGRAM_YEARS } from "@/lib/loan-estimate";
 
 interface GapClosingScholarship {
   name: string;
@@ -41,6 +42,7 @@ export default function NetPriceEstimateSection({
   const [data, setData] = useState<EstimateResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expectedContribution, setExpectedContribution] = useState("");
 
   async function loadEstimate() {
     setLoading(true);
@@ -133,6 +135,54 @@ export default function NetPriceEstimateSection({
             </a>
             , which every Title IV school is required to publish.
           </p>
+
+          <div className="border-t border-border pt-3 mb-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <p className="text-text text-sm font-medium">How much might I need to borrow?</p>
+              <InfoTooltip text="A rough estimate only, not financial advice. Assumes you'd borrow the same annual gap for all 4 years and repay over 10 years at an illustrative 6.5% fixed rate — your actual rate, term, and aid will differ." />
+            </div>
+            <label htmlFor="fa-expected-contribution" className="block text-xs text-text-gray mb-1">
+              What you expect to cover yourself per year (savings, income, 529, etc.)
+            </label>
+            <input
+              id="fa-expected-contribution"
+              type="number"
+              min={0}
+              step={500}
+              inputMode="numeric"
+              placeholder="e.g. 10000"
+              value={expectedContribution}
+              onChange={(e) => setExpectedContribution(e.target.value)}
+              className="w-full rounded-xl bg-card border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary mb-2"
+            />
+            {expectedContribution !== "" && (() => {
+              const contribution = Number(expectedContribution);
+              const annualGap = data.estimate.high - contribution;
+              const loan = estimateLoan(annualGap);
+              if (!loan) {
+                return (
+                  <p className="text-text-gray text-xs">
+                    Based on this, you may not need to borrow to cover the estimated cost.
+                  </p>
+                );
+              }
+              return (
+                <div className="text-xs text-text-gray leading-relaxed">
+                  <p className="text-text text-base font-serif mb-1">
+                    ~${loan.totalLoanNeeded.toLocaleString()} total over {ASSUMED_PROGRAM_YEARS} years
+                  </p>
+                  <p>
+                    ~${loan.monthlyPayment.toLocaleString()}/mo estimated repayment over {ASSUMED_REPAYMENT_YEARS} years at
+                    an illustrative {(ASSUMED_ANNUAL_RATE * 100).toFixed(1)}% fixed rate.
+                  </p>
+                  <p className="italic mt-1 text-text-gray/70">
+                    This is a rough planning estimate, not financial advice or a loan offer — actual loan terms,
+                    rates, and your real aid package will differ.
+                  </p>
+                </div>
+              );
+            })()}
+          </div>
 
           {data.gapClosingScholarships.length > 0 && (
             <div className="border-t border-border pt-3">

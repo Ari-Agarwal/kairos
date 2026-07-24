@@ -58,7 +58,7 @@ interface Profile {
   public_portfolio_token: string | null;
   accent_color: string | null;
   financial_aid_info_consent: boolean;
-  financial_aid_income_bracket: string | null;
+  financial_aid_income_exact: number | null;
   financial_aid_state: string | null;
   financial_aid_family_size: number | null;
   avatar_url: string | null;
@@ -912,7 +912,7 @@ export default function ProfileClient({
         <FinancialAidConsentSection
           profile={{
             financial_aid_info_consent: profile.financial_aid_info_consent,
-            financial_aid_income_bracket: profile.financial_aid_income_bracket,
+            financial_aid_income_exact: profile.financial_aid_income_exact,
             financial_aid_state: profile.financial_aid_state,
             financial_aid_family_size: profile.financial_aid_family_size,
           }}

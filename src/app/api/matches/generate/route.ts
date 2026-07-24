@@ -53,31 +53,18 @@ interface Profile {
   applicant_type: string | null;
   accessibility_pref: string | null;
   financial_aid_info_consent: boolean | null;
-  financial_aid_income_bracket: string | null;
+  financial_aid_income_exact: number | null;
   financial_aid_state: string | null;
   financial_aid_family_size: number | null;
 }
 
-const INCOME_BRACKET_LABELS: Record<string, string> = {
-  under_30k: "under $30,000",
-  "30k_60k": "$30,000–$60,000",
-  "60k_100k": "$60,000–$100,000",
-  "100k_150k": "$100,000–$150,000",
-  "150k_250k": "$150,000–$250,000",
-  over_250k: "over $250,000",
-  prefer_not_to_say: "prefer not to say",
-};
-
 // Only built when the student has actually opted in AND given a usable
-// income bracket -- "financial_aid_info_consent" alone (with every value
-// still null) is not enough to build a real signal. "prefer_not_to_say" is
-// explicit consent to share nothing further, so it also yields no signal.
+// income figure -- "financial_aid_info_consent" alone (with every value
+// still null) is not enough to build a real signal.
 function affordabilitySignal(profile: Profile): string | null {
   if (!profile.financial_aid_info_consent) return null;
-  const bracket = profile.financial_aid_income_bracket;
-  if (!bracket || bracket === "prefer_not_to_say") return null;
-  const label = INCOME_BRACKET_LABELS[bracket] ?? bracket;
-  const parts = [`household income ${label}`];
+  if (profile.financial_aid_income_exact === null) return null;
+  const parts = [`household income $${profile.financial_aid_income_exact.toLocaleString()}`];
   if (profile.financial_aid_family_size) parts.push(`family size ${profile.financial_aid_family_size}`);
   if (profile.financial_aid_state) parts.push(`home state ${profile.financial_aid_state}`);
   return parts.join(", ");

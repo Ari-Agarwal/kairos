@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select(
-      "financial_aid_info_consent, financial_aid_income_bracket, financial_aid_state, financial_aid_family_size, first_gen, financial_aid_need, intended_major, extracurriculars"
+      "financial_aid_info_consent, financial_aid_income_exact, financial_aid_state, financial_aid_family_size, first_gen, financial_aid_need, intended_major, extracurriculars"
     )
     .eq("user_id", user.id)
     .single();
@@ -47,13 +47,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to load profile" }, { status: 500 });
   }
 
-  if (
-    !profile.financial_aid_info_consent ||
-    !profile.financial_aid_income_bracket ||
-    profile.financial_aid_income_bracket === "prefer_not_to_say"
-  ) {
+  if (!profile.financial_aid_info_consent || profile.financial_aid_income_exact === null) {
     return NextResponse.json(
-      { error: "Add your income bracket and family size on your Profile to see a cost estimate." },
+      { error: "Add your household income and family size on your Profile to see a cost estimate." },
       { status: 403 }
     );
   }
@@ -65,7 +61,7 @@ export async function POST(req: Request) {
   const estimate = await getNetPriceEstimate({
     userId: user.id,
     schoolName,
-    incomeBracket: profile.financial_aid_income_bracket,
+    incomeExact: profile.financial_aid_income_exact,
     familySize,
     state: profile.financial_aid_state ?? null,
     stats,

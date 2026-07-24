@@ -1,11 +1,9 @@
 "use client";
 
-// Financial aid consent/UX groundwork (Software_Timeline.md Section 1, item 3).
-// This is deliberately the FULL scope of that item: collecting income
-// bracket / state / family size behind an explicit, plain-language opt-in.
-// It does NOT feed matches, scholarships, or timeline generation, and there
-// is no net-price-calculator anywhere near this component -- both are
-// explicitly future work, gated on this consent pass landing first.
+// Financial aid consent/UX (Software_Timeline.md). Collects exact annual
+// household income (replacing the earlier bracket-based approach, decided
+// 2026-07-24) / state / family size behind an explicit, plain-language
+// opt-in.
 //
 // Kept as its own component (rather than folded into ProfileClient's big
 // form) so the opt-in gate, its own save state, and its own copy stay easy
@@ -14,19 +12,9 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-const INCOME_BRACKETS: { id: string; label: string }[] = [
-  { id: "under_30k", label: "Under $30,000" },
-  { id: "30k_60k", label: "$30,000 – $60,000" },
-  { id: "60k_100k", label: "$60,000 – $100,000" },
-  { id: "100k_150k", label: "$100,000 – $150,000" },
-  { id: "150k_250k", label: "$150,000 – $250,000" },
-  { id: "over_250k", label: "Over $250,000" },
-  { id: "prefer_not_to_say", label: "Prefer not to say" },
-];
-
 interface FinancialAidInfo {
   financial_aid_info_consent: boolean;
-  financial_aid_income_bracket: string | null;
+  financial_aid_income_exact: number | null;
   financial_aid_state: string | null;
   financial_aid_family_size: number | null;
 }
@@ -34,7 +22,9 @@ interface FinancialAidInfo {
 export default function FinancialAidConsentSection({ profile }: { profile: FinancialAidInfo }) {
   const supabase = createClient();
   const [consent, setConsent] = useState(profile.financial_aid_info_consent);
-  const [incomeBracket, setIncomeBracket] = useState(profile.financial_aid_income_bracket ?? "");
+  const [incomeExact, setIncomeExact] = useState(
+    profile.financial_aid_income_exact !== null ? String(profile.financial_aid_income_exact) : ""
+  );
   const [state, setState] = useState(profile.financial_aid_state ?? "");
   const [familySize, setFamilySize] = useState(
     profile.financial_aid_family_size !== null ? String(profile.financial_aid_family_size) : ""
@@ -55,7 +45,7 @@ export default function FinancialAidConsentSection({ profile }: { profile: Finan
 
   async function persist(
     consentValue: boolean,
-    bracket: string | null,
+    incomeExactValue: number | null,
     stateValue: string | null,
     familySizeValue: number | null
   ) {
@@ -73,7 +63,7 @@ export default function FinancialAidConsentSection({ profile }: { profile: Finan
       .from("profiles")
       .update({
         financial_aid_info_consent: consentValue,
-        financial_aid_income_bracket: bracket,
+        financial_aid_income_exact: incomeExactValue,
         financial_aid_state: stateValue,
         financial_aid_family_size: familySizeValue,
         financial_aid_info_updated_at: new Date().toISOString(),
@@ -91,7 +81,7 @@ export default function FinancialAidConsentSection({ profile }: { profile: Finan
   function handleSave() {
     persist(
       consent,
-      incomeBracket || null,
+      incomeExact ? parseInt(incomeExact, 10) : null,
       state.trim() || null,
       familySize ? parseInt(familySize, 10) : null
     );
@@ -115,29 +105,27 @@ export default function FinancialAidConsentSection({ profile }: { profile: Finan
           onChange={(e) => handleConsentToggle(e.target.checked)}
         />
         <span className="text-sm text-text">
-          I&apos;d like to share some general financial context (income range, state, family size) with Kairos.
+          I&apos;d like to share some general financial context (household income, state, family size) with Kairos.
         </span>
       </label>
 
       {consent && (
         <div className="space-y-4">
           <div>
-            <label htmlFor="fa-income-bracket" className="block text-sm text-text-gray mb-1">
-              Household income range
+            <label htmlFor="fa-income-exact" className="block text-sm text-text-gray mb-1">
+              Annual household income
             </label>
-            <select
-              id="fa-income-bracket"
-              value={incomeBracket}
-              onChange={(e) => setIncomeBracket(e.target.value)}
+            <input
+              id="fa-income-exact"
+              type="number"
+              min={0}
+              step={1000}
+              inputMode="numeric"
+              placeholder="e.g. 85000"
+              value={incomeExact}
+              onChange={(e) => setIncomeExact(e.target.value)}
               className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
-            >
-              <option value="">Select a range</option>
-              {INCOME_BRACKETS.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.label}
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div>
             <label htmlFor="fa-state" className="block text-sm text-text-gray mb-1">

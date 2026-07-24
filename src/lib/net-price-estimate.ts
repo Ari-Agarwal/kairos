@@ -28,20 +28,29 @@ function normalize(s: string): string {
   return s.trim().toLowerCase();
 }
 
-function cacheKey(schoolName: string, incomeBracket: string, familySize: number, state: string | null): string {
-  return [normalize(schoolName), incomeBracket, String(familySize), state ? normalize(state) : "unknown"].join("::");
+const INCOME_BAND_WIDTH = 10_000;
+
+// Exact income has much higher cardinality than the old bracket, so the
+// cache key rounds to the nearest $10k band -- keeps the cache meaningfully
+// shared across similar families without ever storing an exact figure here.
+function incomeBand(incomeExact: number): string {
+  return String(Math.round(incomeExact / INCOME_BAND_WIDTH) * INCOME_BAND_WIDTH);
+}
+
+function cacheKey(schoolName: string, incomeExact: number, familySize: number, state: string | null): string {
+  return [normalize(schoolName), incomeBand(incomeExact), String(familySize), state ? normalize(state) : "unknown"].join("::");
 }
 
 export async function getNetPriceEstimate(params: {
   userId: string;
   schoolName: string;
-  incomeBracket: string;
+  incomeExact: number;
   familySize: number;
   state: string | null;
   stats: CollegeStats | null;
 }): Promise<NetPriceEstimate | null> {
-  const { userId, schoolName, incomeBracket, familySize, state, stats } = params;
-  const key = cacheKey(schoolName, incomeBracket, familySize, state);
+  const { userId, schoolName, incomeExact, familySize, state, stats } = params;
+  const key = cacheKey(schoolName, incomeExact, familySize, state);
   const supabase = createServiceClient();
 
   const { data: cached, error: cacheReadError } = await supabase
@@ -65,7 +74,7 @@ export async function getNetPriceEstimate(params: {
 Sticker cost of attendance: ${stats?.costOfAttendance ? `$${stats.costOfAttendance.toLocaleString()}/yr` : "not known"}
 School-wide average net price after aid: ${stats?.avgNetPrice ? `$${stats.avgNetPrice.toLocaleString()}/yr` : "not known"}
 Public/private: ${stats?.ownership ?? "not known"}
-Family income bracket: ${incomeBracket}
+Family annual household income: $${incomeExact.toLocaleString()}
 Family size: ${familySize}
 Family's home state: ${state ?? "not given"}`;
 
@@ -97,7 +106,7 @@ Family's home state: ${state ?? "not given"}`;
     const { error: cacheWriteError } = await supabase.from("financial_aid_net_price_cache").upsert({
       cache_key: key,
       school_name: schoolName,
-      income_bracket: incomeBracket,
+      income_band: incomeBand(incomeExact),
       family_size: familySize,
       state,
       estimated_net_price_low: low,

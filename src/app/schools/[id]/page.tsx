@@ -26,7 +26,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("unweighted_gpa, intended_major, financial_aid_need, financial_aid_info_consent, financial_aid_income_bracket")
+    .select("unweighted_gpa, intended_major, financial_aid_need, financial_aid_info_consent, financial_aid_income_exact")
     .eq("user_id", user.id)
     .single();
 
@@ -48,9 +48,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
         cohortStats={cohortStats}
         financialAidNeed={profile?.financial_aid_need ?? null}
         hasFinancialInfo={Boolean(
-          profile?.financial_aid_info_consent &&
-            profile?.financial_aid_income_bracket &&
-            profile.financial_aid_income_bracket !== "prefer_not_to_say"
+          profile?.financial_aid_info_consent && profile?.financial_aid_income_exact !== null
         )}
       />
     </NavShell>
