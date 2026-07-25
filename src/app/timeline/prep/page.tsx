@@ -5,7 +5,7 @@ import { getMissingFields } from "@/lib/profile-completeness";
 import { INLINE_TEXT_FIELDS } from "@/lib/mini-onboarding-fields";
 import TimelinePrepClient from "./TimelinePrepClient";
 
-export const metadata = { title: "Before we generate — Kairos" };
+export const metadata = { title: "Before we generate · Kairos" };
 
 export default async function TimelinePrepPage() {
   const supabase = await createClient();

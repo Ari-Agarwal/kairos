@@ -1,5 +1,5 @@
 // Deterministic pseudo-random so server and client render identical markup (no hydration
-// mismatch). Uses only integer ops (mulberry32-style) — Math.sin() drifts in its last decimal
+// mismatch). Uses only integer ops (mulberry32-style), Math.sin() drifts in its last decimal
 // places between Node (SSR) and the browser, which broke hydration when tried here first.
 function seededRandom(seed: number): number {
   let t = (Math.floor(seed * 1000) + 0x6d2b79f5) | 0;
@@ -19,7 +19,7 @@ const STARS = Array.from({ length: STAR_COUNT }, (_, i) => ({
   max: 0.35 + seededRandom(i * 4.6 + 5) * 0.35,
 }));
 
-// A faint, perpetual starfield behind app screens — a quiet echo of the
+// A faint, perpetual starfield behind app screens, a quiet echo of the
 // landing page hero, kept subtle enough to never compete with content.
 export default function AmbientField() {
   return (

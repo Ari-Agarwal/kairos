@@ -33,7 +33,7 @@ export default function InviteFriendCard({
     <div className="bg-card border border-border rounded-2xl p-5">
       <p className="text-text font-medium text-sm mb-1">Know someone else applying to college?</p>
       <p className="text-text-gray text-xs mb-3">
-        Share your link — {referredCount > 0 ? `${referredCount} friend${referredCount === 1 ? "" : "s"} already joined.` : "no pressure, just if it's useful."}
+        Share your link, {referredCount > 0 ? `${referredCount} friend${referredCount === 1 ? "" : "s"} already joined.` : "no pressure, just if it's useful."}
       </p>
       <button
         onClick={copyLink}

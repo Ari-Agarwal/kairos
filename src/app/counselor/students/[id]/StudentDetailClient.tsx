@@ -240,7 +240,7 @@ function buildPrepSheetText({
     .sort((a, b) => (a.due_date! < b.due_date! ? -1 : 1))
     .slice(0, 5);
 
-  lines.push(`MEETING PREP SHEET — ${studentName}`);
+  lines.push(`MEETING PREP SHEET, ${studentName}`);
   lines.push(`Generated ${new Date().toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}`);
   lines.push("");
   lines.push(`Grade: ${profile.grade_level}`);
@@ -248,7 +248,7 @@ function buildPrepSheetText({
   lines.push(`Intended major: ${profile.intended_major?.length ? profile.intended_major.join(", ") : "Undecided"}`);
   lines.push("");
 
-  lines.push(`TIMELINE — ${completionPct}% complete (${completedItems}/${totalItems} items)`);
+  lines.push(`TIMELINE, ${completionPct}% complete (${completedItems}/${totalItems} items)`);
   if (overdue.length) {
     lines.push(`Overdue (${overdue.length}):`);
     for (const i of overdue) lines.push(`  - ${i.title} (was due ${i.due_date})`);
@@ -425,7 +425,7 @@ function NarrativeEssaysTab({
   if (!hasNarrative && !hasEssays) {
     return (
       <p className="text-text-gray text-sm text-center py-10">
-        Nothing shared yet — a student opts into sharing their Narrative Builder throughline and essay
+        Nothing shared yet, a student opts into sharing their Narrative Builder throughline and essay
         feedback history from their Profile page.
       </p>
     );
@@ -747,7 +747,7 @@ function NotesLog({
     <div>
       <p className="text-text font-medium text-sm mb-2">Notes log</p>
       <p className="text-text-gray text-xs mb-3">
-        A running, timestamped log — jot quick context like &quot;talked to parent Tuesday, considering gap year.&quot;
+        A running, timestamped log, jot quick context like &quot;talked to parent Tuesday, considering gap year.&quot;
         Visible only to you.
       </p>
       <div className="bg-card border border-border rounded-2xl p-4 mb-4">

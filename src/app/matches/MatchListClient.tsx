@@ -32,10 +32,10 @@ interface Match {
 const CONFIDENCE_LABEL: Record<string, string> = {
   high: "High confidence",
   moderate: "Moderate confidence",
-  low: "Low confidence — less data to go on",
+  low: "Low confidence, less data to go on",
 };
 
-// Distinct from need-based aid (Section 10) — this is derived from the same
+// Distinct from need-based aid (Section 10), this is derived from the same
 // GPA/test-score percentile placement already computed per-school, not from
 // the reach/target/safety category (a strong applicant at a reach school can
 // still have low merit-aid likelihood, and vice versa at a safety school).
@@ -58,23 +58,22 @@ const CATEGORIES: Category[] = ["reach", "target", "safety"];
 const MANUAL_NOTE = "This school was added manually, so an AI assessment isn't available.";
 const REGENERATE_SNAPSHOT_KEY = "kairos_matches_regenerate_snapshot";
 
-interface Photo {
-  imageUrl: string;
-  attributionText: string;
-  attributionUrl: string;
+interface Logo {
+  logoUrl: string;
+  domain: string;
 }
 
 export default function MatchListClient({
   initialMatches,
   remaining,
   isPremium,
-  photos = {},
+  logos = {},
   studentName = null,
 }: {
   initialMatches: Match[];
   remaining: number | null;
   isPremium: boolean;
-  photos?: Record<string, Photo | null>;
+  logos?: Record<string, Logo | null>;
   studentName?: string | null;
 }) {
   const router = useRouter();
@@ -98,6 +97,47 @@ export default function MatchListClient({
     setCompareSelection((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < MAX_COMPARE ? [...prev, id] : prev
     );
+  }
+
+  // Follow-up chat under the comparison table (Software_Timeline.md QA item:
+  // "nobody reads the current text blocks" -- table replaces the blocks,
+  // chat covers anything the table's fixed rows don't capture).
+  const [compareQuestion, setCompareQuestion] = useState("");
+  const [compareChatLog, setCompareChatLog] = useState<{ question: string; answer: string }[]>([]);
+  const [compareChatLoading, setCompareChatLoading] = useState(false);
+  const [compareChatError, setCompareChatError] = useState<string | null>(null);
+
+  async function askCompareQuestion() {
+    const question = compareQuestion.trim();
+    if (!question || compareSelection.length < 2) return;
+    setCompareChatLoading(true);
+    setCompareChatError(null);
+    const schools = compareSelection
+      .map((id) => matches.find((m) => m.id === id))
+      .filter((m): m is Match => !!m)
+      .map((m) => ({
+        school_name: m.school_name,
+        category: m.category,
+        percentage: m.percentage,
+        why_text: m.is_manual ? MANUAL_NOTE : m.why_text,
+      }));
+    try {
+      const res = await fetch("/api/matches/compare-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, schools }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCompareChatError(data.error ?? "Couldn't answer that. Please try again.");
+      } else {
+        setCompareChatLog((prev) => [...prev, { question, answer: data.answer }]);
+        setCompareQuestion("");
+      }
+    } catch {
+      setCompareChatError("Couldn't answer that. Please try again.");
+    }
+    setCompareChatLoading(false);
   }
   const [newSchoolName, setNewSchoolName] = useState("");
   const [newSchoolCategory, setNewSchoolCategory] = useState<Category>("target");
@@ -138,7 +178,7 @@ export default function MatchListClient({
   }
 
 
-  // Aid offers loaded from DB (matchId → amount) — used to gate appeal button
+  // Aid offers loaded from DB (matchId → amount), used to gate appeal button
   const [aidOffers, setAidOffers] = useState<Record<string, number>>({});
   // Logged decision per match (matchId → decision_type) -- used to surface the
   // Section 11 "deferred/waitlisted" guidance (letter of continued interest +
@@ -328,7 +368,7 @@ export default function MatchListClient({
   const [dismissedFailedCategories, setDismissedFailedCategories] = useState(false);
 
   // Onboarding kicks off generation itself, but that call can take up to ~50s
-  // and is abandoned if the user closes the tab before it finishes — leaving
+  // and is abandoned if the user closes the tab before it finishes, leaving
   // a saved profile with zero matches. Rather than making the user notice
   // that and hunt for "Generate List", auto-open the confirm step the moment
   // they land here with an empty list (rather than silently auto-firing
@@ -498,28 +538,130 @@ export default function MatchListClient({
           </div>
 
           {compareSelection.length >= 2 && (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {compareSelection.map((id) => {
-                const m = matches.find((x) => x.id === id);
-                if (!m) return null;
-                return (
-                  <div key={id} className="bg-card border border-border rounded-2xl p-4 space-y-3">
-                    <div>
-                      <span
-                        className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full mb-2 capitalize ${CATEGORY_STYLES[m.category]}`}
-                      >
-                        {m.category}
-                      </span>
-                      <p className="font-serif text-text">{m.school_name}</p>
-                    </div>
-                    <p className="font-serif text-2xl text-primary">{m.percentage}%</p>
-                    <p className="text-text-gray text-sm leading-relaxed">
-                      {m.is_manual ? "Added manually — no AI assessment available." : m.why_text}
-                    </p>
+            <>
+              <div className="overflow-x-auto rounded-2xl border border-border mb-4">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="bg-card">
+                      <th className="text-left text-text-gray font-medium px-4 py-3 border-b border-border w-32">
+                        &nbsp;
+                      </th>
+                      {compareSelection.map((id) => {
+                        const m = matches.find((x) => x.id === id);
+                        if (!m) return null;
+                        return (
+                          <th key={id} className="text-left px-4 py-3 border-b border-border border-l">
+                            <div className="flex items-center gap-2">
+                              {logos[m.id] ? (
+                                <img
+                                  src={logos[m.id]!.logoUrl}
+                                  alt=""
+                                  className="size-7 rounded-lg object-contain bg-bg border border-border shrink-0 p-1"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div className="size-7 rounded-lg bg-secondary-tint border border-dashed border-border flex items-center justify-center shrink-0">
+                                  <span className="font-serif text-xs text-secondary">{m.school_name.charAt(0)}</span>
+                                </div>
+                              )}
+                              <span className="font-serif text-text">{m.school_name}</span>
+                            </div>
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="text-text-gray font-medium px-4 py-3 border-b border-border">Tier</td>
+                      {compareSelection.map((id) => {
+                        const m = matches.find((x) => x.id === id);
+                        if (!m) return null;
+                        return (
+                          <td key={id} className="px-4 py-3 border-b border-border border-l">
+                            <span className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full capitalize ${CATEGORY_STYLES[m.category]}`}>
+                              {m.category}
+                            </span>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                    <tr>
+                      <td className="text-text-gray font-medium px-4 py-3 border-b border-border">Match %</td>
+                      {compareSelection.map((id) => {
+                        const m = matches.find((x) => x.id === id);
+                        if (!m) return null;
+                        return (
+                          <td key={id} className="px-4 py-3 border-b border-border border-l font-serif text-xl text-primary">
+                            {m.percentage}%
+                          </td>
+                        );
+                      })}
+                    </tr>
+                    <tr>
+                      <td className="text-text-gray font-medium px-4 py-3 border-b border-border">Merit aid</td>
+                      {compareSelection.map((id) => {
+                        const m = matches.find((x) => x.id === id);
+                        if (!m) return null;
+                        return (
+                          <td key={id} className="px-4 py-3 border-b border-border border-l text-text-gray text-xs">
+                            {m.merit_aid_likelihood ? MERIT_AID_LABEL[m.merit_aid_likelihood] : "Not assessed"}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                    <tr>
+                      <td className="text-text-gray font-medium px-4 py-3 align-top">Why this fit</td>
+                      {compareSelection.map((id) => {
+                        const m = matches.find((x) => x.id === id);
+                        if (!m) return null;
+                        return (
+                          <td key={id} className="px-4 py-3 border-l align-top text-text-gray text-xs leading-relaxed">
+                            {m.is_manual ? "Added manually, no AI assessment available." : m.why_text}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="bg-card border border-border rounded-2xl p-4">
+                <p className="text-text text-sm font-medium mb-2">Ask a follow-up</p>
+                <p className="text-text-gray text-xs mb-3">
+                  e.g. &ldquo;compare culture across these schools&rdquo; or &ldquo;which has the strongest alumni network for my major?&rdquo;
+                </p>
+                {compareChatLog.length > 0 && (
+                  <div className="space-y-3 mb-3">
+                    {compareChatLog.map((entry, idx) => (
+                      <div key={idx} className="space-y-1">
+                        <p className="text-text text-sm font-medium">{entry.question}</p>
+                        <p className="text-text-gray text-sm leading-relaxed">{entry.answer}</p>
+                      </div>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
+                )}
+                {compareChatError && <p role="alert" className="text-red text-xs mb-2">{compareChatError}</p>}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={compareQuestion}
+                    onChange={(e) => setCompareQuestion(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && !compareChatLoading && askCompareQuestion()}
+                    placeholder="Ask about these schools..."
+                    maxLength={500}
+                    className="flex-1 rounded-xl bg-bg border border-border px-4 py-2 text-text text-sm outline-none focus:border-primary"
+                  />
+                  <button
+                    onClick={askCompareQuestion}
+                    disabled={compareChatLoading || !compareQuestion.trim()}
+                    className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-4 py-2 text-sm disabled:opacity-50"
+                  >
+                    {compareChatLoading ? <span role="status" aria-live="polite">Asking...</span> : "Ask"}
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -536,7 +678,14 @@ export default function MatchListClient({
             </button>
             <button
               onClick={() => {
-                sessionStorage.setItem(REGENERATE_SNAPSHOT_KEY, JSON.stringify(matches.map((m) => m.school_name)));
+                // Only snapshot when a prior list actually exists -- on a
+                // first-ever generation (matches.length === 0) there's
+                // nothing to diff against, so skip this or the "your list
+                // changed" popup fires comparing the new list to an empty
+                // before-state (everything reads as "added").
+                if (matches.length > 0) {
+                  sessionStorage.setItem(REGENERATE_SNAPSHOT_KEY, JSON.stringify(matches.map((m) => m.school_name)));
+                }
                 router.push("/matches/prep");
               }}
               className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-3 py-1.5"
@@ -554,7 +703,7 @@ export default function MatchListClient({
               <span className="font-medium">
                 We couldn&apos;t generate {failedCategories.join(" or ")}-tier matches this time.
               </span>{" "}
-              This isn&apos;t the same as not needing one — tap Regenerate to try again.
+              This isn&apos;t the same as not needing one, tap Regenerate to try again.
             </p>
             <button
               onClick={() => setDismissedFailedCategories(true)}
@@ -645,7 +794,7 @@ export default function MatchListClient({
 
       {waitlistedOrDeferredCount >= 2 && (
         <div className="bg-amber-tint border border-amber/30 rounded-xl px-4 py-3 text-sm text-text-gray mb-4">
-          <span className="text-amber font-medium">Multiple waitlists/deferrals on your list — </span>
+          <span className="text-amber font-medium">Multiple waitlists/deferrals on your list, </span>
           it&apos;s worth revisiting your reach/target/safety balance now that you know more than you did when you first applied.{" "}
           <Link href="/matches/prep" className="underline underline-offset-2 hover:text-text-gray">Regenerate with this in mind</Link>.
         </div>
@@ -794,7 +943,7 @@ export default function MatchListClient({
                       className="text-primary hover:text-primary-hover text-xs px-2.5 py-1.5 rounded-lg border border-primary/30 hover:border-primary/60 transition-colors whitespace-nowrap"
                       aria-label={`Draft letter of continued interest for ${m.school_name}`}
                     >
-                      {outcomeDecisions[m.id] === "waitlist" ? "Waitlisted" : "Deferred"} — draft a letter
+                      {outcomeDecisions[m.id] === "waitlist" ? "Waitlisted" : "Deferred"}, draft a letter
                     </button>
                   )}
                 </div>
@@ -843,16 +992,16 @@ export default function MatchListClient({
                 <div className="pointer-events-none">
                   <div className="flex items-start justify-between mb-2 pr-24">
                     <div className="flex items-start gap-3">
-                      {photos[m.id] ? (
+                      {logos[m.id] ? (
                         <img
-                          src={photos[m.id]!.imageUrl}
+                          src={logos[m.id]!.logoUrl}
                           alt=""
-                          className="size-11 rounded-xl object-cover border border-border shrink-0"
+                          className="size-11 rounded-xl object-contain bg-bg border border-border shrink-0 p-1.5"
                           loading="lazy"
                         />
                       ) : (
-                        // Deliberately distinct from the real-photo treatment above (dashed border,
-                        // dimmer secondary-tint fill) so a school with no photo reads as "no photo
+                        // Deliberately distinct from the real-logo treatment above (dashed border,
+                        // dimmer secondary-tint fill) so a school with no logo reads as "no logo
                         // available for this school" rather than looking like a broken image load
                         // next to schools that do have one.
                         <div className="size-11 rounded-xl bg-secondary-tint border border-dashed border-border flex items-center justify-center shrink-0">
@@ -885,7 +1034,7 @@ export default function MatchListClient({
                   )}
                   {!m.is_manual && (
                     <p className="text-text-gray/70 text-xs mt-2">
-                      Based on your GPA, course rigor, ECs, major &amp; social fit —{" "}
+                      Based on your GPA, course rigor, ECs, major &amp; social fit, {" "}
                       <Link href="/methodology" className="underline underline-offset-2 hover:text-text-gray pointer-events-auto">
                         how this is calculated
                       </Link>

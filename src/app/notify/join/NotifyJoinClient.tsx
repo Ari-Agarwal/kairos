@@ -62,7 +62,7 @@ export function NotifyJoinClient({ signupCount }: { signupCount: number | null }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // clipboard access can fail silently (e.g. insecure context) — no-op
+      // clipboard access can fail silently (e.g. insecure context), no-op
     }
   }
 

@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       rejectScriptTags(label, "label");
     }
 
-    // 256-bit random token — not guessable, not enumerable
+    // 256-bit random token, not guessable, not enumerable
     const token = randomBytes(32).toString("hex");
 
     const { data, error } = await supabase

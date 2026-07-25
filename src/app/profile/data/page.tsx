@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import NavShell from "@/components/NavShell";
 import DataPrivacyClient from "./DataPrivacyClient";
 
-export const metadata = { title: "Your data — Kairos" };
+export const metadata = { title: "Your data · Kairos" };
 
 export default async function DataPrivacyPage() {
   const supabase = await createClient();

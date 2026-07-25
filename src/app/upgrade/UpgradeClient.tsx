@@ -19,7 +19,7 @@ const ROWS = [
 
 function Cell({ value }: { value: boolean | string }) {
   if (typeof value === "string") return <span className="text-text-gray text-sm">{value}</span>;
-  return value ? <span className="text-green">✓</span> : <span className="text-text-gray">—</span>;
+  return value ? <span className="text-green">✓</span> : <span className="text-text-gray">, </span>;
 }
 
 export default function UpgradeClient({

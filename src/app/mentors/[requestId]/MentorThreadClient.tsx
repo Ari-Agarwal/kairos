@@ -84,7 +84,7 @@ export default function MentorThreadClient({
             </div>
           </div>
         ))}
-        {messages.length === 0 && <p className="text-text-gray text-sm">No messages yet — say hello.</p>}
+        {messages.length === 0 && <p className="text-text-gray text-sm">No messages yet, say hello.</p>}
       </div>
 
       {isMentor && (

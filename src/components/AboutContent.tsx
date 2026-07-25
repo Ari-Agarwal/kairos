@@ -18,9 +18,10 @@ export function AboutContent({ showLogo }: { showLogo: boolean }) {
       )}
       <h1 className={`font-serif text-3xl text-text mb-4 ${showLogo ? "mt-6" : ""}`}>Our mission</h1>
       <p className="font-serif text-xl text-text mb-8 leading-relaxed">
-        Every student deserves the caliber of college guidance today only wealthy families can
-        afford. Kairos gives every student a real, data-backed read on where they stand and
-        where they could go, for free.
+        Kairos is the Greek word for the right, opportune moment, the instant when timing and
+        readiness meet. That&apos;s what this app is named for: helping students find the right
+        school, at the right time, with the right steps in between. Our goal is to give every
+        student a real, data-backed read on where they stand and where they could go, for free.
       </p>
 
       <div className="grid grid-cols-2 gap-4 mb-10">
@@ -32,7 +33,7 @@ export function AboutContent({ showLogo }: { showLogo: boolean }) {
         ))}
       </div>
 
-      <div className="space-y-4 text-text-gray text-sm leading-relaxed">
+      <div className="space-y-4 font-serif text-text-gray text-sm leading-relaxed">
         <p>
           Each year, an estimated 400,000 academically strong students from low-income
           backgrounds don&apos;t enroll in any college, and another 200,000 enroll in schools
@@ -56,7 +57,7 @@ export function AboutContent({ showLogo }: { showLogo: boolean }) {
 
       <div className="bg-card border border-border rounded-2xl p-6 flex items-start gap-4 mb-2">
         <div className="shrink-0 w-16 h-16 rounded-full bg-secondary-tint border border-border flex items-center justify-center overflow-hidden">
-          {/* Placeholder — swap for the real headshot, e.g.:
+          {/* Placeholder, swap for the real headshot, e.g.:
               <img src="/ari-headshot.jpg" alt="Ari Agarwal" className="w-full h-full object-cover" /> */}
           <User className="w-7 h-7 text-text-gray" />
         </div>
@@ -64,7 +65,7 @@ export function AboutContent({ showLogo }: { showLogo: boolean }) {
           <p className="text-text font-medium text-sm">Ari Agarwal</p>
           <p className="text-text-gray text-xs mb-2">Founder, Kairos</p>
           <p className="text-text-gray text-sm leading-relaxed">
-            {/* Draft copy — replace with your own. */}
+            {/* Draft copy, replace with your own. */}
             I started Kairos after watching students around me with strong grades and test
             scores get no real guidance on where that could actually take them. I wanted to
             build the tool I wished existed: honest, data-backed, and free to start.

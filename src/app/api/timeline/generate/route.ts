@@ -149,7 +149,6 @@ Intended major: ${profile.intended_major?.length ? profile.intended_major.join("
 Extracurriculars: ${(profile.extracurriculars as string[] | null)?.join("; ") || "not specified"}
 SAT score: ${profile.sat_score ?? "not specified"}
 ACT score: ${profile.act_score ?? "not specified"}
-Class rank: ${profile.class_rank ?? "not specified"}
 AP/IB courses: ${profile.ap_ib_count ?? "not specified"}
 Career goals: ${profile.career_goals ?? "not specified"}
 Geographic preference: ${profile.geographic_pref ?? "not specified"}

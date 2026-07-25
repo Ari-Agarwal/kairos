@@ -12,7 +12,7 @@ export interface AccessUser {
   subscription_tier: "free" | "premium";
 }
 
-// featureKey is intentionally ignored — all premium features gate on subscription_tier only for MVP
+// featureKey is intentionally ignored, all premium features gate on subscription_tier only for MVP
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function canAccessFeature(user: AccessUser | null | undefined, featureKey: FeatureKey): boolean {
   if (!user) return false;

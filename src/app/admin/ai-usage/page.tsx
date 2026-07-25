@@ -68,9 +68,9 @@ export default async function AdminAiUsagePage({
   return (
     <main className="min-h-screen bg-bg px-6 py-10">
       <div className="max-w-3xl mx-auto">
-        <h1 className="font-serif text-2xl text-text mb-1">AI usage — last {LOOKBACK_DAYS} days</h1>
+        <h1 className="font-serif text-2xl text-text mb-1">AI usage, last {LOOKBACK_DAYS} days</h1>
         <p className="text-text-gray text-sm mb-6">
-          {totalCalls} calls · {totalTokens.toLocaleString()} tokens across all features. Metadata only — no
+          {totalCalls} calls · {totalTokens.toLocaleString()} tokens across all features. Metadata only, no
           essay/profile content is logged.
         </p>
         <div className="bg-card border border-border rounded-2xl overflow-hidden">

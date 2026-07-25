@@ -21,7 +21,13 @@ const contentSecurityPolicy = [
   "frame-ancestors 'none'",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  // upload.wikimedia.org/en.wikipedia.org -- School Detail "Photos" tab
+  // images (lib/college-photo.ts); logo.clearbit.com -- match-list card
+  // school logos (lib/college-scorecard.ts getCollegeLogo). Both were
+  // previously blocked outright by the bare "'self' data: blob:" policy,
+  // which is why school photos never rendered (silent CSP block, no
+  // console-visible network error on the image request itself).
+  "img-src 'self' data: blob: https://upload.wikimedia.org https://en.wikipedia.org https://logo.clearbit.com",
   "font-src 'self' data:",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://*.ingest.sentry.io",
   "worker-src 'self' blob:",

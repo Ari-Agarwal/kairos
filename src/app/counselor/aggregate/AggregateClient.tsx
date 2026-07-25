@@ -67,12 +67,12 @@ export default function AggregateClient({
           </div>
           <div>
             <p className="text-text-gray text-xs mb-1">Average GPA</p>
-            <p className="font-serif text-xl text-text">{schoolWide.avgGpa ?? "—"}</p>
+            <p className="font-serif text-xl text-text">{schoolWide.avgGpa ?? "N/A"}</p>
           </div>
           <div>
             <p className="text-text-gray text-xs mb-1">Avg. timeline completion</p>
             <p className="font-serif text-xl text-text">
-              {schoolWide.avgTimelineCompletionPct !== null ? `${schoolWide.avgTimelineCompletionPct}%` : "—"}
+              {schoolWide.avgTimelineCompletionPct !== null ? `${schoolWide.avgTimelineCompletionPct}%` : "N/A"}
             </p>
           </div>
           <div>
@@ -97,12 +97,12 @@ export default function AggregateClient({
                   {g.studentCount} student{g.studentCount === 1 ? "" : "s"}
                 </p>
                 <p className="text-text-gray">
-                  Average GPA: <span className="text-text">{g.avgGpa ?? "—"}</span>
+                  Average GPA: <span className="text-text">{g.avgGpa ?? "N/A"}</span>
                 </p>
                 <p className="text-text-gray">
                   Avg. timeline completion:{" "}
                   <span className="text-text">
-                    {g.avgTimelineCompletionPct !== null ? `${g.avgTimelineCompletionPct}%` : "—"}
+                    {g.avgTimelineCompletionPct !== null ? `${g.avgTimelineCompletionPct}%` : "N/A"}
                   </span>
                   {g.trendCompletionDelta != null && g.trendCompletionDelta !== 0 && (
                     <span className={g.trendCompletionDelta > 0 ? "text-green" : "text-red"}>

@@ -20,7 +20,6 @@ import {
   Award,
   Mic,
   FileSignature,
-  UserCheck,
   ClipboardCheck,
   BookOpen,
   Briefcase,
@@ -39,7 +38,7 @@ const TABS = [
 ];
 
 // Full desktop sidebar order (decision Jul 16), grouped once the flat list
-// grew past 10 items. Mentor loop deliberately excluded — feature stays
+// grew past 10 items. Mentor loop deliberately excluded, feature stays
 // built (code/migrations untouched) but its nav entry point is pulled for now.
 const DESKTOP_NAV_GROUPS: { label: string | null; items: typeof TABS }[] = [
   {
@@ -53,7 +52,6 @@ const DESKTOP_NAV_GROUPS: { label: string | null; items: typeof TABS }[] = [
   {
     label: "Support",
     items: [
-      { href: "/review", label: "Human Review", icon: UserCheck },
       { href: "/scholarships", label: "Scholarships", icon: Award },
       { href: "/recommenders", label: "Recommendations", icon: FileSignature },
       { href: "/career-path", label: "Career Path", icon: Briefcase },

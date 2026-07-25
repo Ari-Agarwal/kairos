@@ -13,12 +13,12 @@ const QUESTIONS = [
   {
     key: "moment",
     label: "Describe one specific moment when an interest or value became real for you.",
-    placeholder: "Not \"I've always loved robotics\" — a specific scene: where you were, what happened, what you noticed.",
+    placeholder: "Not \"I've always loved robotics\", a specific scene: where you were, what happened, what you noticed.",
   },
   {
     key: "revealed",
     label: "What did that moment reveal about what you actually care about?",
-    placeholder: "In your own words — not a trait like \"hardworking,\" but the reason behind what you did.",
+    placeholder: "In your own words, not a trait like \"hardworking,\" but the reason behind what you did.",
   },
   {
     key: "pattern",
@@ -28,7 +28,7 @@ const QUESTIONS = [
   {
     key: "struggle",
     label: "Describe a real struggle or setback, and what changed afterward.",
-    placeholder: "Doesn't need to be dramatic — an intellectual or interpersonal struggle counts.",
+    placeholder: "Doesn't need to be dramatic, an intellectual or interpersonal struggle counts.",
   },
   {
     key: "differentiator",
@@ -38,7 +38,7 @@ const QUESTIONS = [
   {
     key: "direction",
     label: "Where do you want to take this? How does it connect to your intended major or future direction?",
-    placeholder: "Tie it forward, not just backward — what you want to do with it next.",
+    placeholder: "Tie it forward, not just backward, what you want to do with it next.",
   },
 ] as const;
 
@@ -117,7 +117,7 @@ export default function NarrativeBuilderClient({
   // real counselor or recommender to read/print themselves.
   function exportOnePager(synthesis: NarrativeSynthesis) {
     const lines = [
-      "MY NARRATIVE — Kairos",
+      "MY NARRATIVE - Kairos",
       "",
       "THROUGHLINE",
       synthesis.throughline,
@@ -229,7 +229,7 @@ export default function NarrativeBuilderClient({
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "We hit a snag putting your narrative together — try again in a moment.");
+      setError(body.error ?? "We hit a snag putting your narrative together, try again in a moment.");
       setLoading(false);
       return;
     }
@@ -260,7 +260,7 @@ export default function NarrativeBuilderClient({
     return (
       <div>
         <p className="text-text-gray text-xs bg-secondary-tint border border-border rounded-xl px-4 py-2.5 mb-5">
-          Change any answer below, then regenerate — no need to walk through each question again.
+          Change any answer below, then regenerate, no need to walk through each question again.
         </p>
         <div className="space-y-4 mb-4">
           {QUESTIONS.map((q) => (
@@ -333,9 +333,16 @@ export default function NarrativeBuilderClient({
             aria-live="polite"
             className="mb-4 rounded-xl border border-primary/30 bg-secondary-tint px-4 py-2.5 text-primary text-sm font-medium"
           >
-            You did it — your narrative is complete.
+            You did it, your narrative is complete.
           </motion.div>
         )}
+        {/* Restructured into 3 clear sections (Software_Timeline.md QA item:
+            output was too dense/text-heavy): (1) what you currently show,
+            (2) how to improve + why each part matters, (3) how to actually
+            do it. Previously this was ~8 flat stacked cards with no grouping. */}
+
+        <p className="text-text-gray text-xs font-medium uppercase tracking-widest mb-3">1. What you currently show</p>
+
         <div className="bg-card border border-border rounded-2xl p-6 mb-4">
           <p className="text-primary text-xs font-medium uppercase tracking-wide mb-2">Your throughline</p>
           <p className="font-serif text-xl text-text leading-snug">{result.throughline}</p>
@@ -395,10 +402,27 @@ export default function NarrativeBuilderClient({
           <p className="text-text-gray text-sm leading-relaxed">{result.growth_arc}</p>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-5 mb-4">
+        <div className="bg-card border border-border rounded-2xl p-5 mb-6">
           <p className="text-text font-medium mb-2">What sets you apart</p>
           <p className="text-text-gray text-sm leading-relaxed">{result.differentiator}</p>
         </div>
+
+        {result.gaps.length > 0 && (
+          <>
+            <p className="text-text-gray text-xs font-medium uppercase tracking-widest mb-3">
+              2. How to improve, and why it matters
+            </p>
+            <div className="bg-secondary-tint border border-border rounded-2xl p-4 mb-6">
+              <ul className="text-text-gray text-sm space-y-2">
+                {result.gaps.map((g, i) => (
+                  <li key={i} className="leading-relaxed">• {g}</li>
+                ))}
+              </ul>
+            </div>
+          </>
+        )}
+
+        <p className="text-text-gray text-xs font-medium uppercase tracking-widest mb-3">3. How to actually do it</p>
 
         <div className="space-y-3 mb-4">
           <p className="text-text font-medium">Possible essay angles</p>
@@ -453,17 +477,6 @@ export default function NarrativeBuilderClient({
           </div>
         )}
 
-        {result.gaps.length > 0 && (
-          <div className="bg-secondary-tint border border-border rounded-2xl p-4 mb-4">
-            <p className="text-text-gray text-xs font-medium mb-1">Worth revisiting</p>
-            <ul className="text-text-gray text-xs space-y-0.5">
-              {result.gaps.map((g, i) => (
-                <li key={i}>• {g}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
         <div className="flex items-center gap-4">
           <button onClick={() => exportOnePager(result)} className="text-primary text-sm hover:text-primary-hover">
             Export one-pager
@@ -493,13 +506,13 @@ export default function NarrativeBuilderClient({
         onDone={() => setShowTimelineToast(false)}
       />
       <p className="text-text-gray text-xs bg-secondary-tint border border-border rounded-xl px-4 py-2.5 mb-5">
-        Kairos helps you brainstorm and critique — you write the essay.
+        Kairos helps you brainstorm and critique, you write the essay.
       </p>
 
       {validSeed && !seedDismissed && (
         <div className="bg-secondary-tint border border-border rounded-xl px-4 py-3 mb-5 flex items-start justify-between gap-3">
           <p className="text-text-gray text-xs leading-relaxed">
-            Pulled in your mock interview answer for this question — edit it however you like.
+            Pulled in your mock interview answer for this question, edit it however you like.
           </p>
           <button onClick={() => setSeedDismissed(true)} className="text-text-gray hover:text-text text-xs shrink-0">
             Dismiss
@@ -572,6 +585,23 @@ export default function NarrativeBuilderClient({
         <p role="alert" className="text-red text-sm mb-4">
           {error}
         </p>
+      )}
+
+      {/* Skip-all (Software_Timeline.md QA item): builds a narrative from
+          whatever's already answered, at any point in the wizard, never
+          blocking on completing all 6 questions -- quality improves with
+          more answers, but nothing here requires finishing them. */}
+      {step < totalSteps - 1 && (
+        <div className="text-right mb-3">
+          <button
+            onClick={() => handleSubmit()}
+            disabled={loading || !hasAnyAnswer}
+            title={hasAnyAnswer ? undefined : "Answer at least one question first"}
+            className="text-text-gray text-xs hover:text-text disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Skip remaining questions & build now
+          </button>
+        </div>
       )}
 
       <div className="flex items-center justify-between">

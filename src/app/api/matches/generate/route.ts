@@ -41,7 +41,6 @@ interface Profile {
   act_score: number | null;
   campus_size_pref: string[] | null;
   campus_setting_pref: string[] | null;
-  class_rank: string | null;
   ap_ib_count: number | null;
   career_goals: string | null;
   geographic_pref: string | null;
@@ -87,8 +86,7 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = user.id;
 
-  // Optional freeform steer ("what am I looking for") from the matches page —
-  // unlike every other free-text field in the app this one is allowed to be
+  // Optional freeform steer ("what am I looking for") from the matches page, // unlike every other free-text field in the app this one is allowed to be
   // empty, so it's validated by hand rather than via requireString.
   let feedback: string | null = null;
   let isRegenerate = false;
@@ -158,6 +156,19 @@ export async function POST(req: Request) {
   const lockedNamesOriginal = (lockedRows ?? []).map((r) => r.school_name);
   const lockedNames = new Set(lockedNamesOriginal.map((n) => n.trim().toLowerCase()));
 
+  // Determined server-side (not from the client's `isRegenerate` flag) so a
+  // first-ever generation is always held to the stricter bar below, even if
+  // the client got confused about its own state. A first-ever list must
+  // never come back partial (e.g. reach-only) -- there's no existing list
+  // for the student to fall back on, unlike a regenerate.
+  const { count: activeMatchCount, error: activeMatchCountError } = await supabase
+    .from("school_matches")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("is_active", true);
+  if (activeMatchCountError) console.error("matches generate active-match-count query failed:", activeMatchCountError);
+  const isFirstGeneration = !activeMatchCount;
+
   const missing = missingFields(profile);
   const affordability = affordabilitySignal(profile);
   const userMessage = `Student profile:
@@ -171,7 +182,6 @@ Extracurriculars: ${profile.extracurriculars?.join("; ") ?? "missing"}
 Schools already considering: ${profile.schools_already_considering ?? "missing"}
 SAT score: ${profile.sat_score ?? "not given"}
 ACT score: ${profile.act_score ?? "not given"}
-Class rank: ${profile.class_rank ?? "not given"}
 AP/IB courses: ${profile.ap_ib_count ?? "not given"}
 Career goals: ${profile.career_goals ?? "not given"}
 Geographic preference: ${profile.geographic_pref ?? "not given"}
@@ -187,7 +197,7 @@ Accessibility/accommodation needs: ${profile.accessibility_pref ?? "not given"}
 ${affordability ? `Estimated affordability: ${affordability} (student opted in to share this)` : ""}
 ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}
 ${lockedNames.size > 0 ? `\nThe student has locked in the following schools already on their list -- they are staying regardless of this generation, so do NOT include them in your results: ${lockedNamesOriginal.join(", ")}.` : ""}
-${feedback ? `\n${isRegenerate ? `The student was asked "what should change from your last list?" and said: "${feedback}" — this is feedback on the list they just saw, so treat it as a direct correction (e.g. if they said "too many reach schools," shift the new list's balance accordingly), not just a general preference.` : `The student was asked "what are you looking for in your matches?" and said: "${feedback}"`} Weigh this alongside the profile above; don't let it override hard constraints like GPA/test-score realism, but do let it steer emphasis (e.g. toward a specific region, school size, or program strength).` : ""}`;
+${feedback ? `\n${isRegenerate ? `The student was asked "what should change from your last list?" and said: "${feedback}", this is feedback on the list they just saw, so treat it as a direct correction (e.g. if they said "too many reach schools," shift the new list's balance accordingly), not just a general preference.` : `The student was asked "what are you looking for in your matches?" and said: "${feedback}"`} Weigh this alongside the profile above; don't let it override hard constraints like GPA/test-score realism, but do let it steer emphasis (e.g. toward a specific region, school size, or program strength).` : ""}`;
 
   const CATEGORIES = ["reach", "target", "safety"] as const;
 
@@ -239,24 +249,30 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
 
   async function generateCategory(category: (typeof CATEGORIES)[number]): Promise<SchoolResult[]> {
     // Forcing tool-use makes the model target a fixed schema instead of free-text
-    // JSON, which cuts out most malformed-JSON failures — but tool-use isn't a hard
+    // JSON, which cuts out most malformed-JSON failures, but tool-use isn't a hard
     // schema lock at the token level, and a "guaranteed inclusion" case (many named
     // schools + full factor writeups) can still run the output close to the token
     // ceiling, so one bounded retry with headroom guards the rare truncated/malformed
-    // miss. Capped at 2 attempts, not more: a single attempt can take up to ~50s, and
-    // maxDuration is hard-capped at 60s on Vercel's Hobby plan — a 3rd attempt risks
-    // the platform killing the whole request mid-retry instead of us returning a
-    // clean 502.
+    // miss. Capped at 2 attempts normally, not more: a single attempt can take up to
+    // ~50s, and maxDuration is hard-capped at 60s on Vercel's Hobby plan, a 3rd
+    // attempt risks the platform killing the whole request mid-retry instead of us
+    // returning a clean 502. A first-ever generation gets a 3rd attempt specifically
+    // (see isFirstGeneration below): a partial first list (e.g. reach-only) is a much
+    // worse outcome than occasionally running closer to the timeout.
     let lastErr: unknown;
     // A retry after an empty-schools miss reuses the identical prompt, so without
     // added pressure the model can repeat the same "too uncertain to commit" empty
-    // response (seen in practice on "safety" — its extra "genuinely glad to attend"
+    // response (seen in practice on "safety", its extra "genuinely glad to attend"
     // qualifier makes the model more willing to return nothing than a list it isn't
     // fully confident clears that bar). Telling it plainly that empty is invalid and
     // some real answer is required fixes the retry without touching the base prompt.
+    // On a first-ever generation, apply that same pressure from attempt 1 instead of
+    // waiting for an empty miss -- there's no existing list to fall back on, so every
+    // category needs its best shot at a non-empty result immediately, not just on retry.
     flagAnomalousUsage("matches/generate", userId);
-    let forceNonEmpty = false;
-    for (let attempt = 0; attempt < 2; attempt++) {
+    let forceNonEmpty = isFirstGeneration;
+    const maxAttempts = isFirstGeneration ? 3 : 2;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const t0 = Date.now();
       try {
         const response = await getAnthropic().messages.create({
@@ -276,7 +292,7 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
           // the effort tier, so this should stay close in quality.
           output_config: { effort: "medium" },
           system: schoolMatchingPrompt(category) + (forceNonEmpty
-            ? `\n\nYour previous attempt returned zero schools for this category. That response was invalid — an empty list is never an acceptable answer. Apply your best judgment and return at least 3 real, currently-operating schools that genuinely fit the "${category}" band for this student, even if you are not fully certain about every detail.`
+            ? `\n\nYour previous attempt returned zero schools for this category. That response was invalid, an empty list is never an acceptable answer. Apply your best judgment and return at least 3 real, currently-operating schools that genuinely fit the "${category}" band for this student, even if you are not fully certain about every detail.`
             : ""),
           messages: [{ role: "user", content: userMessage }],
           tools: [SCHOOLS_TOOL],
@@ -310,7 +326,7 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
     throw lastErr;
   }
 
-  // Reach/target/safety run concurrently — ~1/3 the wall-clock of one 15-school call.
+  // Reach/target/safety run concurrently, ~1/3 the wall-clock of one 15-school call.
   // allSettled rather than all: one category (e.g. "safety") failing its retries
   // shouldn't sink the other two categories that succeeded fine.
   const settled = await Promise.allSettled(CATEGORIES.map(generateCategory));
@@ -327,12 +343,30 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
     return NextResponse.json({ error: "Failed to generate matches. Please try again." }, { status: 502 });
   }
 
-  // Which categories never produced a usable list after both attempts --
-  // surfaced to the client so a missing safety/reach tier reads as "we
-  // couldn't generate this" rather than silently looking identical to "the
-  // model judged you don't need one" (the two are indistinguishable from the
-  // match list alone).
+  // Which categories never produced a usable list after retries -- surfaced
+  // to the client so a missing safety/reach tier reads as "we couldn't
+  // generate this" rather than silently looking identical to "the model
+  // judged you don't need one" (the two are indistinguishable from the match
+  // list alone).
   const failedCategories = CATEGORIES.filter((_, i) => settled[i].status === "rejected");
+
+  // A first-ever generation must never save a partial list (e.g. reach-only)
+  // -- there's no existing list behind it for the student to fall back on,
+  // so a category that never produced a usable result outright fails the
+  // whole request with a real error, instead of silently persisting an
+  // incomplete reach/target/safety spread alongside a soft "some tiers
+  // failed" banner.
+  if (isFirstGeneration && failedCategories.length > 0) {
+    console.error("First-ever match generation came back partial:", failedCategories);
+    return NextResponse.json(
+      {
+        error: `Couldn't generate a full reach/target/safety list right now (the ${failedCategories.join(" and ")} tier${
+          failedCategories.length > 1 ? "s" : ""
+        } failed). Please try again.`,
+      },
+      { status: 502 }
+    );
+  }
 
   const seen = new Set<string>();
   const schools = byCategory.flat().filter((s) => {

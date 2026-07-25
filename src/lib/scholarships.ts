@@ -19,9 +19,18 @@ export interface ScholarshipProfile {
 const MAJOR_KEYWORDS: Record<string, string[]> = {
   "computer science": ["computer science", "computer engineering", "technical field", "technology"],
   engineering: ["engineering", "technical field"],
-  business: ["business", "marketing", "finance", "entrepreneurship", "deca", "fbla"],
+  business: ["business", "marketing", "finance", "entrepreneurship", "deca", "fbla", "accounting", "retail"],
   education: ["education", "teacher", "teaching", "educator"],
-  "visual/performing arts": ["art", "arts", "writing", "visual", "performing"],
+  "visual/performing arts": ["art", "arts", "writing", "visual", "performing", "music", "design", "graphic"],
+  journalism: ["journalism", "media", "communications", "communication"],
+  psychology: ["psychology", "behavioral science", "mental health"],
+  "social work": ["social work"],
+  nursing: ["nursing", "health-science", "health science", "pre-med"],
+  "environmental science": ["environmental", "meteorology", "atmospheric science", "hydrology"],
+  agriculture: ["agriculture", "agribusiness", "agronomy", "animal science"],
+  "political science": ["law school", "pre-law", "political science"],
+  architecture: ["architecture"],
+  mathematics: ["mathematics", "statistics", "actuarial"],
 };
 
 // Business/Education/Humanities & Arts added (Jul 17, follow-up to the
@@ -160,7 +169,7 @@ export function getFitTier(scholarship: Scholarship, profile: ScholarshipProfile
   }
   return {
     tier: "Reach",
-    reason: "Nothing in your profile confirms eligibility here — check the source link for the exact requirements.",
+    reason: "Nothing in your profile confirms eligibility here, check the source link for the exact requirements.",
   };
 }
 
@@ -180,4 +189,77 @@ export function deadlineSortKey(deadlineWindow: string): number {
     if (text.includes(name)) return index;
   }
   return 99;
+}
+
+export type GradeLevel = "Freshman" | "Sophomore" | "Junior" | "Senior";
+
+const GRADE_RANK: Record<GradeLevel, number> = { Freshman: 0, Sophomore: 1, Junior: 2, Senior: 3 };
+
+// Most scholarships in this dataset are written for "graduating high school
+// seniors" -- but a handful explicitly open earlier (sophomore/junior-track
+// programs like Goldwater/Udall, or open-to-all essay contests). Detect the
+// earliest grade a student could actually act on this scholarship from its
+// own eligibility text, so a sophomore doesn't see a senior-only scholarship
+// as something to do right now.
+export function getEligibleGrade(scholarship: Scholarship): GradeLevel {
+  const text = `${scholarship.name} ${scholarship.eligibility_summary}`.toLowerCase();
+  if (/sophomore\/junior|sophomore or junior|rising sophomore\/junior/.test(text)) return "Sophomore";
+  if (/\bjunior\b/.test(text) && !/\bsenior\b/.test(text)) return "Junior";
+  if (/\bsophomore\b/.test(text) && !/\bsenior\b/.test(text) && !/\bjunior\b/.test(text)) return "Sophomore";
+  if (/\bsenior\b|graduating high school|high school senior/.test(text)) return "Senior";
+  // No grade restriction detected (e.g. local Dollars for Scholars chapters,
+  // open essay contests) -- treat as actionable at any grade.
+  return "Freshman";
+}
+
+// This scholarship's deadline is only immediately actionable once the
+// student has reached the grade it requires -- used to keep grade-locked
+// scholarships (e.g. senior-only) from showing up as due-now items for an
+// underclassman.
+export function isGradeEligibleNow(scholarship: Scholarship, currentGrade: GradeLevel): boolean {
+  return GRADE_RANK[currentGrade] >= GRADE_RANK[getEligibleGrade(scholarship)];
+}
+
+// Turns a free-text deadline_window plus the student's current grade level
+// into a real calendar date so the scholarship can be inserted into the
+// timeline at the right point instead of always appended to the bottom.
+// If the student isn't grade-eligible yet (e.g. a senior-only scholarship
+// seen by a sophomore), the date is projected forward to the application
+// cycle of the grade they'll actually need to be in, so it lands further
+// down the timeline as a future item rather than as something actionable now.
+export function estimateScholarshipDueDate(
+  scholarship: Scholarship,
+  currentGrade: GradeLevel,
+  today: Date = new Date()
+): string {
+  const monthIndex = (() => {
+    const text = scholarship.deadline_window.toLowerCase();
+    for (const [name, index] of Object.entries(MONTH_ORDER)) {
+      if (text.includes(name)) return index;
+    }
+    return null;
+  })();
+
+  const requiredGrade = getEligibleGrade(scholarship);
+  const yearsUntilEligible = Math.max(0, GRADE_RANK[requiredGrade] - GRADE_RANK[currentGrade]);
+
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+
+  if (monthIndex === null) {
+    // Unparseable window -- place it a year out per grade gap so it still
+    // sorts sensibly rather than defaulting to "no date" (bottom of list).
+    const d = new Date(currentYear + yearsUntilEligible, currentMonth, 1);
+    return d.toISOString().slice(0, 10);
+  }
+
+  let targetYear = currentYear + yearsUntilEligible;
+  // If eligible now (no grade gap) and the deadline month already passed
+  // this year, roll to next year's cycle instead of a date in the past.
+  if (yearsUntilEligible === 0 && monthIndex < currentMonth) {
+    targetYear += 1;
+  }
+
+  const d = new Date(targetYear, monthIndex, 1);
+  return d.toISOString().slice(0, 10);
 }

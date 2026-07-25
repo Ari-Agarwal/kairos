@@ -132,7 +132,7 @@ export default function AidAppealModal({ matchId, matches, aidOffers, onClose }:
               {result.caveat}
             </div>
             <p className="text-text-gray text-xs">
-              AI-generated draft based on your logged aid figures — dollar amounts are taken directly from your records. Review carefully before sending.
+              AI-generated draft based on your logged aid figures, dollar amounts are taken directly from your records. Review carefully before sending.
             </p>
             <div className="flex gap-2 pt-1">
               <button

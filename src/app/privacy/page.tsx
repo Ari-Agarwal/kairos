@@ -1,4 +1,4 @@
-export const metadata = { title: "Privacy Policy — Kairos" };
+export const metadata = { title: "Privacy Policy · Kairos" };
 
 export default function PrivacyPage() {
   return (
@@ -17,78 +17,76 @@ export default function PrivacyPage() {
           <ul className="space-y-2">
             <li>
               <span className="text-text">Email and login identity</span> (email/password or
-              Google sign-in) — to create and secure your account and log you in.
+              Google sign-in), to create and secure your account and log you in.
             </li>
             <li>
-              <span className="text-text">Age confirmation (14+)</span> — to confirm you&apos;re
+              <span className="text-text">Age confirmation (14+)</span>, to confirm you&apos;re
               old enough to use Kairos (see Children&apos;s privacy below).
             </li>
             <li>
               <span className="text-text">Profile details</span> (grade level, intended major, and
               the schools you&apos;re already considering; optionally test scores and
-              extracurriculars) — to generate your school-match list and application timeline and to
+              extracurriculars), to generate your school-match list and application timeline and to
               personalize your guidance. Optional fields only improve accuracy; you can skip them.
             </li>
             <li>
-              <span className="text-text">Essay drafts you submit</span> — to generate AI feedback
+              <span className="text-text">Essay drafts you submit</span>, to generate AI feedback
               on that specific draft. Sent only when you use Essay Feedback.
             </li>
             <li>
-              <span className="text-text">Your saved matches and timeline</span> — to store your
+              <span className="text-text">Your saved matches and timeline</span>, to store your
               plan so it&apos;s there when you come back.
             </li>
             <li>
-              <span className="text-text">Error and diagnostic data</span> — to detect and fix
+              <span className="text-text">Error and diagnostic data</span>, to detect and fix
               crashes and keep the product working.
             </li>
             <li>
               <span className="text-text">Financial need, career goals, class rank, course
-              rigor, and first-gen/legacy context</span> (all optional) — to factor real
+              rigor, and first-gen/legacy context</span> (all optional), to factor real
               affordability and background context into your matches and timeline, instead of
               guidance that ignores them.
             </li>
             <li>
               <span className="text-text">Admissions decisions you log</span> (accept/reject/
-              waitlist, aid offer amount, notes) — to track your own outcomes over time. We do
+              waitlist, aid offer amount, notes), to track your own outcomes over time. We do
               not currently use this data to inform other students&apos; matches; if that changes,
               it will only ever be in aggregated, de-identified form, and we&apos;ll update this
               notice before it happens.
             </li>
             <li>
-              <span className="text-text">Human-review requests you submit</span> — to route your
+              <span className="text-text">Human-review requests you submit</span>, to route your
               request to a counselor for review.
             </li>
             <li>
               <span className="text-text">Content of a shared read-only link you create</span>{" "}
-              (e.g. for a parent or counselor) — to generate that link and show them the match/
+              (e.g. for a parent or counselor), to generate that link and show them the match/
               timeline snapshot you chose to share. You control creation and revocation of these
               links; see Section 3.
             </li>
             <li>
               <span className="text-text">Activity descriptions, recommender details and brag
-              sheets, and career-path questions</span> — to generate AI feedback, talking points,
+              sheets, and career-path questions</span>, to generate AI feedback, talking points,
               or guidance specific to that feature. Sent only when you use the corresponding tool
               (Activities, Rec Letters, Career Path).
             </li>
             <li>
-              <span className="text-text">Mock interview question and answer text</span> — to
+              <span className="text-text">Mock interview question and answer text</span>, to
               score your practice answer and give feedback. Your spoken answer is transcribed
               entirely in your browser; we never receive or store audio, only the resulting text.
             </li>
             <li>
-              <span className="text-text">Phone number and SMS opt-in preference</span> — to send
+              <span className="text-text">Phone number and SMS opt-in preference</span>, to send
               you deadline reminders and essay prompts by text, only if you opt in. Message and
               data rates may apply; reply STOP at any time to opt out. See Section 2 for the SMS
               provider.
             </li>
             <li>
-              <span className="text-text">Mentor opt-in, mentor request, and message content</span>{" "}
-              — to connect you with a peer mentor or mentee once both sides accept a request. First
+              <span className="text-text">Mentor opt-in, mentor request, and message content</span>{" "}, to connect you with a peer mentor or mentee once both sides accept a request. First
               contact is always a request, not open messaging; see Section 3 for who can see this.
             </li>
             <li>
-              <span className="text-text">Reports and blocks you submit against another user</span>{" "}
-              — to enforce our safety policy. A block is never visible to the person you blocked.
+              <span className="text-text">Reports and blocks you submit against another user</span>{" "}, to enforce our safety policy. A block is never visible to the person you blocked.
             </li>
           </ul>
         </section>
@@ -101,30 +99,30 @@ export default function PrivacyPage() {
           </p>
           <ul className="space-y-2">
             <li>
-              <span className="text-text">Anthropic</span> — receives your essay text and profile
+              <span className="text-text">Anthropic</span>, receives your essay text and profile
               details to generate matches, timelines, career-path information, and essay feedback.
               Under Anthropic&apos;s API terms, your inputs are not used to train their models.
             </li>
             <li>
-              <span className="text-text">Supabase</span> — stores your account and profile data,
+              <span className="text-text">Supabase</span>, stores your account and profile data,
               with row-level security limiting every record to you.
             </li>
             <li>
-              <span className="text-text">Stripe</span> — if you upgrade to Premium, processes the
+              <span className="text-text">Stripe</span>, if you upgrade to Premium, processes the
               payment; we never see or store your card number.
             </li>
             <li>
-              <span className="text-text">Resend</span> — sends your welcome email.
+              <span className="text-text">Resend</span>, sends your welcome email.
             </li>
             <li>
-              <span className="text-text">Vercel</span> — hosts the application.
+              <span className="text-text">Vercel</span>, hosts the application.
             </li>
             <li>
-              <span className="text-text">Sentry</span> — receives error/diagnostic data so we can
+              <span className="text-text">Sentry</span>, receives error/diagnostic data so we can
               fix bugs.
             </li>
             <li>
-              <span className="text-text">Twilio</span> — if you opt in to SMS, sends your text
+              <span className="text-text">Twilio</span>, if you opt in to SMS, sends your text
               messages. Receives your phone number and message content only for that purpose.
             </li>
           </ul>
@@ -139,7 +137,7 @@ export default function PrivacyPage() {
             <li>
               <span className="text-text">A school counselor</span> can see your matches and
               timeline only if your account is affiliated with a school running the Kairos
-              counselor dashboard, and only that counselor — not the whole school.
+              counselor dashboard, and only that counselor, not the whole school.
             </li>
             <li>
               <span className="text-text">A human-review request</span> is visible to the
@@ -152,7 +150,7 @@ export default function PrivacyPage() {
             </li>
             <li>
               <span className="text-text">A mentor or mentee</span> can see your mentor profile
-              only after you both accept a connection request — never before.
+              only after you both accept a connection request, never before.
             </li>
           </ul>
         </section>
@@ -177,8 +175,7 @@ export default function PrivacyPage() {
           <h2 className="text-text font-medium mb-2">6. Your rights</h2>
           <p>
             You can view and edit your profile data at any time from the Profile screen. You can
-            permanently delete your account and all associated data from the same screen —
-            this removes your profile, school matches, timeline, and regeneration history.
+            permanently delete your account and all associated data from the same screen, this removes your profile, school matches, timeline, and regeneration history.
           </p>
         </section>
         <section>

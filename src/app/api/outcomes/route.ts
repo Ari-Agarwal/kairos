@@ -59,7 +59,7 @@ export async function POST(req: Request) {
       rejectScriptTags(notes, "notes");
     }
 
-    // Verify the school_match_id belongs to this user before upsert — the RLS
+    // Verify the school_match_id belongs to this user before upsert, the RLS
     // with-check enforces it at the DB layer too, but an explicit check gives a
     // clearer 404 rather than a generic constraint error.
     const { data: matchRow, error: matchRowError } = await supabase

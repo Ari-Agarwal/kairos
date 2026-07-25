@@ -16,7 +16,7 @@ interface EligibilityData {
 }
 
 const STATUS_LABEL: Record<ReviewRequest["status"], string> = {
-  pending: "Pending — a counselor will reach out shortly",
+  pending: "Pending, a counselor will reach out shortly",
   in_progress: "In progress",
   completed: "Completed",
 };
@@ -46,7 +46,7 @@ export default function HumanReviewCard() {
     });
     const json = await res.json();
     if (!res.ok) {
-      setError(json.error ?? "Couldn't send that — mind trying again?");
+      setError(json.error ?? "Couldn't send that, mind trying again?");
       setSubmitting(false);
       return;
     }
@@ -68,7 +68,7 @@ export default function HumanReviewCard() {
         <div>
           <p className="text-text font-medium text-sm">AI + Human Review</p>
           <p className="text-text-gray text-xs mt-0.5">
-            Get a real counselor&rsquo;s eyes on your application — once per admissions cycle.
+            Get a real counselor&rsquo;s eyes on your application, once per admissions cycle.
           </p>
         </div>
         {data && (

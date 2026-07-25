@@ -5,7 +5,7 @@ import { getMissingFields } from "@/lib/profile-completeness";
 import { INLINE_TEXT_FIELDS } from "@/lib/mini-onboarding-fields";
 import MatchesPrepClient from "./MatchesPrepClient";
 
-export const metadata = { title: "Before we generate — Kairos" };
+export const metadata = { title: "Before we generate · Kairos" };
 
 export default async function MatchesPrepPage() {
   const supabase = await createClient();

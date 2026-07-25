@@ -39,7 +39,7 @@ export default function PreviewHeroesPage() {
   );
 }
 
-// 1. Spline Scene — split layout, text left, 3D/visual right, spotlight glow
+// 1. Spline Scene, split layout, text left, 3D/visual right, spotlight glow
 function SplineSceneMock() {
   return (
     <div className="relative overflow-hidden bg-bg min-h-[80vh] flex items-center">
@@ -74,7 +74,7 @@ function SplineSceneMock() {
   );
 }
 
-// 2. Hero Section 5 — video/motion background, centered content, Tailark style
+// 2. Hero Section 5, video/motion background, centered content, Tailark style
 function HeroSection5Mock() {
   return (
     <div className="relative min-h-[80vh] flex items-center justify-center overflow-hidden bg-bg">
@@ -106,7 +106,7 @@ function HeroSection5Mock() {
   );
 }
 
-// 3. Hero Section Dark — retro grid bg, badge, gradient heading, dashboard preview image
+// 3. Hero Section Dark, retro grid bg, badge, gradient heading, dashboard preview image
 function HeroSectionDarkMock() {
   return (
     <div className="relative min-h-[85vh] overflow-hidden bg-bg flex flex-col items-center justify-center px-6">
@@ -151,7 +151,7 @@ function HeroSectionDarkMock() {
   );
 }
 
-// 4. Hero Section 1 — classic centered SaaS hero, nav-style top bar, large heading
+// 4. Hero Section 1, classic centered SaaS hero, nav-style top bar, large heading
 function HeroSection1Mock() {
   return (
     <div className="min-h-[85vh] bg-bg">

@@ -5,7 +5,7 @@ export { MIN_COHORT_SIZE, type CohortStats } from "@/lib/cohort-types";
 
 /**
  * Aggregate outcome counts for a given school from students with similar profiles.
- * Never returns individual rows — only aggregate counts to preserve anonymity.
+ * Never returns individual rows, only aggregate counts to preserve anonymity.
  *
  * Similarity is defined as:
  *   - Same school_name (case-insensitive exact match on what we store)

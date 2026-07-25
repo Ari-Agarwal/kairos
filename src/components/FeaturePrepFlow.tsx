@@ -101,7 +101,7 @@ export default function FeaturePrepFlow({
       // Any unhandled field left blank shouldn't be able to hang this in the
       // "submitting" spinner forever with no feedback -- always surface a
       // recoverable error instead.
-      setError("Something went wrong on our end — your answers are still here, so just try again.");
+      setError("Something went wrong on our end, your answers are still here, so just try again.");
       setSubmitting(false);
     }
   }
@@ -243,15 +243,33 @@ export default function FeaturePrepFlow({
         </div>
       </div>
 
-      {!required && (
-        <button
-          type="button"
-          onClick={() => submit(true)}
-          className="text-text-gray hover:text-text text-xs underline underline-offset-2 mt-5 block mx-auto"
-        >
-          Skip these questions
-        </button>
-      )}
+      <div className="flex items-center justify-center gap-4 mt-5">
+        {/* Per-question skip -- distinct from "Skip these questions" below,
+            this just moves past the current round (clearing nothing already
+            answered on other rounds) even when `required` would otherwise
+            block "Continue" on this one field. */}
+        {!isFeedbackRound && (
+          <button
+            type="button"
+            onClick={() => goNext()}
+            className="text-text-gray hover:text-text text-xs underline underline-offset-2"
+          >
+            Skip this question
+          </button>
+        )}
+        {!required && (
+          <>
+            {!isFeedbackRound && <span className="text-text-gray/40 text-xs">·</span>}
+            <button
+              type="button"
+              onClick={() => submit(true)}
+              className="text-text-gray hover:text-text text-xs underline underline-offset-2"
+            >
+              Skip all questions
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

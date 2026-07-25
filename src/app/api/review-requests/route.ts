@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     throw e;
   }
 
-  // Enforce yearly cap — count existing requests in the current calendar year.
+  // Enforce yearly cap, count existing requests in the current calendar year.
   const { count, error: countError } = await supabase
     .from("review_requests")
     .select("id", { count: "exact", head: true })

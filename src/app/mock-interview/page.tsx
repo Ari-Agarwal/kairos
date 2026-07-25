@@ -7,7 +7,7 @@ import { canAccessFeature } from "@/lib/access";
 import MockInterviewClient from "./MockInterviewClient";
 import LockedCard from "../essay-feedback/LockedCard";
 
-export const metadata = { title: "Mock Interview — Kairos" };
+export const metadata = { title: "Mock Interview · Kairos" };
 
 export default async function MockInterviewPage() {
   const supabase = await createClient();

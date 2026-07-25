@@ -25,7 +25,14 @@ export default async function RecommendersPage() {
 
   if (recommendersError) console.error("recommenders query failed:", recommendersError);
 
-  const origin = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  // Bug fix: this previously read NEXT_PUBLIC_APP_URL, which is never set
+  // anywhere in the app's env files, so origin was always "" and the copied
+  // share link was a bare "/recommender/<token>" relative path, broken for
+  // the external recommender who has no session/host context to resolve it
+  // against. NEXT_PUBLIC_SITE_URL is the var actually configured (see
+  // layout.tsx/sitemap.ts/shared-links route), with the same production
+  // fallback used elsewhere in the app.
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kairosadmissions.vercel.app";
 
   return (
     <NavShell>

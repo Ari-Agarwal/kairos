@@ -114,13 +114,13 @@ export async function sendWaitlistWeekOneContent(to: string, position: number, r
       <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto;">
         <h1 style="font-size: 22px;">Senior year, month by month.</h1>
         <p style="font-family: Helvetica, Arial, sans-serif; color: #444; line-height: 1.6;">
-          No pitch here — just the deadline timeline students ask us for most.
+          No pitch here, just the deadline timeline students ask us for most.
         </p>
         <ul style="font-family: Helvetica, Arial, sans-serif; color: #444; line-height: 1.8; padding-left: 20px;">
-          <li><strong>August:</strong> Common App opens Aug 1 — set up your account, start a personal statement draft.</li>
-          <li><strong>September:</strong> Finalize your school list. Request teacher recommendation letters — give at least 8-10 weeks' notice.</li>
+          <li><strong>August:</strong> Common App opens Aug 1, set up your account, start a personal statement draft.</li>
+          <li><strong>September:</strong> Finalize your school list. Request teacher recommendation letters, give at least 8-10 weeks' notice.</li>
           <li><strong>October:</strong> Start FAFSA and CSS Profile prep (opens Oct 1). Finalize supplemental essays for early rounds.</li>
-          <li><strong>November:</strong> Most ED/EA deadlines fall Nov 1-2 — your busiest submission week.</li>
+          <li><strong>November:</strong> Most ED/EA deadlines fall Nov 1-2, your busiest submission week.</li>
           <li><strong>December:</strong> EA/ED decisions arrive. If deferred or not applying early, keep RD essays moving.</li>
           <li><strong>January:</strong> Most RD applications due (Jan 4-6 for many schools).</li>
           <li><strong>February:</strong> Remaining RD deadlines, compare financial aid offers as they arrive.</li>
@@ -147,11 +147,10 @@ export async function sendPrelaunchReminderEmail(to: string, referralLink: strin
       <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto;">
         <h1 style="font-size: 22px;">Kairos launches next week.</h1>
         <p style="font-family: Helvetica, Arial, sans-serif; color: #444; line-height: 1.6;">
-          We'll email the moment your account is ready — no action needed on your end.
+          We'll email the moment your account is ready, no action needed on your end.
         </p>
         <p style="font-family: Helvetica, Arial, sans-serif; color: #444; line-height: 1.6;">
-          If any of your friends have been putting off senior year prep, now's the moment —
-          your referral link still moves you up until launch:<br />
+          If any of your friends have been putting off senior year prep, now's the moment, your referral link still moves you up until launch:<br />
           <a href="${referralLink}" style="color: #3C5E3B;">${referralLink}</a>
         </p>
         <p style="font-family: Helvetica, Arial, sans-serif; color: #888; font-size: 13px; margin-top: 24px;">
@@ -171,7 +170,7 @@ export async function sendReengagementEmail(to: string, fullName: string) {
       <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto;">
         <h1 style="font-size: 22px;">Hey ${fullName || "there"}, it's been a couple weeks.</h1>
         <p style="font-family: Helvetica, Arial, sans-serif; color: #444; line-height: 1.6;">
-          No pressure — just a nudge. Your matches and timeline are still there whenever you're ready to
+          No pressure, just a nudge. Your matches and timeline are still there whenever you're ready to
           pick back up. A few minutes now can save a scramble later.
         </p>
         <p style="font-family: Helvetica, Arial, sans-serif; color: #888; font-size: 13px; margin-top: 24px;">

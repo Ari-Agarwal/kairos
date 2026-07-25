@@ -20,8 +20,7 @@ function generateReferralCode(): string {
   return code;
 }
 
-// Effective position = signup-order rank, minus 10 spots per confirmed referral —
-// otherwise a referrer's rank never moves (rank-by-created_at is fixed once set),
+// Effective position = signup-order rank, minus 10 spots per confirmed referral, // otherwise a referrer's rank never moves (rank-by-created_at is fixed once set),
 // which would make the "you moved up" framing/email literally false.
 async function computePosition(
   service: SupabaseClient,
@@ -51,7 +50,7 @@ export async function POST(req: Request) {
 
   const service = createServiceClient();
 
-  // No authenticated user for a public signup — rate-limit by client IP instead.
+  // No authenticated user for a public signup, rate-limit by client IP instead.
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   const rl = await checkRateLimit(service, `waitlist:${ip}`, 5, 60 * 60 * 1000);
   if (!rl.ok) return NextResponse.json({ error: "Too many requests." }, { status: 429 });
@@ -122,7 +121,7 @@ export async function POST(req: Request) {
       }
       if (error.code === "23505") {
         // Could be the (contact_type, contact) unique index (repeat signup) or a
-        // referral_code collision — only the former should short-circuit as success.
+        // referral_code collision, only the former should short-circuit as success.
         const { data: existing } = await service
           .from("waitlist_signups")
           .select("id")
@@ -133,7 +132,7 @@ export async function POST(req: Request) {
           alreadySignedUp = true;
           break;
         }
-        continue; // referral_code collision — retry with a fresh code
+        continue; // referral_code collision, retry with a fresh code
       }
       return NextResponse.json({ error: "Could not save signup." }, { status: 500 });
     }
@@ -157,7 +156,7 @@ export async function POST(req: Request) {
 
     const origin = req.headers.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-    // Email delivery failures shouldn't fail the signup itself — log and move on.
+    // Email delivery failures shouldn't fail the signup itself, log and move on.
     if (contact_type === "email" && inserted?.referral_code && position !== null) {
       const referralLink = `${origin}/notify/join?ref=${inserted.referral_code}`;
       sendWaitlistConfirmation(contact, position, referralLink).catch((err) =>

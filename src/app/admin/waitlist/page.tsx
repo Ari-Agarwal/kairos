@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 
 // Protected by a secret key in the URL (?key=...), same pattern as the
-// parent/counselor share links — not gated by Supabase auth since there's
+// parent/counselor share links, not gated by Supabase auth since there's
 // no admin-role concept in this app. Deliberately returns a plain 404 on a
 // wrong/missing key instead of a 401/403, so the route's existence isn't
 // signaled to anyone probing it.

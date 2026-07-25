@@ -221,7 +221,7 @@ export default function EssayFeedbackClient() {
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "We hit a snag reading your draft — try again in a moment.");
+      setError(body.error ?? "We hit a snag reading your draft, try again in a moment.");
       setLoading(false);
       return;
     }
@@ -251,7 +251,7 @@ export default function EssayFeedbackClient() {
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "We hit a snag generating angles — try again in a moment.");
+      setError(body.error ?? "We hit a snag generating angles, try again in a moment.");
       setLoading(false);
       return;
     }
@@ -277,7 +277,7 @@ export default function EssayFeedbackClient() {
   return (
     <div>
       <p className="text-text-gray text-xs bg-secondary-tint border border-border rounded-xl px-4 py-2.5 mb-5">
-        Kairos helps you brainstorm and critique — you write the essay.
+        Kairos helps you brainstorm and critique, you write the essay.
       </p>
 
       {/* Mode toggle */}
@@ -349,7 +349,7 @@ export default function EssayFeedbackClient() {
                       <p className="text-text text-sm truncate">{h.school || "No school specified"}</p>
                       <p className="text-text-gray text-xs">
                         {new Date(h.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
-                        {" — "}
+                        {", "}
                         {wordCount(h.essay_text)} words
                       </p>
                     </div>
@@ -363,7 +363,7 @@ export default function EssayFeedbackClient() {
                     <p className="text-text text-sm truncate">{h.school || "No school specified"}</p>
                     <p className="text-text-gray text-xs">
                       {new Date(h.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
-                      {" — "}
+                      {", "}
                       {wordCount(h.essay_text)} words
                     </p>
                   </button>
@@ -372,7 +372,7 @@ export default function EssayFeedbackClient() {
               {compareMode && compareIds.length === 2 && (
                 <div className="mt-3 pt-3 border-t border-border">
                   <p className="text-text-gray text-xs mb-2">
-                    Diff (older → newer, by save order) — red is removed, green is added.
+                    Diff (older → newer, by save order), red is removed, green is added.
                   </p>
                   <div className="bg-bg border border-border rounded-xl p-3 text-sm leading-relaxed max-h-80 overflow-y-auto">
                     {(() => {
@@ -430,7 +430,7 @@ export default function EssayFeedbackClient() {
             placeholder={
               mode === "brainstorm"
                 ? "Paste the supplement prompt you're responding to…"
-                : "Supplement prompt (optional) — paste it here to get prompt-specific feedback"
+                : "Supplement prompt (optional), paste it here to get prompt-specific feedback"
             }
             className="w-full rounded-2xl bg-card border border-border px-4 py-3 text-text text-sm outline-none focus:border-primary resize-none mb-3"
           />
@@ -447,13 +447,13 @@ export default function EssayFeedbackClient() {
                 className="w-full rounded-2xl bg-card border border-border px-4 py-3 text-text text-sm outline-none focus:border-primary resize-none mb-1"
               />
               <p className={`text-xs mb-3 ${wordCount(essay) > COMMON_APP_WORD_LIMIT ? "text-red" : "text-text-gray"}`}>
-                {wordCount(essay)} / {COMMON_APP_WORD_LIMIT} words (Common App personal statement limit — supplements vary)
+                {wordCount(essay)} / {COMMON_APP_WORD_LIMIT} words (Common App personal statement limit, supplements vary)
               </p>
 
               {feedback && annotatedSegments.length > 0 && markerForIndex.size > 0 && (
                 <div className="mb-4">
                   <p className="text-text-gray text-xs font-medium uppercase tracking-wide mb-2">
-                    Annotated draft {essay !== annotatedEssay && <span className="normal-case font-normal">(from the version you submitted — keep editing above)</span>}
+                    Annotated draft {essay !== annotatedEssay && <span className="normal-case font-normal">(from the version you submitted, keep editing above)</span>}
                   </p>
                   <div className="rounded-2xl bg-card border border-border px-4 py-3 text-text text-sm leading-relaxed whitespace-pre-wrap">
                     {annotatedSegments.map((seg, i) =>
@@ -545,7 +545,7 @@ export default function EssayFeedbackClient() {
             {feedback && (
               <div className="space-y-3">
                 <p className="text-text-gray text-xs">
-                  AI-generated feedback — use it as a starting point, not a final verdict on your essay.
+                  AI-generated feedback, use it as a starting point, not a final verdict on your essay.
                 </p>
                 {feedback.map((f, idx) => {
               const isNarrativeContradiction = f.label.startsWith("Contradicts your narrative:");
@@ -593,7 +593,7 @@ export default function EssayFeedbackClient() {
         {angles && (
           <div className="space-y-3">
             <p className="text-text-gray text-xs">
-              AI-generated angle suggestions — these are starting points, not prescriptions.
+              AI-generated angle suggestions, these are starting points, not prescriptions.
             </p>
             {angles.map((a, idx) => (
               <motion.div

@@ -76,7 +76,7 @@ export default function TaskDetailClient({ item }: { item: TimelineItem }) {
               )
             }
             className="flex items-center gap-1 text-text-gray hover:text-text text-xs transition-colors"
-            title="Download .ics — works with Apple Calendar, Outlook, and any calendar app"
+            title="Download .ics, works with Apple Calendar, Outlook, and any calendar app"
           >
             <CalendarPlus className="size-3.5" />
             Apple / Outlook
@@ -145,7 +145,7 @@ export default function TaskDetailClient({ item }: { item: TimelineItem }) {
               className="flex items-center justify-center gap-2"
             >
               <Check className="size-4" />
-              {saving ? "Saving..." : "Completed — mark as incomplete"}
+              {saving ? "Saving..." : "Completed, mark as incomplete"}
             </motion.span>
           ) : (
             <motion.span key="pending" exit={{ opacity: 0 }}>

@@ -75,6 +75,7 @@ export default function SchoolDetailClient({
   match,
   stats,
   photo,
+  secondaryPhoto,
   cohortStats,
   financialAidNeed,
   hasFinancialInfo,
@@ -82,11 +83,12 @@ export default function SchoolDetailClient({
   match: Match;
   stats: CollegeStats | null;
   photo: CollegePhoto | null;
+  secondaryPhoto: CollegePhoto | null;
   cohortStats: CohortStats | null;
   financialAidNeed: boolean | null;
   hasFinancialInfo: boolean;
 }) {
-  const [tab, setTab] = useState<"info" | "breakdown" | "outcomes">("info");
+  const [tab, setTab] = useState<"info" | "breakdown" | "photos">("info");
   const [aidNeed, setAidNeed] = useState(financialAidNeed);
   const [aidNudgeDismissed, setAidNudgeDismissed] = useState(false);
 
@@ -132,7 +134,7 @@ export default function SchoolDetailClient({
       </div>
 
       <div className="relative flex gap-2 mb-6 bg-card border border-border rounded-xl p-1 w-fit flex-wrap">
-        {(["info", "breakdown", "outcomes"] as const).map((t) => (
+        {(["info", "breakdown", "photos"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -148,7 +150,7 @@ export default function SchoolDetailClient({
               />
             )}
             <span className="relative z-10">
-              {t === "info" ? "Info" : t === "breakdown" ? "Breakdown" : "Outcomes"}
+              {t === "info" ? "Info" : t === "breakdown" ? "Breakdown" : "Photos"}
             </span>
           </button>
         ))}
@@ -230,7 +232,7 @@ export default function SchoolDetailClient({
                 </div>
                 {(stats.avgNetPrice !== null || stats.medianDebt !== null || stats.medianEarnings10yr !== null) && (
                   <p className="text-text-gray text-xs mb-2">
-                    Net price, debt, and earnings figures are school-wide averages — not specific to
+                    Net price, debt, and earnings figures are school-wide averages, not specific to
                     your financial situation, income bracket, or intended major.{" "}
                     <Link href="/scholarships" className="text-primary hover:text-primary-hover underline underline-offset-2">
                       Browse scholarships →
@@ -322,8 +324,7 @@ export default function SchoolDetailClient({
                   <p className="text-text font-medium text-sm mb-1">What readers typically weigh</p>
                   <p className="text-text-gray text-xs mb-3">
                     General guidance based on publicly reported patterns (Common Data Set factor-importance
-                    reporting, published admissions-office guidance) for <strong>{guidance.tierLabel.toLowerCase()}</strong> —
-                    not specific to {match.school_name}&apos;s actual committee and not a claim that any real
+                    reporting, published admissions-office guidance) for <strong>{guidance.tierLabel.toLowerCase()}</strong>, not specific to {match.school_name}&apos;s actual committee and not a claim that any real
                     admissions officer reviewed your application.
                   </p>
                   <p className="text-text-gray text-sm mb-3">{guidance.summary}</p>
@@ -365,78 +366,43 @@ export default function SchoolDetailClient({
           </motion.div>
         )}
 
-        {tab === "outcomes" && (
+        {tab === "photos" && (
           <motion.div
-            key="outcomes"
+            key="photos"
             initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: EASE }}
             className="bg-card border border-border rounded-2xl p-5"
           >
-            <p className="text-text font-medium mb-1">Students like you</p>
+            <p className="text-text font-medium mb-1">Photos</p>
             <p className="text-text-gray text-xs leading-relaxed mb-5">
-              Anonymized, aggregated outcomes from other Kairos students who applied here — no
-              individual decisions are shown. &quot;Similar&quot; means within ±0.5 GPA and the same
-              intended major where enough data exists; otherwise broadened to all logged outcomes for
-              this school.
+              Real campus photos sourced from Wikipedia.
             </p>
 
-            {cohortStats === null ? (
-              <div className="rounded-xl border border-border bg-bg p-5 text-center">
-                <p className="text-text font-medium mb-2">Not enough data yet</p>
-                <p className="text-text-gray text-sm leading-relaxed">
-                  This view will populate after the first full admissions cycle completes (typically
-                  March–April). We need at least {MIN_COHORT_SIZE} logged decisions from Kairos
-                  students who applied here before we can show an aggregate — showing anything smaller
-                  would be statistically meaningless and could narrow down to a single person.
-                </p>
-                <p className="text-text-gray text-xs mt-4">
-                  If you&apos;ve already heard back from this school, you can{" "}
-                  <button
-                    className="text-primary underline underline-offset-2 hover:text-primary-hover"
-                    onClick={() => {
-                      // direct user back to the matches list where the "Log decision" modal lives
-                      window.location.href = "/matches";
-                    }}
-                  >
-                    log your decision
-                  </button>{" "}
-                  from your match list to help build this dataset for future students.
-                </p>
+            {photo || secondaryPhoto ? (
+              <div className="grid sm:grid-cols-2 gap-3">
+                {[photo, secondaryPhoto].filter((p): p is CollegePhoto => p !== null).map((p, i) => (
+                  <div key={i}>
+                    <img
+                      src={p.imageUrl}
+                      alt={match.school_name}
+                      className="w-full h-48 object-cover rounded-xl border border-border"
+                      loading="lazy"
+                    />
+                    <p className="text-text-gray/70 text-xs mt-1.5">
+                      <a href={p.attributionUrl} target="_blank" rel="noreferrer" className="hover:text-text-gray underline underline-offset-2">
+                        {p.attributionText}
+                      </a>
+                    </p>
+                  </div>
+                ))}
               </div>
             ) : (
-              <div>
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {(
-                    [
-                      { key: "accept", label: "Accepted", color: "text-green" },
-                      { key: "reject", label: "Rejected", color: "text-red" },
-                      { key: "waitlist", label: "Waitlisted", color: "text-amber-text-on-tint" },
-                      { key: "defer", label: "Deferred", color: "text-secondary" },
-                    ] as const
-                  ).map(({ key, label, color }) => {
-                    const count = cohortStats[key];
-                    const pct = cohortStats.total > 0 ? Math.round((count / cohortStats.total) * 100) : 0;
-                    return (
-                      <div key={key} className="bg-bg border border-border rounded-xl p-3">
-                        <p className="text-text-gray text-xs mb-1">{label}</p>
-                        <p className={`font-serif text-xl ${color}`}>{pct}%</p>
-                        <p className="text-text-gray text-xs mt-0.5">{count} of {cohortStats.total}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <p className="text-text-gray text-xs leading-relaxed">
-                  Based on {cohortStats.total} student{cohortStats.total !== 1 ? "s" : ""} who used
-                  Kairos and logged a decision for {match.school_name}
-                  {cohortStats.gpaBand
-                    ? ` with a GPA between ${cohortStats.gpaBand[0].toFixed(1)} and ${cohortStats.gpaBand[1].toFixed(1)}`
-                    : ""}
-                  {cohortStats.majorMatch ? " and the same intended major" : ""}.{" "}
-                  This is real reported data, not a statistical prediction — the sample is small and
-                  should not be read as a reliable admissions probability.
+              <div className="rounded-xl border border-border bg-bg p-5 text-center">
+                <p className="text-text font-medium mb-2">No photos available</p>
+                <p className="text-text-gray text-sm leading-relaxed">
+                  We couldn&apos;t find a usable photo for {match.school_name} yet.
                 </p>
               </div>
             )}

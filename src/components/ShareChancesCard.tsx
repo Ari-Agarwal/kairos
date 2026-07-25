@@ -106,7 +106,7 @@ function drawCard(canvas: HTMLCanvasElement, data: ShareCardData) {
 
   // School name (serif)
   ctx.font = `bold clamp(36px, 5vw, 52px) Georgia, "Times New Roman", serif`;
-  // Canvas doesn't support clamp — use fixed size, scale by name length
+  // Canvas doesn't support clamp, use fixed size, scale by name length
   const nameFontSize = data.schoolName.length > 30 ? 52 : data.schoolName.length > 20 ? 62 : 72;
   ctx.font = `bold ${nameFontSize}px Georgia, "Times New Roman", serif`;
   ctx.fillStyle = PALETTE.text;
@@ -135,7 +135,7 @@ function drawCard(canvas: HTMLCanvasElement, data: ShareCardData) {
     ctx.fillText(l, cx + 52, nameY + i * lineH);
   });
 
-  // Percentage — large amber serif
+  // Percentage, large amber serif
   const pctY = nameY + lines.length * lineH + 72;
   ctx.font = `bold 200px Georgia, "Times New Roman", serif`;
   ctx.fillStyle = PALETTE.primary;
@@ -249,7 +249,7 @@ export default function ShareChancesCard({ data, onClose }: ShareChancesCardProp
       }
       setStatus("idle");
     } catch (err) {
-      // User cancelled share — not an error worth surfacing
+      // User cancelled share, not an error worth surfacing
       if (err instanceof DOMException && err.name === "AbortError") {
         setStatus("idle");
       } else {
@@ -292,7 +292,7 @@ export default function ShareChancesCard({ data, onClose }: ShareChancesCardProp
         </p>
 
         {status === "error" && (
-          <p role="alert" className="text-red text-xs">Couldn&rsquo;t put that image together — give it another try.</p>
+          <p role="alert" className="text-red text-xs">Couldn&rsquo;t put that image together, give it another try.</p>
         )}
 
         <div className="flex gap-2 pt-1">

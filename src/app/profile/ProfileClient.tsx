@@ -39,7 +39,6 @@ interface Profile {
   campus_setting_pref: string[] | null;
   sat_score: number | null;
   act_score: number | null;
-  class_rank: string | null;
   ap_ib_count: number | null;
   career_goals: string | null;
   geographic_pref: string | null;
@@ -89,7 +88,6 @@ export default function ProfileClient({
     schools_already_considering: profile.schools_already_considering ?? "",
     sat_score: profile.sat_score !== null ? String(profile.sat_score) : "",
     act_score: profile.act_score !== null ? String(profile.act_score) : "",
-    class_rank: profile.class_rank ?? "",
     ap_ib_count: profile.ap_ib_count !== null ? String(profile.ap_ib_count) : "",
     career_goals: profile.career_goals ?? "",
     geographic_pref: profile.geographic_pref ?? "",
@@ -153,7 +151,7 @@ export default function ProfileClient({
       .from("profile-photos")
       .upload(path, file, { upsert: true, contentType: file.type });
     if (uploadError) {
-      setAvatarError("Couldn't upload that photo — please try again.");
+      setAvatarError("Couldn't upload that photo, please try again.");
       setAvatarUploading(false);
       return;
     }
@@ -163,7 +161,7 @@ export default function ProfileClient({
       .update({ avatar_url: publicUrlData.publicUrl })
       .eq("user_id", user.id);
     if (updateError) {
-      setAvatarError("Photo uploaded but couldn't be saved to your profile — please try again.");
+      setAvatarError("Photo uploaded but couldn't be saved to your profile, please try again.");
       setAvatarUploading(false);
       return;
     }
@@ -277,7 +275,6 @@ export default function ProfileClient({
         campus_setting_pref: campusSettingPrefs,
         sat_score: form.sat_score ? parseInt(form.sat_score, 10) : null,
         act_score: form.act_score ? parseInt(form.act_score, 10) : null,
-        class_rank: form.class_rank || null,
         ap_ib_count: form.ap_ib_count ? parseInt(form.ap_ib_count, 10) : null,
         career_goals: form.career_goals || null,
         geographic_pref: form.geographic_pref || null,
@@ -469,18 +466,6 @@ export default function ProfileClient({
             </div>
           </div>
           <div>
-            <label htmlFor="pf-class-rank" className="block text-sm text-text-gray mb-1">Class rank</label>
-            <p className="text-xs text-text-gray/70 mb-1">Most high schools no longer report class rank — leave blank if yours doesn't.</p>
-            <input
-              id="pf-class-rank"
-              type="text"
-              placeholder="e.g. Top 10%, or 12/340"
-              value={form.class_rank}
-              onChange={(e) => setForm({ ...form, class_rank: e.target.value })}
-              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
-            />
-          </div>
-          <div>
             <label htmlFor="pf-ap-ib-count" className="block text-sm text-text-gray mb-1">AP/IB courses taken (or in progress)</label>
             <input
               id="pf-ap-ib-count"
@@ -504,7 +489,7 @@ export default function ProfileClient({
           <div>
             <label htmlFor="pf-geo-pref" className="block text-sm text-text-gray mb-1">Geographic preference</label>
             <p className="text-text-gray text-xs mb-2">
-              Region, climate, and/or proximity to home or people you know — whatever matters to you.
+              Region, climate, and/or proximity to home or people you know, whatever matters to you.
             </p>
             <input
               id="pf-geo-pref"
@@ -626,7 +611,7 @@ export default function ProfileClient({
               />
               <span>
                 Share my Narrative Builder throughline and essay feedback history with my counselor
-                (if I have one). Off by default — turning this on lets them see your qualitative work,
+                (if I have one). Off by default, turning this on lets them see your qualitative work,
                 not just deadlines and matches.
               </span>
             </label>
@@ -641,7 +626,7 @@ export default function ProfileClient({
               />
               <span>
                 Share my Narrative Builder highlights (throughline, core values, differentiator) on my
-                recommender&apos;s page. Off by default and separate from the counselor toggle above — a
+                recommender&apos;s page. Off by default and separate from the counselor toggle above, a
                 recommender link doesn&apos;t require login, so this is its own opt-in.
               </span>
             </label>
@@ -834,10 +819,10 @@ export default function ProfileClient({
           <p className="text-text-gray text-sm mb-3">
             Based on your profile, you could be eligible for the{" "}
             <strong className="text-text">Common App fee waiver</strong> or a{" "}
-            <strong className="text-text">NACAC fee waiver</strong> — which let you apply to many schools at no cost.
+            <strong className="text-text">NACAC fee waiver</strong>, which let you apply to many schools at no cost.
             Eligibility is determined by each school using criteria such as financial need, first-generation status,
             and participation in programs like free/reduced lunch or public assistance. You do not need to prove
-            eligibility upfront — just indicate it on your Common App application.
+            eligibility upfront, just indicate it on your Common App application.
           </p>
           <div className="flex flex-wrap gap-3">
             <a
@@ -879,7 +864,7 @@ export default function ProfileClient({
 
       <div className="mt-8 pt-6 border-t border-border">
         {/* Mentor loop entry point pulled Jul 16 (decision, not a removal of the
-            feature) — code/migrations/API untouched, just no longer surfaced. */}
+            feature), code/migrations/API untouched, just no longer surfaced. */}
         <div className="bg-card border border-border rounded-2xl p-5 mb-6">
           <ShareLinksManager />
         </div>
@@ -887,7 +872,7 @@ export default function ProfileClient({
         <div className="bg-card border border-border rounded-2xl p-5 mb-6">
           <p className="text-text font-medium text-sm mb-1">Accent color</p>
           <p className="text-text-gray text-xs mb-3">
-            Make Kairos feel a little more yours. This only changes the accent shade — tier
+            Make Kairos feel a little more yours. This only changes the accent shade, tier
             colors, alerts, and premium stay exactly where they are.
           </p>
           <div className="flex gap-3">
@@ -921,7 +906,7 @@ export default function ProfileClient({
         <div className="bg-card border border-border rounded-2xl p-5 mb-6">
           <p className="text-text font-medium text-sm mb-1">Public Portfolio</p>
           <p className="text-text-gray text-xs mb-3">
-            A clean, shareable page with your name, activities, throughline, and interests — good for
+            A clean, shareable page with your name, activities, throughline, and interests, good for
             scholarship applications, a LinkedIn-style profile, or a recommender request. Never includes
             grades, test scores, financial details, essays, or school lists. Off by default.
           </p>
@@ -966,7 +951,7 @@ export default function ProfileClient({
         ) : (
           <div className="bg-red-tint border border-border rounded-2xl p-4">
             <p className="text-text text-sm mb-3">
-              This permanently deletes your entire Kairos account — profile, matches, timeline, essay
+              This permanently deletes your entire Kairos account, profile, matches, timeline, essay
               feedback history, activity evaluations, scholarship tracker, and everything else. This cannot
               be undone.
             </p>

@@ -5,8 +5,7 @@ import { POST } from "./route";
 
 // Requires .env.test pointed at STAGING with STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET
 // set to TEST-MODE Stripe keys, and TEST_STUDENT_A_EMAIL seeded as a real auth user
-// whose profiles.user_id we look up below. This hits the route handler in-process —
-// no live server or `stripe listen` required.
+// whose profiles.user_id we look up below. This hits the route handler in-process, // no live server or `stripe listen` required.
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const service = createSupabaseClient(
@@ -90,7 +89,7 @@ describe("Stripe webhook handler", () => {
     // operation is idempotent in effect (sets the same value twice), even though there
     // is no explicit processed-event-id guard yet. If a future event type has a
     // non-idempotent side effect (e.g. incrementing a counter), this test won't catch
-    // it — that needs its own dedicated idempotency-guard test once one is added.
+    // it, that needs its own dedicated idempotency-guard test once one is added.
     expect(data?.subscription_tier).toBe("premium");
   });
 });

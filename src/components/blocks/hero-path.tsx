@@ -80,7 +80,7 @@ function generatePoints() {
 
 function buildPath() {
   // A route from lower-left foreground, weaving through the field, to a
-  // destination deep on the right — the "clear line through the noise".
+  // destination deep on the right, the "clear line through the noise".
   // Mirrored on x so the destination (the glowing lighthouse, the point that
   // draws the eye) lands on the left, near the hero copy, instead of pulling
   // attention to the empty right side of the screen.
@@ -94,7 +94,7 @@ function buildPath() {
     new THREE.Vector3(-6.4, 1.1, -8.6),
   ]);
   const tube = new THREE.TubeGeometry(curve, PATH_SAMPLES, 0.035, 6, false);
-  // count in index entries when indexed, vertices otherwise — drawRange units differ
+  // count in index entries when indexed, vertices otherwise, drawRange units differ
   const indexCount = tube.index ? tube.index.count : tube.attributes.position.count;
   return { curve, tube, indexCount, destination: curve.getPoint(1) };
 }
@@ -181,7 +181,7 @@ function Scene({ pointer }: { pointer: React.RefObject<{ x: number; y: number }>
     }
     if (towerMatRef.current) towerMatRef.current.opacity = ignite * 0.9;
 
-    // invisible beam sweep — the light has no body, only the points reveal it
+    // invisible beam sweep, the light has no body, only the points reveal it
     const beamOn = easeOutCubic(ignite);
     const beamAngle = ((elapsed - DRAW_DURATION) * Math.PI * 2) / BEAM_PERIOD;
     pointMaterial.uniforms.uBeamOn.value = beamOn;
@@ -271,7 +271,7 @@ class WebGLErrorBoundary extends React.Component<
     return { hasError: true };
   }
   componentDidCatch() {
-    // Swallow WebGL/three.js runtime errors (unsupported GPU, lost context, etc.) — fall back to the static SVG.
+    // Swallow WebGL/three.js runtime errors (unsupported GPU, lost context, etc.), fall back to the static SVG.
   }
   render() {
     if (this.state.hasError) return <PathFallback />;

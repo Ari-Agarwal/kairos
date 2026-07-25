@@ -6,7 +6,6 @@ export interface CompletenessProfile {
   sat_score?: number | null;
   act_score?: number | null;
   career_goals?: string | null;
-  class_rank?: string | null;
   campus_size_pref?: string[] | null;
   campus_setting_pref?: string[] | null;
   legacy_school?: string | null;
@@ -16,7 +15,7 @@ export interface CompletenessProfile {
 export type CompletenessSurface = "matches" | "timeline" | "general";
 
 // Which fields actually matter for each generation, so the nudge shown before
-// a given generation only lists what would improve THAT output — not every
+// a given generation only lists what would improve THAT output, not every
 // field missing anywhere on the profile. "general" (dashboard) is the union,
 // since nothing specific is being generated there. Campus size/setting
 // preference moved here from "timeline" (Jul 16) -- they're match-quality
@@ -33,14 +32,13 @@ const SURFACE_FIELDS: Record<CompletenessSurface, string[]> = {
     "campus_size_pref",
     "campus_setting_pref",
   ],
-  timeline: ["class_rank", "career_goals", "test_scores"],
+  timeline: ["career_goals", "test_scores"],
   general: [
     "intended_major",
     "extracurriculars",
     "schools_already_considering",
     "test_scores",
     "career_goals",
-    "class_rank",
     "campus_size_pref",
     "campus_setting_pref",
     "legacy_school",
@@ -60,8 +58,6 @@ function isMissing(profile: CompletenessProfile, field: string): boolean {
       return !profile.test_scores && !profile.sat_score && !profile.act_score;
     case "career_goals":
       return !profile.career_goals;
-    case "class_rank":
-      return !profile.class_rank;
     case "campus_size_pref":
       return !profile.campus_size_pref || profile.campus_size_pref.length === 0;
     case "campus_setting_pref":

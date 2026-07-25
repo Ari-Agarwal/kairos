@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import NavShell from "@/components/NavShell";
 import MentorsClient from "./MentorsClient";
 
-export const metadata = { title: "Mentors — Kairos" };
+export const metadata = { title: "Mentors · Kairos" };
 
 export default async function MentorsPage() {
   const supabase = await createClient();

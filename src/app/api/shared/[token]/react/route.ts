@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 
-// Public endpoint — no auth cookie required, same trust model as
+// Public endpoint, no auth cookie required, same trust model as
 // GET /api/shared/[token]: the caller only needs a valid, unrevoked,
 // unexpired share token. All access goes through the service-role client;
 // no anon/public Supabase policy grants writes on shared_list_reactions.
@@ -10,7 +10,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 // Lets a parent/family member holding the link react to (thumbs up/down)
 // or leave a short comment on one of the student's matched schools. The
 // student then sees this on their own /matches page. No financial/grades/
-// essay content is accepted or exposed here — just a reaction + short note
+// essay content is accepted or exposed here, just a reaction + short note
 // tied to a school match the token's own student owns.
 
 const VALID_REACTIONS = new Set(["up", "down"]);
@@ -76,7 +76,7 @@ export async function POST(
     return NextResponse.json({ error: "This link has expired." }, { status: 410 });
   }
 
-  // Confirm the match actually belongs to this token's own student — stops
+  // Confirm the match actually belongs to this token's own student, stops
   // a valid token from being used to write against an unrelated match id.
   const { data: match, error: matchErr } = await service
     .from("school_matches")

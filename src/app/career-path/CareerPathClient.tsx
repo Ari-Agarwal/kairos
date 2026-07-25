@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { crossFeatureWhyText } from "@/lib/cross-feature-why";
@@ -25,7 +26,7 @@ interface CareerPath {
 const CONFIDENCE_LABEL: Record<string, string> = {
   high: "High confidence",
   moderate: "Moderate confidence",
-  low: "Low confidence — less established data for this pairing",
+  low: "Low confidence, less established data for this pairing",
 };
 
 interface Photo {
@@ -213,65 +214,6 @@ export default function CareerPathClient({
     setShowRegen(false);
   }
 
-  // Compare mode: up to 3 schools side by side. Persisted to localStorage
-  // (selection + mode only, not results -- those are cheap to re-fetch and
-  // re-running the AI call automatically on page load would be surprising)
-  // so navigating away and back doesn't silently drop an in-progress
-  // comparison the student was still building.
-  const COMPARE_STORAGE_KEY = "kairos_career_path_compare";
-  const [compareMode, setCompareMode] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      const raw = localStorage.getItem(COMPARE_STORAGE_KEY);
-      return raw ? (JSON.parse(raw).mode ?? false) : false;
-    } catch {
-      return false;
-    }
-  });
-  const [compareSelection, setCompareSelection] = useState<string[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const raw = localStorage.getItem(COMPARE_STORAGE_KEY);
-      return raw ? (JSON.parse(raw).selection ?? []) : [];
-    } catch {
-      return [];
-    }
-  });
-  const [compareCustomInput, setCompareCustomInput] = useState("");
-  const [compareResults, setCompareResults] = useState<Record<string, CareerPath | "error"> | null>(null);
-  const [compareLoading, setCompareLoading] = useState(false);
-  const MAX_COMPARE = 3;
-
-  useEffect(() => {
-    localStorage.setItem(COMPARE_STORAGE_KEY, JSON.stringify({ mode: compareMode, selection: compareSelection }));
-  }, [compareMode, compareSelection]);
-
-  function toggleCompareSchool(name: string) {
-    setCompareSelection((prev) =>
-      prev.includes(name) ? prev.filter((n) => n !== name) : prev.length < MAX_COMPARE ? [...prev, name] : prev
-    );
-  }
-
-  function addCompareCustomSchool() {
-    const name = compareCustomInput.trim();
-    if (!name || compareSelection.includes(name) || compareSelection.length >= MAX_COMPARE) return;
-    setCompareSelection((prev) => [...prev, name]);
-    setCompareCustomInput("");
-  }
-
-  async function handleCompare() {
-    if (compareSelection.length < 2) return;
-    setCompareLoading(true);
-    setCompareResults(null);
-    const entries = await Promise.all(
-      compareSelection.map(async (name) => {
-        const result = await fetchCareerPath(name);
-        return [name, result ?? ("error" as const)] as const;
-      })
-    );
-    setCompareResults(Object.fromEntries(entries));
-    setCompareLoading(false);
-  }
 
   return (
     <div>
@@ -321,131 +263,21 @@ export default function CareerPathClient({
         />
       )}
 
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setCompareMode(false)}
-          className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-colors ${
-            !compareMode ? "bg-primary text-bg" : "bg-card border border-border text-text-gray hover:text-text"
-          }`}
-        >
-          Single school
-        </button>
-        <button
-          onClick={() => setCompareMode(true)}
-          className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-colors ${
-            compareMode ? "bg-primary text-bg" : "bg-card border border-border text-text-gray hover:text-text"
-          }`}
-        >
-          Compare schools
-        </button>
-      </div>
+      {/* Software_Timeline.md QA item: the old per-school "Compare schools"
+          box (wall-of-text summaries side by side) is replaced with an
+          essay-help box -- a shortcut into Essay Feedback, since that's the
+          more useful next step from this page than a text-heavy comparison. */}
+      <Link
+        href="/essay-feedback"
+        className="block bg-card border border-border rounded-2xl p-5 mb-6 hover:border-primary/50 transition-colors"
+      >
+        <p className="text-text font-medium text-sm mb-1">Need help with an essay?</p>
+        <p className="text-text-gray text-xs leading-relaxed">
+          Get AI feedback on a draft, or brainstorm essay angles grounded in your actual profile.{" "}
+          <span className="text-primary">Go to Essay Feedback →</span>
+        </p>
+      </Link>
 
-      {compareMode ? (
-        <div className="mb-6">
-          <div className="bg-card border border-border rounded-2xl p-5 mb-4 space-y-3">
-            <p className="text-text text-sm font-medium">Pick 2–3 schools to compare</p>
-            {matches.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {matches.map((m) => {
-                  const isSelected = compareSelection.includes(m.school_name);
-                  return (
-                    <button
-                      key={m.id}
-                      onClick={() => toggleCompareSchool(m.school_name)}
-                      disabled={!isSelected && compareSelection.length >= MAX_COMPARE}
-                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-40 ${
-                        isSelected ? "bg-primary text-bg" : "bg-bg border border-border text-text-gray hover:text-text"
-                      }`}
-                    >
-                      {m.school_name}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={compareCustomInput}
-                onChange={(e) => setCompareCustomInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addCompareCustomSchool()}
-                placeholder="Add another school"
-                maxLength={200}
-                disabled={compareSelection.length >= MAX_COMPARE}
-                className="flex-1 rounded-xl bg-bg border border-border px-4 py-2 text-text text-sm outline-none focus:border-primary disabled:opacity-50"
-              />
-              <button
-                onClick={addCompareCustomSchool}
-                disabled={!compareCustomInput.trim() || compareSelection.length >= MAX_COMPARE}
-                className="rounded-xl border border-border text-text-gray hover:text-text text-sm font-medium px-3 py-2 disabled:opacity-40"
-              >
-                Add
-              </button>
-            </div>
-            {compareSelection.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {compareSelection.map((name) => (
-                  <span
-                    key={name}
-                    className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-secondary-tint text-text"
-                  >
-                    {name}
-                    <button onClick={() => toggleCompareSchool(name)} aria-label={`Remove ${name}`} className="text-text-gray hover:text-red">
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-            <button
-              onClick={handleCompare}
-              disabled={compareLoading || compareSelection.length < 2}
-              className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-5 py-2.5 disabled:opacity-50"
-            >
-              {compareLoading ? <span role="status" aria-live="polite">Comparing...</span> : "Compare"}
-            </button>
-          </div>
-
-          {compareResults && (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {compareSelection.map((name) => {
-                const result = compareResults[name];
-                return (
-                  <div key={name} className="bg-card border border-border rounded-2xl p-4 space-y-3">
-                    <div className="flex items-center gap-3">
-                      {photos[name] ? (
-                        <img
-                          src={photos[name]!.imageUrl}
-                          alt=""
-                          className="size-11 rounded-xl object-cover border border-border shrink-0"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="size-11 rounded-xl bg-secondary-tint border border-dashed border-border flex items-center justify-center shrink-0">
-                          <span className="font-serif text-sm text-secondary">{name.charAt(0)}</span>
-                        </div>
-                      )}
-                      <p className="font-serif text-text">{name}</p>
-                    </div>
-                    {result === "error" || !result ? (
-                      <p className="text-red text-sm">Couldn&apos;t load this school.</p>
-                    ) : (
-                      <>
-                        <p className="text-text-gray text-sm leading-relaxed">{result.summary}</p>
-                        <div>
-                          <p className="text-text font-medium text-xs mb-1">Median salary</p>
-                          <p className="text-text-gray text-sm">{result.median_salary}</p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      ) : (
-        <>
       <div className="bg-card border border-border rounded-2xl p-5 mb-6 space-y-3">
         {matches.length > 0 && (
           <div className="flex gap-2 mb-1">
@@ -523,26 +355,7 @@ export default function CareerPathClient({
               {careerPath.confidence && ` · ${CONFIDENCE_LABEL[careerPath.confidence]}`}
             </p>
             <p className="text-text-gray text-sm leading-relaxed">{careerPath.summary}</p>
-            <div>
-              <p className="text-text font-medium text-sm mb-1">Typical internships</p>
-              <ul className="text-text-gray text-sm space-y-0.5">
-                {careerPath.internships.map((i, idx) => (
-                  <li key={idx}>• {i}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-text font-medium text-sm mb-1">Employer types &amp; locations</p>
-              <ul className="text-text-gray text-sm space-y-0.5">
-                {careerPath.employer_types.map((i, idx) => (
-                  <li key={idx}>• {i}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-text font-medium text-sm mb-1">Median salary</p>
-              <p className="text-text-gray text-sm">{careerPath.median_salary}</p>
-            </div>
+            <CareerPathDiagram schoolName={schoolName} careerPath={careerPath} />
 
             {exploringMajor && (
               <div className="pt-2 border-t border-border">
@@ -556,7 +369,7 @@ export default function CareerPathClient({
                   >
                     {addingMajorToProfile
                       ? "Adding…"
-                      : `Looks like a fit — add ${exploringMajor} to your intended majors?`}
+                      : `Looks like a fit, add ${exploringMajor} to your intended majors?`}
                   </button>
                 )}
               </div>
@@ -572,7 +385,7 @@ export default function CareerPathClient({
                     disabled={addingToMatches}
                     className="text-primary text-sm hover:text-primary-hover disabled:opacity-40"
                   >
-                    {addingToMatches ? "Adding…" : `Looks like a fit — add ${schoolName} to your matches?`}
+                    {addingToMatches ? "Adding…" : `Looks like a fit, add ${schoolName} to your matches?`}
                   </button>
                 )}
               </div>
@@ -620,8 +433,86 @@ export default function CareerPathClient({
           </motion.div>
         )}
       </AnimatePresence>
-        </>
+    </div>
+  );
+}
+
+// Replaces the old wall-of-text internships/employer-types/salary lists with
+// a simple 4-step visual path (high school -> college -> summer internship ->
+// return offer), since students weren't reading the text blocks. Plain
+// flexbox + CSS, no charting dependency -- this is a fixed 4-node sequence,
+// not real data-driven charting.
+function CareerPathDiagram({ schoolName, careerPath }: { schoolName: string; careerPath: CareerPath }) {
+  const steps = [
+    {
+      label: "High School",
+      detail: "Where you are now",
+    },
+    {
+      label: "College",
+      detail: schoolName,
+    },
+    {
+      label: "Summer Internship",
+      detail: careerPath.internships[0] ?? "Typical internship for this major",
+    },
+    {
+      label: "Return Offer",
+      detail: careerPath.employer_types[0] ?? "Typical first employer",
+    },
+  ];
+
+  return (
+    <div className="pt-1">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-0">
+        {steps.map((step, idx) => (
+          <div key={step.label} className="flex sm:flex-1 sm:flex-col items-start sm:items-center gap-3 sm:gap-2">
+            <div className="flex sm:flex-col items-center gap-2 sm:w-full">
+              <div className="flex flex-col items-center shrink-0">
+                <div className="size-8 rounded-full bg-primary text-bg flex items-center justify-center font-serif text-sm shrink-0">
+                  {idx + 1}
+                </div>
+              </div>
+              {idx < steps.length - 1 && (
+                <>
+                  {/* vertical connector on mobile, horizontal on desktop */}
+                  <div className="w-px h-6 bg-border sm:hidden shrink-0" />
+                  <div className="hidden sm:block flex-1 h-px bg-border mt-4" />
+                </>
+              )}
+            </div>
+            <div className="pb-4 sm:pb-0 sm:text-center sm:px-1">
+              <p className="text-text font-medium text-sm">{step.label}</p>
+              <p className="text-text-gray text-xs leading-snug">{step.detail}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {careerPath.internships.length > 1 && (
+        <div className="mt-4 pt-3 border-t border-border">
+          <p className="text-text font-medium text-xs mb-1">Other common internships</p>
+          <ul className="text-text-gray text-xs space-y-0.5">
+            {careerPath.internships.slice(1).map((i, idx) => (
+              <li key={idx}>• {i}</li>
+            ))}
+          </ul>
+        </div>
       )}
+      {careerPath.employer_types.length > 1 && (
+        <div className="mt-3">
+          <p className="text-text font-medium text-xs mb-1">Other employer types &amp; locations</p>
+          <ul className="text-text-gray text-xs space-y-0.5">
+            {careerPath.employer_types.slice(1).map((i, idx) => (
+              <li key={idx}>• {i}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div className="mt-3">
+        <p className="text-text font-medium text-xs mb-1">Median salary</p>
+        <p className="text-text-gray text-xs">{careerPath.median_salary}</p>
+      </div>
     </div>
   );
 }

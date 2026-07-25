@@ -9,7 +9,7 @@ import {
   MULTI_SELECT_FIELDS,
 } from "@/lib/mini-onboarding-fields";
 
-// Pure inline fields — no card, no title, no buttons. Embedded directly into
+// Pure inline fields, no card, no title, no buttons. Embedded directly into
 // whatever pre-generate panel the parent (Matches/Timeline) already shows,
 // rather than a separate pop-up modal that appears after the fact.
 export default function MissingFieldInputs({

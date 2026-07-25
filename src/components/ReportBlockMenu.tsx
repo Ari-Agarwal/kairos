@@ -117,7 +117,7 @@ export default function ReportBlockMenu({
           </div>
         </div>
       )}
-      {mode === "done" && <p className="text-text-gray text-sm">Thanks — we&apos;ve received this.</p>}
+      {mode === "done" && <p className="text-text-gray text-sm">Thanks, we&apos;ve received this.</p>}
       {error && <p className="text-red text-xs mt-2">{error}</p>}
     </div>
   );

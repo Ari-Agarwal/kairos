@@ -85,7 +85,7 @@ export function buildCollegeListPdf(matches: PdfMatch[], studentName: string | n
       ensureSpace(50);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
-      const pct = m.is_manual ? "" : `  —  ${m.percentage}% match`;
+      const pct = m.is_manual ? "" : `, ${m.percentage}% match`;
       doc.text(`${m.school_name}${pct}`, PAGE_MARGIN, y);
       y += 16;
 

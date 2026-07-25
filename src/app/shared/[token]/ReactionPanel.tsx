@@ -73,7 +73,7 @@ export default function ReactionPanel({
         </button>
         {status === "saving" && <span className="text-text-gray text-xs">Saving…</span>}
         {status === "saved" && <span className="text-text-gray text-xs">Saved</span>}
-        {status === "error" && <span className="text-red text-xs">Couldn&apos;t save — try again</span>}
+        {status === "error" && <span className="text-red text-xs">Couldn&apos;t save, try again</span>}
       </div>
       <form onSubmit={submitComment} className="flex items-center gap-2">
         <input

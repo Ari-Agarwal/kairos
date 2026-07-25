@@ -198,11 +198,36 @@ export default function OnboardingPage() {
     setStep((s) => Math.max(0, s - 1));
   }
 
-  async function handleSubmit() {
-    const err = validateStep(step);
-    if (err) {
-      showError(err);
-      return;
+  // Per-question/per-step skip (Software_Timeline.md QA item): advances
+  // without running validateStep, so a student can move on even if this
+  // round's fields are the kind that would otherwise block "Continue."
+  function skipStep() {
+    setError(null);
+    setDirection(1);
+    if (isLastRound) {
+      handleSubmit(true);
+    } else {
+      setStep((s) => s + 1);
+    }
+  }
+
+  // "Skip all questions" -- jumps straight to submission from wherever the
+  // student currently is, applying sensible defaults for the handful of
+  // fields the profile table requires (grade_level/GPA/current_school/
+  // intended_major are NOT NULL), so this can never fail with unanswered
+  // required fields the way validateStep would otherwise demand.
+  function skipAll() {
+    setError(null);
+    handleSubmit(true);
+  }
+
+  async function handleSubmit(skipValidation = false) {
+    if (!skipValidation) {
+      const err = validateStep(step);
+      if (err) {
+        showError(err);
+        return;
+      }
     }
     setError(null);
     setLoading(true);
@@ -256,16 +281,25 @@ export default function OnboardingPage() {
       }
     }
 
+    // Skipping a step (or "skip all") can reach here with the profile
+    // table's NOT NULL fields still unset -- fall back to sensible defaults
+    // rather than letting the insert fail outright, so skip can never brick
+    // account creation. A student who skipped these can always fill them in
+    // properly later from /profile?edit=true.
+    const safeGradeLevel = gradeLevel || GRADE_LEVELS[0];
+    const safeGpa = (value: string) => (value && !Number.isNaN(parseFloat(value)) ? parseFloat(value) : 0);
+    const safeCurrentSchool = currentSchool.trim() || "Not specified";
+
     const { error } = await supabase.from("profiles").insert({
       user_id: user.id,
       display_name: fullName || user.email || null,
       referred_by_user_id: referredByUserId,
-      grade_level: gradeLevel,
-      unweighted_gpa: parseFloat(unweightedGpa),
-      weighted_gpa: parseFloat(weightedGpa),
+      grade_level: safeGradeLevel,
+      unweighted_gpa: safeGpa(unweightedGpa),
+      weighted_gpa: safeGpa(weightedGpa),
       intended_major: resolvedMajors,
       interests: combinedInterests || null,
-      current_school: currentSchool,
+      current_school: safeCurrentSchool,
       extracurriculars: ecArray.length > 0 ? ecArray : null,
       sat_score: satScore ? parseInt(satScore, 10) : null,
       act_score: actScore ? parseInt(actScore, 10) : null,
@@ -316,7 +350,7 @@ export default function OnboardingPage() {
   const rounds: { title: string; blurb: string; fields: React.ReactNode }[] = [
     {
       title: "Getting to know you",
-      blurb: "Before we talk numbers, tell us a bit about who you are — like a counselor would.",
+      blurb: "Before we talk numbers, tell us a bit about who you are, like a counselor would.",
       fields: (
         <>
           <div>
@@ -331,7 +365,7 @@ export default function OnboardingPage() {
           </div>
           <div>
             <label htmlFor="ob-interests" className="block text-sm text-text-gray mb-1">
-              Interests <span className="text-text-gray/70">— optional</span>
+              Interests <span className="text-text-gray/70">, optional</span>
             </label>
             <p className="text-text-gray text-xs mb-2">
               Anything you&apos;re into that doesn&apos;t fit neatly into a major, e.g. &quot;robotics, creative writing, climate policy.&quot;
@@ -346,7 +380,7 @@ export default function OnboardingPage() {
           </div>
           <div>
             <label htmlFor="ob-matters" className="block text-sm text-text-gray mb-1">
-              What matters to you in choosing a college? <span className="text-text-gray/70">— optional</span>
+              What matters to you in choosing a college? <span className="text-text-gray/70">, optional</span>
             </label>
             <textarea
               id="ob-matters"
@@ -360,7 +394,7 @@ export default function OnboardingPage() {
           </div>
           <div>
             <label htmlFor="ob-beyond-transcript" className="block text-sm text-text-gray mb-1">
-              What&apos;s something about you a transcript wouldn&apos;t show? <span className="text-text-gray/70">— optional</span>
+              What&apos;s something about you a transcript wouldn&apos;t show? <span className="text-text-gray/70">, optional</span>
             </label>
             <textarea
               id="ob-beyond-transcript"
@@ -374,10 +408,10 @@ export default function OnboardingPage() {
           </div>
           <div>
             <label htmlFor="ob-applicant-type" className="block text-sm text-text-gray mb-1">
-              Which of these describes you? <span className="text-text-gray/70">— optional</span>
+              Which of these describes you? <span className="text-text-gray/70">, optional</span>
             </label>
             <p className="text-text-gray text-xs mb-2">
-              We&apos;ll shape your timeline and matches to fit — leave this as-is if none apply.
+              We&apos;ll shape your timeline and matches to fit, leave this as-is if none apply.
             </p>
             <select
               id="ob-applicant-type"
@@ -394,7 +428,7 @@ export default function OnboardingPage() {
           </div>
           <div>
             <label htmlFor="ob-accessibility" className="block text-sm text-text-gray mb-1">
-              Anything about campus accessibility or disability services that matters to your search? <span className="text-text-gray/70">— optional</span>
+              Anything about campus accessibility or disability services that matters to your search? <span className="text-text-gray/70">, optional</span>
             </label>
             <input
               id="ob-accessibility"
@@ -411,7 +445,7 @@ export default function OnboardingPage() {
     },
     {
       title: "The basics",
-      blurb: "Now the numbers — grade, GPA, and where you go to school.",
+      blurb: "Now the numbers, grade, GPA, and where you go to school.",
       fields: (
         <>
           <div className="grid grid-cols-2 gap-4">
@@ -528,7 +562,7 @@ export default function OnboardingPage() {
     },
     {
       title: "Extracurriculars",
-      blurb: "Tell us what you actually spend your time on — depth beats a long list.",
+      blurb: "Tell us what you actually spend your time on, depth beats a long list.",
       fields: (
         <div>
           <span id="ob-activities-label" className="block text-sm text-text-gray mb-1">Your activities</span>
@@ -588,11 +622,11 @@ export default function OnboardingPage() {
     },
     {
       title: "Test scores",
-      blurb: "Almost there — this is the last stretch.",
+      blurb: "Almost there, this is the last stretch.",
       fields: (
         <>
           <p className="text-text-gray text-xs -mt-2">
-            Enter either or both — some schools superscore across test types.
+            Enter either or both, some schools superscore across test types.
           </p>
           <div>
             <label htmlFor="ob-sat-score" className="block text-sm text-text-gray mb-1">SAT Score</label>
@@ -689,7 +723,7 @@ export default function OnboardingPage() {
         Let&apos;s find your people (and your schools)
       </motion.h1>
       <p className="text-text-gray text-sm mb-6">
-        A few quick rounds — the more we know about you, the sharper your matches get.
+        A few quick rounds, the more we know about you, the sharper your matches get.
       </p>
 
       <motion.div
@@ -792,10 +826,28 @@ export default function OnboardingPage() {
               )}
               <button
                 type="button"
-                onClick={isLastRound ? handleSubmit : goNext}
+                onClick={isLastRound ? () => handleSubmit() : goNext}
                 className="flex-1 rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium py-3"
               >
                 {isLastRound ? "Complete profile" : "Continue"}
+              </button>
+            </div>
+
+            <div className="flex items-center justify-center gap-4">
+              <button
+                type="button"
+                onClick={skipStep}
+                className="text-text-gray hover:text-text text-xs underline underline-offset-2"
+              >
+                Skip this question
+              </button>
+              <span className="text-text-gray/40 text-xs">·</span>
+              <button
+                type="button"
+                onClick={skipAll}
+                className="text-text-gray hover:text-text text-xs underline underline-offset-2"
+              >
+                Skip all questions
               </button>
             </div>
           </div>

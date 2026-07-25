@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // 5 drafts per minute — this calls Anthropic, so keep it tight
+  // 5 drafts per minute, this calls Anthropic, so keep it tight
   const rl = await checkRateLimit(supabase, `loci:${user.id}`, 5, 60_000);
   if (!rl.ok) return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
 

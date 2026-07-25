@@ -105,7 +105,7 @@ export async function POST(req: Request) {
     const trimmedEssay = essay.trim();
     if (recentHistory && recentHistory.length === 3 && recentHistory.every((h) => h.essay_text.trim() === trimmedEssay)) {
       repeatNotice =
-        "You've submitted this exact draft for feedback a few times in a row — Kairos gives feedback, but you're the one who has to make the changes. Try revising based on what you've already gotten before asking again.";
+        "You've submitted this exact draft for feedback a few times in a row, Kairos gives feedback, but you're the one who has to make the changes. Try revising based on what you've already gotten before asking again.";
     }
   }
 

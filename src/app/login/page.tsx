@@ -56,8 +56,7 @@ export default function LoginPage() {
     setError(null);
     setOauthLoading(provider);
     const redirectTo = `${window.location.origin}/auth/callback`;
-    // signInWithOAuth doesn't redirect the browser itself in this SDK/config —
-    // it just returns the authorize URL, so we have to navigate to it ourselves.
+    // signInWithOAuth doesn't redirect the browser itself in this SDK/config, // it just returns the authorize URL, so we have to navigate to it ourselves.
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo },

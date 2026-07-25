@@ -91,7 +91,7 @@ export default function FinancialAidConsentSection({ profile }: { profile: Finan
     <div className="bg-card border border-border rounded-2xl p-5 mb-6">
       <p className="text-text font-medium text-sm mb-1">Financial aid info (optional)</p>
       <p className="text-text-gray text-xs mb-3">
-        Kairos does not currently use this anywhere in your matches, scholarships, or timeline — it&apos;s
+        Kairos does not currently use this anywhere in your matches, scholarships, or timeline, it&apos;s
         being collected now only so we can build affordability tools honestly later, with your consent
         already on record rather than assumed. You never need to fill this in to use any part of Kairos,
         and you can withdraw consent and clear this information at any time.

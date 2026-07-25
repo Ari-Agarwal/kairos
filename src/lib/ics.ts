@@ -1,4 +1,4 @@
-// iCalendar (RFC 5545) helpers — no external dependency needed for this volume of templating.
+// iCalendar (RFC 5545) helpers, no external dependency needed for this volume of templating.
 
 function escIcs(value: string): string {
   // RFC 5545 §3.3.11: escape backslash first, then semicolon, comma, newline.

@@ -38,7 +38,7 @@ export default function ReportDataIssueButton({ contentType, label }: { contentT
   }
 
   if (submitted) {
-    return <p className="text-text-gray text-xs">Thanks — flagged for review.</p>;
+    return <p className="text-text-gray text-xs">Thanks, flagged for review.</p>;
   }
 
   if (!open) {

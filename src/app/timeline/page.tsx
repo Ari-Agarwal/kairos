@@ -35,7 +35,7 @@ function computeYouAreHere(items: TimelineItem[]): string | null {
     });
 
   // Recomputed fresh on every page load (this is a Server Component, not
-  // cached), so "today" is always current as of the latest visit — the
+  // cached), so "today" is always current as of the latest visit, the
   // marker needs to actually compare against it rather than just picking
   // the chronologically-first incomplete item, or an unchecked task stays
   // pinned as "You are here" forever after its due date passes.
@@ -43,7 +43,7 @@ function computeYouAreHere(items: TimelineItem[]): string | null {
   const upcoming = sortByDate(eligible.filter((i) => new Date(i.due_date!).getTime() >= todayMs));
   if (upcoming.length > 0) return upcoming[0].id;
 
-  // Everything is overdue — "here" is the most recently missed item, not
+  // Everything is overdue, "here" is the most recently missed item, not
   // the oldest one, since that's the one most relevant to catch up on now.
   const overdue = sortByDate(eligible);
   return overdue[overdue.length - 1].id;

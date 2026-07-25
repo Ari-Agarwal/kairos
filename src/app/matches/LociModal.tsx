@@ -58,7 +58,7 @@ export default function LociModal({ matchId, onClose }: Props) {
         {!result ? (
           <>
             <p className="text-text-gray text-sm">
-              Add any meaningful updates since you applied — new grades, awards, leadership roles, or other concrete developments. Leave blank if you have no updates.
+              Add any meaningful updates since you applied, new grades, awards, leadership roles, or other concrete developments. Leave blank if you have no updates.
             </p>
             <textarea
               placeholder="e.g. I earned a 4.0 this semester and was elected president of my robotics club in March."
@@ -95,7 +95,7 @@ export default function LociModal({ matchId, onClose }: Props) {
               {result.caveat}
             </div>
             <p className="text-text-gray text-xs">
-              AI-generated draft based on your profile. Review and edit before sending — you know your story better than any AI does.
+              AI-generated draft based on your profile. Review and edit before sending, you know your story better than any AI does.
             </p>
             <div className="flex gap-2 pt-1">
               <button

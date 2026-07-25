@@ -45,7 +45,7 @@ export default function MentorOptInCard({
       <p className="text-text font-medium text-sm mb-2">Mentor other students</p>
       <p className="text-text-gray text-xs mb-3 leading-relaxed">
         If you&apos;ve logged an acceptance to a school, you can opt in to mentor other students applying
-        there. Messaging only starts once you accept a specific request — nothing is open by default.
+        there. Messaging only starts once you accept a specific request, nothing is open by default.
       </p>
       {!optIn ? (
         <div>

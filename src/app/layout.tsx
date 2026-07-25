@@ -9,10 +9,10 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kairosadmissions.ve
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Kairos — College guidance for every student",
+  title: "Kairos: College guidance for every student",
   description: "Personalized college admissions guidance, regardless of what you can afford.",
   openGraph: {
-    title: "Kairos — College guidance for every student",
+    title: "Kairos: College guidance for every student",
     description: "Personalized college admissions guidance, regardless of what you can afford.",
     url: siteUrl,
     siteName: "Kairos",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "Kairos — College guidance for every student",
+    title: "Kairos: College guidance for every student",
     description: "Personalized college admissions guidance, regardless of what you can afford.",
   },
 };

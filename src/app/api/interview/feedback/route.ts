@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Mock Interview is a Premium feature." }, { status: 403 });
   }
 
-  const VALID_CATEGORIES = ["General", "Why This School", "Behavioral", "Extracurricular"];
+  const VALID_CATEGORIES = ["General", "Why This School", "Behavioral", "Extracurricular", "Other"];
   let question: string;
   let answer: string;
   let category: string | null;

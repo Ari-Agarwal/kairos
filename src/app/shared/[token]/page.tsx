@@ -202,7 +202,7 @@ export default async function SharedView({
         </section>
 
         <p className="text-text-gray text-xs text-center border-t border-border pt-6">
-          Admission odds are AI-generated estimates based on the student&apos;s profile and general acceptance data — not a guarantee of any outcome.
+          Admission odds are AI-generated estimates based on the student&apos;s profile and general acceptance data, not a guarantee of any outcome.
           This view is shared by {student.display_name}; grades, scores, financial details, and essays are never included. Powered by Kairos.
         </p>
       </div>

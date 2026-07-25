@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 // already created in Auth > Users, each with their own row in `profiles`.
 //
 // Counselor/cross-school RLS cases (counselors, schools, counselor_notes,
-// reminder_log) are parked for Phase 2 — see Software_Timeline.md.
+// reminder_log) are parked for Phase 2, see Software_Timeline.md.
 
 function client() {
   return createSupabaseClient(
@@ -93,7 +93,7 @@ describe("RLS student-table isolation", () => {
     const { data: studentBRows } = await studentB.from("profiles").select("user_id").limit(1);
     const studentBId = studentBRows?.[0]?.user_id;
     // school_match_id is a foreign key; any UUID that doesn't exist will fail the FK check
-    // before RLS even matters — but if student B has a match, RLS is what blocks it.
+    // before RLS even matters, but if student B has a match, RLS is what blocks it.
     // We test with a random UUID: the insert must fail (FK or RLS, either is correct).
     const { error } = await studentA.from("application_outcomes").insert({
       user_id: studentBId,
@@ -146,7 +146,7 @@ describe("RLS student-table isolation", () => {
     const studentBId = studentBRows?.[0]?.user_id;
     const { data: linkRows } = await studentB.from("shared_links").select("token").eq("user_id", studentBId).limit(1);
     const token = linkRows?.[0]?.token;
-    if (!token) return; // no link fixture for student B in this environment — nothing to attempt
+    if (!token) return; // no link fixture for student B in this environment, nothing to attempt
     await studentA.from("shared_links").update({ revoked_at: new Date().toISOString() }).eq("token", token);
     const { data: check } = await studentB.from("shared_links").select("revoked_at").eq("token", token).single();
     expect(check?.revoked_at).toBeNull();
@@ -285,7 +285,7 @@ describe("RLS student-table isolation", () => {
     const studentBId = studentBRows?.[0]?.user_id;
     const { data: recRows } = await studentB.from("recommenders").select("id").eq("user_id", studentBId).limit(1);
     const recId = recRows?.[0]?.id;
-    if (!recId) return; // no recommender fixture for student B in this environment — nothing to attempt
+    if (!recId) return; // no recommender fixture for student B in this environment, nothing to attempt
     await studentA.from("recommenders").update({ brag_sheet: { forged: true } }).eq("id", recId);
     const { data: check } = await studentB.from("recommenders").select("brag_sheet").eq("id", recId).single();
     expect(check?.brag_sheet).not.toEqual({ forged: true });

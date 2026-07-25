@@ -2,10 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import NavShell from "@/components/NavShell";
 import ScholarshipsClient from "./ScholarshipsClient";
-import { getAllScholarships, isLikelyMatch, getMatchReason, getCategory, getFitTier, getScholarshipDataVerifiedDate } from "@/lib/scholarships";
+import { getAllScholarships, isLikelyMatch, getMatchReason, getCategory, getFitTier, getScholarshipDataVerifiedDate, isGradeEligibleNow, type GradeLevel } from "@/lib/scholarships";
 import { getScholarshipLogo } from "@/lib/scholarship-logo";
 
-export const metadata = { title: "Scholarships — Kairos" };
+export const metadata = { title: "Scholarships · Kairos" };
 
 export default async function ScholarshipsPage() {
   const supabase = await createClient();
@@ -14,7 +14,7 @@ export default async function ScholarshipsPage() {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("first_gen, financial_aid_need, intended_major, extracurriculars")
+    .select("first_gen, financial_aid_need, intended_major, extracurriculars, grade_level")
     .eq("user_id", user.id)
     .single();
 
@@ -26,6 +26,12 @@ export default async function ScholarshipsPage() {
     intended_major: (profile?.intended_major as string[] | null) ?? null,
     extracurriculars: (profile?.extracurriculars as string[] | null) ?? null,
   };
+
+  const gradeLevel = (["Freshman", "Sophomore", "Junior", "Senior"] as const).includes(
+    profile?.grade_level as GradeLevel
+  )
+    ? (profile!.grade_level as GradeLevel)
+    : "Senior"; // default to "eligible now" behavior if grade isn't set
 
   const { data: trackerRows, error: trackerError } = await supabase
     .from("scholarship_tracker")
@@ -64,11 +70,16 @@ export default async function ScholarshipsPage() {
     checklist: checklistByName.get(s.name) ?? [],
     syncedToTimeline: syncedNames.has(s.name),
     logo: logoByOrg.get(s.organization) ?? null,
+    gradeEligibleNow: isGradeEligibleNow(s, gradeLevel),
   }));
 
   return (
     <NavShell>
-      <ScholarshipsClient scholarships={scholarships} dataVerifiedDate={getScholarshipDataVerifiedDate()} />
+      <ScholarshipsClient
+        scholarships={scholarships}
+        dataVerifiedDate={getScholarshipDataVerifiedDate()}
+        gradeLevel={gradeLevel}
+      />
     </NavShell>
   );
 }

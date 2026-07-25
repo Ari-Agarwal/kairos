@@ -61,7 +61,7 @@ export default function ShareLinksManager() {
         );
       }
     } catch {
-      // silent — the UI still shows the link as active, user can retry
+      // silent, the UI still shows the link as active, user can retry
     } finally {
       setRevoking(null);
     }
@@ -91,7 +91,7 @@ export default function ShareLinksManager() {
       <div className="flex gap-2 mb-4">
         <input
           type="text"
-          placeholder="Label (e.g. For Mom) — optional"
+          placeholder="Label (e.g. For Mom), optional"
           value={labelInput}
           onChange={(e) => setLabelInput(e.target.value)}
           maxLength={80}

@@ -34,7 +34,7 @@ export default function TimelinePrepClient({
         const { error: updateError } = await supabase.from("profiles").update(patch).eq("user_id", user.id);
         if (updateError) return { error: updateError.message };
       } catch {
-        return { error: "Couldn't save your answers just now — check your connection and try again." };
+        return { error: "Couldn't save your answers just now, check your connection and try again." };
       }
     }
 
@@ -49,12 +49,12 @@ export default function TimelinePrepClient({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        return { error: body.error ?? "We hit a snag starting your timeline — try again, or check back in a few minutes if it keeps happening." };
+        return { error: body.error ?? "We hit a snag starting your timeline, try again, or check back in a few minutes if it keeps happening." };
       }
       router.push("/timeline");
       return {};
     } catch {
-      return { error: "We hit a snag starting your timeline — check your connection and try again." };
+      return { error: "We hit a snag starting your timeline, check your connection and try again." };
     }
   }
 

@@ -248,7 +248,7 @@ class WebGLErrorBoundary extends React.Component<
     return { hasError: true };
   }
   componentDidCatch() {
-    // Swallow WebGL/three.js runtime errors (unsupported GPU, lost context, etc.) — fall back to the static SVG below.
+    // Swallow WebGL/three.js runtime errors (unsupported GPU, lost context, etc.), fall back to the static SVG below.
   }
   render() {
     if (this.state.hasError) return <ConstellationFallback />;

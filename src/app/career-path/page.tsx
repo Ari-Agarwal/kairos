@@ -8,7 +8,7 @@ import LockedCard from "../essay-feedback/LockedCard";
 import CareerPathClient from "./CareerPathClient";
 import { getCollegePhoto } from "@/lib/college-photo";
 
-export const metadata = { title: "Career Path — Kairos" };
+export const metadata = { title: "Career Path · Kairos" };
 
 export default async function CareerPathPage({
   searchParams,
@@ -51,7 +51,7 @@ export default async function CareerPathPage({
       <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
         <h1 className="font-serif text-2xl text-text mb-1">Career Path</h1>
         <p className="text-text-gray text-sm mb-6">
-          Typical internships, employer types, and salary patterns for your intended major — at any
+          Typical internships, employer types, and salary patterns for your intended major, at any
           school, not just one match at a time.
         </p>
 

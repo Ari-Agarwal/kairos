@@ -64,7 +64,7 @@ export default function RecommendersClient({ initialRecommenders, origin }: Prop
         body: JSON.stringify({ recommender_name: newName, recommender_email: newEmail || undefined, relationship: newRel }),
       });
       const body = await res.json();
-      if (!res.ok) { setFormError(body.error ?? "Couldn't add that recommender — mind trying again?"); return; }
+      if (!res.ok) { setFormError(body.error ?? "Couldn't add that recommender, mind trying again?"); return; }
       setRecommenders(prev => [body.recommender, ...prev]);
       setNewName(""); setNewEmail(""); setNewRel("");
       setAdding(false);
@@ -248,7 +248,7 @@ export default function RecommendersClient({ initialRecommenders, origin }: Prop
           </div>
           <div>
             <label className="block text-text-gray text-xs uppercase tracking-widest mb-1.5">
-              Email <span className="normal-case text-text-gray">(optional — for your reference only)</span>
+              Email <span className="normal-case text-text-gray">(optional, for your reference only)</span>
             </label>
             <input
               type="email"

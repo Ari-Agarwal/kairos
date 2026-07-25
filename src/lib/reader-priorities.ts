@@ -44,7 +44,7 @@ export function getReaderPriorities(acceptanceRate: number | null, ownership: st
       summary:
         "At this selectivity level, published Common Data Set reporting and admissions-office guidance consistently describe a fully holistic process: grades and course rigor clear the bar for most applicants, so essays, recommendations, extracurricular depth, and demonstrated fit typically do the real differentiating.",
       factors: [
-        { factor: "Course rigor & grades", note: "Necessary but rarely sufficient on their own — most of the applicant pool already clears this bar." },
+        { factor: "Course rigor & grades", note: "Necessary but rarely sufficient on their own, most of the applicant pool already clears this bar." },
         { factor: "Essays & personal qualities", note: "Frequently cited as one of the most heavily weighted factors once academics are comparable across applicants." },
         { factor: "Recommendations", note: "Used to corroborate the academic and personal story the rest of the application tells." },
         { factor: "Extracurricular depth", note: "Sustained, specific involvement tends to matter more than a long, shallow activity list." },
@@ -88,7 +88,7 @@ export function getReaderPriorities(acceptanceRate: number | null, ownership: st
       "We don't have a verified acceptance rate for this school to tailor this further, but Common Data Set reporting across most U.S. colleges consistently ranks academic factors (grades, course rigor) above extracurricular and essay factors in stated importance, with the exact balance varying by how selective a given school actually is.",
     factors: [
       { factor: "Grades & course rigor", note: "The most consistently highly-weighted factor across published CDS data, regardless of selectivity." },
-      { factor: "Essays & recommendations", note: "Weight varies significantly by school — generally more influential the more selective the school." },
+      { factor: "Essays & recommendations", note: "Weight varies significantly by school, generally more influential the more selective the school." },
       { factor: "Extracurricular involvement", note: "Widely reported as a real factor, more often a differentiator than a primary driver." },
     ],
   };

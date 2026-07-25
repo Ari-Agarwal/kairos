@@ -20,7 +20,7 @@ interface SessionHistoryEntry {
   created_at: string;
 }
 
-const CATEGORIES = ["General", "Why This School", "Behavioral", "Extracurricular"] as const;
+const CATEGORIES = ["General", "Why This School", "Behavioral", "Extracurricular", "Other"] as const;
 type Category = (typeof CATEGORIES)[number];
 
 // Mirrors NarrativeBuilderClient's QUESTIONS keys/labels -- kept as a small
@@ -88,6 +88,15 @@ export default function MockInterviewClient() {
   const [recordingKind, setRecordingKind] = useState<"video" | "audio" | null>(null);
   const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
   const [category, setCategory] = useState<Category>("General");
+  // Redesigned entry flow (Software_Timeline.md item 21): a single "Start
+  // mock interview" button replaces the old four-upfront-buttons layout.
+  // "start" -> "scope" (general vs. specific school) -> "school" (only if
+  // specific school) -> "category" (General/Why This School/Behavioral/
+  // Extracurricular/Other-freeform) -> question is fetched.
+  const [flowStage, setFlowStage] = useState<"start" | "scope" | "school" | "category">("start");
+  const [scope, setScope] = useState<"general" | "school" | null>(null);
+  const [schoolNameInput, setSchoolNameInput] = useState("");
+  const [otherDescription, setOtherDescription] = useState("");
   const [history, setHistory] = useState<SessionHistoryEntry[] | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -117,7 +126,7 @@ export default function MockInterviewClient() {
 
   // Feature detection reads browser APIs, so it can't run during SSR/render
   // without a hydration mismatch (same constraint documented in
-  // ProfileCompletenessModal.tsx) — gate it behind a mount-only effect
+  // ProfileCompletenessModal.tsx), gate it behind a mount-only effect
   // instead of a module-level `typeof window` constant.
   const [speechSupported, setSpeechSupported] = useState(false);
   const [ttsSupported, setTtsSupported] = useState(false);
@@ -190,11 +199,16 @@ export default function MockInterviewClient() {
     const res = await fetch("/api/interview/question", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ category, regenFeedback: feedbackForRegen?.trim() || undefined }),
+      body: JSON.stringify({
+        category,
+        regenFeedback: feedbackForRegen?.trim() || undefined,
+        schoolName: scope === "school" ? schoolNameInput.trim() || undefined : undefined,
+        otherDescription: category === "Other" ? otherDescription.trim() || undefined : undefined,
+      }),
     });
     setLoadingQuestion(false);
     if (!res.ok) {
-      setError("We hit a snag pulling up a question — try again in a moment.");
+      setError("We hit a snag pulling up a question, try again in a moment.");
       return;
     }
     const data = await res.json();
@@ -257,7 +271,7 @@ export default function MockInterviewClient() {
     });
     setLoadingFeedback(false);
     if (!res.ok) {
-      setError("We hit a snag scoring your answer — try again in a moment.");
+      setError("We hit a snag scoring your answer, try again in a moment.");
       return;
     }
     setFeedback(await res.json());
@@ -279,12 +293,12 @@ export default function MockInterviewClient() {
         Practice answering a real admissions interview question out loud, then get direct feedback.
       </p>
       <p className="text-text-gray text-xs mb-2 leading-relaxed">
-        Your voice is converted to text entirely in your browser — audio is never sent to or stored
+        Your voice is converted to text entirely in your browser, audio is never sent to or stored
         on our servers, only the text you see below.{!speechSupported && " Voice input isn't supported in this browser; type your answer instead."}
-        {recordingSupported && " If you allow camera/mic access, we'll also keep a recording for you to play back — it stays on your device for this session only and is never uploaded."}
+        {recordingSupported && " If you allow camera/mic access, we'll also keep a recording for you to play back, it stays on your device for this session only and is never uploaded."}
       </p>
       <p className="text-text-gray text-xs mb-6 leading-relaxed">
-        Questions and feedback are AI-generated (sent to our AI provider, Anthropic) — a starting point for practice, not a verdict on a real interview.
+        Questions and feedback are AI-generated (sent to our AI provider, Anthropic), a starting point for practice, not a verdict on a real interview.
       </p>
 
       {showHistory && (
@@ -314,9 +328,69 @@ export default function MockInterviewClient() {
         </div>
       )}
 
-      {!question && (
+      {!question && flowStage === "start" && (
+        <button
+          onClick={() => setFlowStage("scope")}
+          className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-4 py-2.5"
+        >
+          Start mock interview
+        </button>
+      )}
+
+      {!question && flowStage === "scope" && (
+        <div className="bg-card border border-border rounded-2xl p-5 mb-4">
+          <p className="text-text font-medium text-sm mb-3">Is this general practice, or for a specific school?</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => { setScope("general"); setFlowStage("category"); }}
+              className="rounded-xl border border-border text-text-gray hover:text-text text-sm font-medium px-4 py-2 transition-colors"
+            >
+              General practice
+            </button>
+            <button
+              onClick={() => { setScope("school"); setFlowStage("school"); }}
+              className="rounded-xl border border-border text-text-gray hover:text-text text-sm font-medium px-4 py-2 transition-colors"
+            >
+              A specific school
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!question && flowStage === "school" && (
+        <div className="bg-card border border-border rounded-2xl p-5 mb-4">
+          <label htmlFor="interview-school-name" className="block text-text font-medium text-sm mb-2">
+            Which school?
+          </label>
+          <input
+            id="interview-school-name"
+            value={schoolNameInput}
+            onChange={(e) => setSchoolNameInput(e.target.value)}
+            placeholder="e.g. University of Michigan"
+            maxLength={200}
+            className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text text-sm outline-none focus:border-primary mb-3"
+          />
+          <div className="flex gap-3">
+            <button
+              onClick={() => setFlowStage("scope")}
+              className="text-text-gray text-sm hover:text-text"
+            >
+              Back
+            </button>
+            <button
+              onClick={() => setFlowStage("category")}
+              disabled={!schoolNameInput.trim()}
+              className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-4 py-2 text-sm disabled:opacity-50"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!question && flowStage === "category" && (
         <>
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-3">
             {CATEGORIES.map((c) => (
               <button
                 key={c}
@@ -329,13 +403,30 @@ export default function MockInterviewClient() {
               </button>
             ))}
           </div>
-          <button
-            onClick={() => getQuestion()}
-            disabled={loadingQuestion}
-            className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-4 py-2.5 disabled:opacity-50"
-          >
-            {loadingQuestion ? <span role="status" aria-live="polite">Loading…</span> : "Start mock interview"}
-          </button>
+          {category === "Other" && (
+            <input
+              value={otherDescription}
+              onChange={(e) => setOtherDescription(e.target.value)}
+              placeholder="What do you want to practice?"
+              maxLength={300}
+              className="w-full rounded-xl bg-bg border border-border px-4 py-2.5 text-text text-sm outline-none focus:border-primary mb-3"
+            />
+          )}
+          <div className="flex gap-3">
+            <button
+              onClick={() => setFlowStage(scope === "school" ? "school" : "scope")}
+              className="text-text-gray text-sm hover:text-text"
+            >
+              Back
+            </button>
+            <button
+              onClick={() => getQuestion()}
+              disabled={loadingQuestion || (category === "Other" && !otherDescription.trim())}
+              className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg font-medium px-4 py-2.5 disabled:opacity-50"
+            >
+              {loadingQuestion ? <span role="status" aria-live="polite">Loading…</span> : "Get my question"}
+            </button>
+          </div>
         </>
       )}
 
@@ -435,7 +526,7 @@ export default function MockInterviewClient() {
           {playbackUrl && (
             <div className="mb-4">
               <p className="text-text-gray text-xs mb-1">
-                Your {recordingKind === "video" ? "recording" : "audio"} — listen for pacing and filler words
+                Your {recordingKind === "video" ? "recording" : "audio"}, listen for pacing and filler words
               </p>
               {recordingKind === "video" ? (
                 <video src={playbackUrl} controls className="w-full rounded-xl border border-border max-h-64" />
@@ -493,7 +584,7 @@ export default function MockInterviewClient() {
                   onClick={() => setShowNarrativePicker(true)}
                   className="text-primary text-sm hover:text-primary-hover"
                 >
-                  Strong answer — use it in Narrative Builder?
+                  Strong answer, use it in Narrative Builder?
                 </button>
               )}
             </div>

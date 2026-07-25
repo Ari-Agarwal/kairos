@@ -6,8 +6,9 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { isTrustedOrigin } from "@/lib/origin-check";
 import { canAccessFeature } from "@/lib/access";
 import { rejectScriptTags } from "@/lib/validate";
+import { getSchoolInterviewPattern } from "@/lib/interview-patterns";
 
-const CATEGORIES = ["General", "Why This School", "Behavioral", "Extracurricular"] as const;
+const CATEGORIES = ["General", "Why This School", "Behavioral", "Extracurricular", "Other"] as const;
 type Category = (typeof CATEGORIES)[number];
 
 const CATEGORY_GUIDANCE: Record<Category, string> = {
@@ -15,6 +16,10 @@ const CATEGORY_GUIDANCE: Record<Category, string> = {
   "Why This School": "Ask a question specifically about why the student is interested in a particular school or program.",
   Behavioral: "Ask a behavioral question (e.g. about a challenge, conflict, or teamwork experience).",
   Extracurricular: "Ask a question specifically about the student's extracurricular activities or interests outside class.",
+  // Freeform follow-up choice (Software_Timeline.md item 21) -- the student
+  // describes in their own words what they want to practice, rather than
+  // being limited to the four fixed categories.
+  Other: "Ask a question that fits what the student described they want to practice, staying a genuine admissions-interview-style question.",
 };
 
 export async function POST(req: Request) {
@@ -39,6 +44,8 @@ export async function POST(req: Request) {
 
   let category: Category = "General";
   let regenFeedback: string | undefined;
+  let schoolName: string | undefined;
+  let otherDescription: string | undefined;
   try {
     const body = await req.json().catch(() => ({}));
     if (body?.category && CATEGORIES.includes(body.category)) category = body.category;
@@ -46,9 +53,32 @@ export async function POST(req: Request) {
       rejectScriptTags(body.regenFeedback, "Feedback");
       regenFeedback = body.regenFeedback.trim();
     }
+    // Specific-school flow (Software_Timeline.md items 21/22): grounds the
+    // question in that school's known interview format/pattern when it's in
+    // the seed database, never fabricated if the school isn't covered yet.
+    if (typeof body?.schoolName === "string" && body.schoolName.trim() && body.schoolName.length <= 200) {
+      rejectScriptTags(body.schoolName, "School name");
+      schoolName = body.schoolName.trim();
+    }
+    // "Other" category freeform description of what the student wants to
+    // practice (Software_Timeline.md item 21's fifth follow-up choice).
+    if (typeof body?.otherDescription === "string" && body.otherDescription.trim() && body.otherDescription.length <= 300) {
+      rejectScriptTags(body.otherDescription, "Description");
+      otherDescription = body.otherDescription.trim();
+    }
   } catch {
     // no body / invalid JSON -- fall back to General
   }
+
+  const schoolPattern = schoolName ? getSchoolInterviewPattern(schoolName) : null;
+  const schoolContext = schoolName
+    ? schoolPattern
+      ? `\n\nThe student is practicing specifically for ${schoolName}. Known interview format/pattern: ${schoolPattern.format}. ${schoolPattern.notes} Ground the question in this pattern where it makes sense, but do not fabricate specifics beyond what's given here.`
+      : `\n\nThe student is practicing specifically for ${schoolName}, but no specific interview-format data is available for this school -- ask a genuine "why this school" style question without inventing school-specific interview details you're not confident are real.`
+    : "";
+  const otherContext = category === "Other" && otherDescription
+    ? `\n\nThe student described what they want to practice: "${otherDescription}"`
+    : "";
 
   // Difficulty ramp (Software_Timeline.md 5k): count how many past sessions
   // this student already logged in this exact category so a repeat session
@@ -87,7 +117,7 @@ export async function POST(req: Request) {
               regenFeedback
                 ? `\n\nThe student was asked "what should change about the question?" on a regenerate and said: "${regenFeedback}" -- ask a genuinely different question that addresses this, not a rephrasing of a similar one.`
                 : ""
-            }${difficultyNote}`,
+            }${difficultyNote}${schoolContext}${otherContext}`,
           },
         ],
       });

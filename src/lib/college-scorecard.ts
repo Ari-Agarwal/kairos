@@ -1,7 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/server";
 
 const API_BASE = "https://api.data.gov/ed/collegescorecard/v1/schools";
-const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days — this data changes yearly at most
+const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days, this data changes yearly at most
 
 export interface CollegeStats {
   acceptanceRate: number | null; // 0-1
@@ -12,6 +12,38 @@ export interface CollegeStats {
   medianDebt: number | null; // median federal debt at completion (USD)
   medianEarnings10yr: number | null; // median earnings 10 yrs after entry, school-wide (USD/yr)
   fetchedAt: string | null; // when this data was last verified against College Scorecard (6g data-freshness)
+  schoolUrl: string | null; // school.school_url from Scorecard, used to build a logo URL (see getCollegeLogo)
+}
+
+// Strips a Scorecard school_url (which may be bare "www.example.edu" or a
+// full "http://example.edu/path") down to a bare domain suitable for a
+// domain-keyed logo service.
+function domainFromSchoolUrl(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const withProtocol = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+    return new URL(withProtocol).hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+export interface CollegeLogo {
+  logoUrl: string;
+  domain: string;
+}
+
+// Real school logo, keyed off the school's actual web domain (via College
+// Scorecard's school_url) rather than a generic stock icon. Uses Clearbit's
+// free, keyless logo endpoint (https://logo.clearbit.com/{domain}) -- this is
+// a plain image URL with no API key/billing, and Clearbit falls back to a
+// generic placeholder image itself when a domain has no logo, so this never
+// 404s outright. Returns null only when we have no real domain to key off.
+export async function getCollegeLogo(schoolName: string): Promise<CollegeLogo | null> {
+  const stats = await getCollegeStats(schoolName);
+  const domain = domainFromSchoolUrl(stats?.schoolUrl ?? null);
+  if (!domain) return null;
+  return { logoUrl: `https://logo.clearbit.com/${domain}`, domain };
 }
 
 const OWNERSHIP_LABELS: Record<number, string> = {
@@ -31,7 +63,7 @@ function bareName(name: string): string {
     .trim();
 }
 
-// College Scorecard's name search is a loose text match, not a lookup — it
+// College Scorecard's name search is a loose text match, not a lookup, it
 // happily returns an unrelated US school (or nothing meaningful) for a
 // query it doesn't actually cover, e.g. any non-US institution like
 // "University of Oxford". Reject anything that isn't a close match rather
@@ -43,7 +75,7 @@ function namesMatch(query: string, result: string): boolean {
 }
 
 async function fetchFromScorecard(schoolName: string): Promise<CollegeStats | null> {
-  // DEMO_KEY works out of the box but is rate-limited (30/hr, 50/day) — set
+  // DEMO_KEY works out of the box but is rate-limited (30/hr, 50/day), set
   // COLLEGE_SCORECARD_API_KEY (free, instant at api.data.gov/signup) for
   // production traffic.
   const apiKey = process.env.COLLEGE_SCORECARD_API_KEY || "DEMO_KEY";
@@ -58,6 +90,7 @@ async function fetchFromScorecard(schoolName: string): Promise<CollegeStats | nu
       "latest.cost.attendance.academic_year",
       "latest.aid.median_debt.completers.overall",
       "latest.earnings.10_yrs_after_entry.median",
+      "school.school_url",
     ].join(","),
     per_page: "1",
     api_key: apiKey,
@@ -80,8 +113,8 @@ async function fetchFromScorecard(schoolName: string): Promise<CollegeStats | nu
 
   const matchedName = result["school.name"];
   if (typeof matchedName !== "string" || !namesMatch(schoolName, matchedName)) {
-    console.error(`College Scorecard name mismatch: query="${schoolName}" best-guess="${matchedName}" — rejected`);
-    return null; // Scorecard's best guess isn't actually this school (e.g. non-US institution) — don't show it as if it were.
+    console.error(`College Scorecard name mismatch: query="${schoolName}" best-guess="${matchedName}", rejected`);
+    return null; // Scorecard's best guess isn't actually this school (e.g. non-US institution), don't show it as if it were.
   }
 
   return {
@@ -93,13 +126,14 @@ async function fetchFromScorecard(schoolName: string): Promise<CollegeStats | nu
     medianDebt: result["latest.aid.median_debt.completers.overall"] ?? null,
     medianEarnings10yr: result["latest.earnings.10_yrs_after_entry.median"] ?? null,
     fetchedAt: new Date().toISOString(),
+    schoolUrl: result["school.school_url"] ?? null,
   };
 }
 
 // Cached in Supabase (keyed by normalized school name, shared across all
 // students) so we don't re-hit the rate-limited Scorecard API on every page
 // view. Returns null both when the school genuinely has no Scorecard match
-// and when the lookup itself fails — callers fall back to the "no verified
+// and when the lookup itself fails, callers fall back to the "no verified
 // stats" message either way.
 export async function getCollegeStats(schoolName: string): Promise<CollegeStats | null> {
   const key = normalizeName(schoolName);
@@ -125,6 +159,7 @@ export async function getCollegeStats(schoolName: string): Promise<CollegeStats 
           medianDebt: cached.median_debt ?? null,
           medianEarnings10yr: cached.median_earnings_10yr ?? null,
           fetchedAt: cached.fetched_at,
+          schoolUrl: cached.school_url ?? null,
         }
       : null;
   }
@@ -146,6 +181,7 @@ export async function getCollegeStats(schoolName: string): Promise<CollegeStats 
             medianDebt: cached.median_debt ?? null,
             medianEarnings10yr: cached.median_earnings_10yr ?? null,
             fetchedAt: cached.fetched_at,
+            schoolUrl: cached.school_url ?? null,
           }
         : null;
     }
@@ -161,6 +197,7 @@ export async function getCollegeStats(schoolName: string): Promise<CollegeStats 
     cost_of_attendance: stats?.costOfAttendance ?? null,
     median_debt: stats?.medianDebt ?? null,
     median_earnings_10yr: stats?.medianEarnings10yr ?? null,
+    school_url: stats?.schoolUrl ?? null,
     found: stats !== null,
     fetched_at: new Date().toISOString(),
   });

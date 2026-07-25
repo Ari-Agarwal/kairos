@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import type { Scholarship, ScholarshipCategory, FitAssessment } from "@/lib/scholarships";
-import { SCHOLARSHIP_CATEGORIES, deadlineSortKey } from "@/lib/scholarships";
+import type { Scholarship, ScholarshipCategory, FitAssessment, GradeLevel } from "@/lib/scholarships";
+import { SCHOLARSHIP_CATEGORIES, deadlineSortKey, estimateScholarshipDueDate } from "@/lib/scholarships";
 import { createClient } from "@/lib/supabase/client";
 import { ScholarshipsEmptyArt } from "@/components/EmptyStateIllustration";
 import ReportDataIssueButton from "@/components/ReportDataIssueButton";
 import InfoTooltip from "@/components/InfoTooltip";
 
 const FIT_TIER_EXPLAINER =
-  "Rule-based, not AI-generated: it checks your profile (first-gen status, financial need, major, ROTC-style ECs) against this scholarship's stated eligibility text. Strong Fit means 2+ factors line up, Possible means 1, and Reach means none confirmed yet — that's a gap in known info, not a claim you're ineligible.";
+  "Rule-based, not AI-generated: it checks your profile (first-gen status, financial need, major, ROTC-style ECs) against this scholarship's stated eligibility text. Strong Fit means 2+ factors line up, Possible means 1, and Reach means none confirmed yet, that's a gap in known info, not a claim you're ineligible.";
 
 interface ChecklistItem {
   label: string;
@@ -25,6 +25,7 @@ interface ScholarshipWithMatch extends Scholarship {
   checklist: ChecklistItem[];
   syncedToTimeline: boolean;
   logo: { imageUrl: string } | null;
+  gradeEligibleNow: boolean;
 }
 
 const DEFAULT_CHECKLIST: ChecklistItem[] = [
@@ -45,9 +46,11 @@ type TrackerStatus = "saved" | "applied" | null;
 export default function ScholarshipsClient({
   scholarships,
   dataVerifiedDate,
+  gradeLevel,
 }: {
   scholarships: ScholarshipWithMatch[];
   dataVerifiedDate: string | null;
+  gradeLevel: GradeLevel;
 }) {
   const supabase = createClient();
   const [showMatchesOnly, setShowMatchesOnly] = useState(false);
@@ -87,15 +90,19 @@ export default function ScholarshipsClient({
       setSyncingName(null);
       return;
     }
+    const dueDate = estimateScholarshipDueDate(s, gradeLevel);
+    const whyText = s.gradeEligibleNow
+      ? `Deadline window: ${s.deadline_window} (confirm the exact date on the official site before you rely on it).`
+      : `Deadline window: ${s.deadline_window}. This scholarship isn't actionable yet based on its grade-level eligibility, placed further out on your timeline for when you're eligible to apply (confirm the exact date on the official site closer to then).`;
     const { error } = await supabase.from("timeline_items").insert({
       user_id: user.id,
       title: `Scholarship: ${s.name}`,
-      due_date: null,
+      due_date: dueDate,
       school_tags: [],
       tier: "free",
       is_strategic: false,
       completed: false,
-      why_text: `Deadline window: ${s.deadline_window} (confirm the exact date on the official site before you rely on it).`,
+      why_text: whyText,
       what_to_do: [
         "Review the eligibility requirements",
         "Gather any required materials (essay, recommendation, transcript)",
@@ -138,9 +145,8 @@ export default function ScholarshipsClient({
     <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
       <h1 className="font-serif text-2xl text-text mb-2">Scholarships</h1>
       <p className="text-text-gray text-sm mb-4 leading-relaxed">
-        National scholarships worth applying to, grouped by type since there are too many to scroll
-        through one by one. Deadline windows are approximate — exact dates shift a little every
-        cycle, so confirm the current date on the official site before you rely on it.
+        Deadline windows are approximate, exact dates shift a little every cycle, so confirm the
+        current date on the official site before you rely on it.
         {dataVerifiedDate && (
           <span className="text-text-gray/70">
             {" "}Data last verified {new Date(dataVerifiedDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}.

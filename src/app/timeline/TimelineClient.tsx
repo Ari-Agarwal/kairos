@@ -139,7 +139,7 @@ export default function TimelineClient({
       } else if (data.status === "error") {
         if (pollRef.current) clearInterval(pollRef.current);
         setJobPending(false);
-        setJobError(data.error_message ?? "We hit a snag putting your timeline together — try regenerating, or check back in a few minutes if it keeps happening.");
+        setJobError(data.error_message ?? "We hit a snag putting your timeline together, try regenerating, or check back in a few minutes if it keeps happening.");
       }
     }, 3000);
     return () => {
@@ -188,7 +188,7 @@ export default function TimelineClient({
     } catch {
       // ignore
     }
-    const messages = ["Nice — one step closer.", "Done. Momentum builds.", "That's one more behind you."];
+    const messages = ["Nice, one step closer.", "Done. Momentum builds.", "That's one more behind you."];
     setCelebrateItemId(itemId);
     setCelebrationMessage(messages[count] ?? messages[0]);
     celebrationTimers.current.push(setTimeout(() => setCelebrateItemId(null), 700));
@@ -350,7 +350,7 @@ export default function TimelineClient({
             style={{ ["--twinkle-max" as string]: "1", ["--twinkle-duration" as string]: "1.2s" }}
           />
           <p className="text-text-gray text-sm">
-            Regenerating your timeline in the background — this list will update automatically once it&apos;s ready.
+            Regenerating your timeline in the background, this list will update automatically once it&apos;s ready.
           </p>
         </div>
       )}
@@ -495,7 +495,7 @@ export default function TimelineClient({
               {/* node on the path */}
               {isHere ? (
                 <>
-                  {/* soft beacon halo — the lighthouse, made literal */}
+                  {/* soft beacon halo, the lighthouse, made literal */}
                   <motion.div
                     className="absolute -left-[41px] top-0 h-8 w-8 rounded-full bg-primary/25 blur-md"
                     animate={reduceMotion ? undefined : { opacity: [0.5, 0.95, 0.5], scale: [0.9, 1.1, 0.9] }}
@@ -614,13 +614,13 @@ export default function TimelineClient({
                   {item.is_recurring && (
                     <p className="text-secondary text-xs mb-1.5 flex items-center gap-1">
                       <Repeat className="size-3" />
-                      Ongoing — not a one-time task
+                      Ongoing, not a one-time task
                     </p>
                   )}
                   {item.is_financial_aid && (
                     <p className="text-primary text-xs mb-1.5 flex items-center gap-1 font-medium">
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary" />
-                      Financial aid deadline — missing this can affect aid eligibility, not just admission
+                      Financial aid deadline, missing this can affect aid eligibility, not just admission
                       <InfoTooltip
                         label="What are FAFSA and the CSS Profile?"
                         text="FAFSA is the free federal form every family fills out to qualify for any financial aid, including loans and grants. The CSS Profile is a separate, more detailed form some colleges also require to award their own (non-federal) aid. Both use last year's tax info, not a guess about affordability."
@@ -648,7 +648,7 @@ export default function TimelineClient({
                       <p className="text-text-gray text-sm">{item.why_text}</p>
                       {item.why_text !== "Added manually by you." && (
                         <p className="text-text-gray/70 text-xs mt-1.5">
-                          Based on your saved schools &amp; deadline data —{" "}
+                          Based on your saved schools &amp; deadline data, {" "}
                           <Link
                             href="/methodology"
                             className="underline underline-offset-2 hover:text-text-gray pointer-events-auto"

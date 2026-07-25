@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendWaitlistWeekOneContent, sendPrelaunchReminderEmail } from "@/lib/email";
 
-// Launch target per docs/Launch_Plan.md — the pre-launch reminder goes out
+// Launch target per docs/Launch_Plan.md, the pre-launch reminder goes out
 // starting 7 days before this date, matching §3.7's nurture sequence.
 const LAUNCH_DATE = new Date("2026-08-14T00:00:00Z");
 const DAY_MS = 24 * 60 * 60 * 1000;

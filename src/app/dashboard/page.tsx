@@ -6,7 +6,6 @@ import { getMissingFields } from "@/lib/profile-completeness";
 import LivingProfileNudge from "@/components/LivingProfileNudge";
 import CountUp from "@/components/CountUp";
 import GenerateTimelineCard from "./GenerateTimelineCard";
-import HumanReviewCard from "@/components/HumanReviewCard";
 import InviteFriendCard from "@/components/InviteFriendCard";
 import { MatchesEmptyArt, ScholarshipsEmptyArt } from "@/components/EmptyStateIllustration";
 import { getAllScholarships, getFitTier, type ScholarshipProfile } from "@/lib/scholarships";
@@ -223,7 +222,7 @@ export default async function DashboardPage({
                     <div key={t.id} className="flex items-center justify-between gap-2">
                       <p className="text-base text-text truncate min-w-0">{t.title}</p>
                       <span className="text-text-gray text-sm shrink-0">
-                        {t.due_date ? new Date(`${t.due_date}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "—"}
+                        {t.due_date ? new Date(`${t.due_date}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "N/A"}
                       </span>
                     </div>
                   ))}
@@ -294,7 +293,6 @@ export default async function DashboardPage({
           </Link>
         </div>
 
-        <HumanReviewCard />
         <InviteFriendCard referralCode={profile.referral_code ?? null} referredCount={referredCount ?? 0} />
         <Link href="/mock-interview" className="text-text-gray hover:text-text text-sm underline underline-offset-2">
           Practice a mock interview →

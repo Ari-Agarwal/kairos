@@ -51,15 +51,15 @@ export interface CrisisResource {
 }
 
 // Tone matches the app's existing warm-not-corporate voice (e.g. the essay
-// feedback disclaimer "Kairos helps you brainstorm and critique — you write
+// feedback disclaimer "Kairos helps you brainstorm and critique, you write
 // the essay."). Calm, supportive, non-alarming -- surfaced ABOVE the normal
 // AI output, never replacing it.
 export function getCrisisResource(): CrisisResource {
   return {
     heading: "Before anything else",
     message:
-      "Something in what you wrote sounds like it might be weighing on you more than an essay should. If things feel like too much right now, please reach out — you deserve support beyond what an app can give.",
-    lifeline: "Call or text 988 — the Suicide & Crisis Lifeline (24/7, free, confidential).",
+      "Something in what you wrote sounds like it might be weighing on you more than an essay should. If things feel like too much right now, please reach out, you deserve support beyond what an app can give.",
+    lifeline: "Call or text 988, the Suicide & Crisis Lifeline (24/7, free, confidential).",
     textline: "Or text HOME to 741741 to reach the Crisis Text Line.",
   };
 }

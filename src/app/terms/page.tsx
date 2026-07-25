@@ -1,4 +1,4 @@
-export const metadata = { title: "Terms of Service — Kairos" };
+export const metadata = { title: "Terms of Service · Kairos" };
 
 export default function TermsPage() {
   return (

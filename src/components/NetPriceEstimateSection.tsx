@@ -71,8 +71,8 @@ export default function NetPriceEstimateSection({
       <div className="bg-bg border border-dashed border-border rounded-xl p-4 mb-3">
         <p className="text-text text-sm font-medium mb-1">See your estimated cost at {schoolName}</p>
         <p className="text-text-gray text-xs leading-relaxed mb-3">
-          Add your income bracket, state, and family size on your Profile — completely optional and never
-          required — to see a rough estimated net price range here, tailored to your family&apos;s situation.
+          Add your income bracket, state, and family size on your Profile, completely optional and never
+          required, to see a rough estimated net price range here, tailored to your family&apos;s situation.
         </p>
         <Link
           href="/profile"
@@ -88,7 +88,7 @@ export default function NetPriceEstimateSection({
     <div className="bg-bg border border-border rounded-xl p-4 mb-3">
       <div className="flex items-center gap-1.5 mb-1">
         <p className="text-text text-sm font-medium">Estimated cost</p>
-        <InfoTooltip text="A rough AI-reasoned estimate based on your income bracket, state, and family size — not an official calculation. Actual aid varies by school and by year." />
+        <InfoTooltip text="A rough AI-reasoned estimate based on your income bracket, state, and family size, not an official calculation. Actual aid varies by school and by year." />
       </div>
 
       {!data && !loading && (
@@ -139,7 +139,7 @@ export default function NetPriceEstimateSection({
           <div className="border-t border-border pt-3 mb-3">
             <div className="flex items-center gap-1.5 mb-2">
               <p className="text-text text-sm font-medium">How much might I need to borrow?</p>
-              <InfoTooltip text="A rough estimate only, not financial advice. Assumes you'd borrow the same annual gap for all 4 years and repay over 10 years at an illustrative 6.5% fixed rate — your actual rate, term, and aid will differ." />
+              <InfoTooltip text="A rough estimate only, not financial advice. Assumes you'd borrow the same annual gap for all 4 years and repay over 10 years at an illustrative 6.5% fixed rate, your actual rate, term, and aid will differ." />
             </div>
             <label htmlFor="fa-expected-contribution" className="block text-xs text-text-gray mb-1">
               What you expect to cover yourself per year (savings, income, 529, etc.)
@@ -176,7 +176,7 @@ export default function NetPriceEstimateSection({
                     an illustrative {(ASSUMED_ANNUAL_RATE * 100).toFixed(1)}% fixed rate.
                   </p>
                   <p className="italic mt-1 text-text-gray/70">
-                    This is a rough planning estimate, not financial advice or a loan offer — actual loan terms,
+                    This is a rough planning estimate, not financial advice or a loan offer, actual loan terms,
                     rates, and your real aid package will differ.
                   </p>
                 </div>
@@ -200,7 +200,7 @@ export default function NetPriceEstimateSection({
                     >
                       {s.name}
                     </a>
-                    {s.award_amount && <span className="text-text-gray"> — {s.award_amount}</span>}
+                    {s.award_amount && <span className="text-text-gray">, {s.award_amount}</span>}
                     <p className="text-text-gray/80 mt-0.5">{s.fit_reason}</p>
                   </li>
                 ))}

@@ -30,7 +30,7 @@ export async function GET(
   if (recError) console.error("talking-points recommender lookup failed:", recError);
   if (!rec) return NextResponse.json({ error: "Not found." }, { status: 404 });
 
-  // Public, unauthenticated endpoint — key the limit on the token itself
+  // Public, unauthenticated endpoint, key the limit on the token itself
   // (not a user id, since the caller isn't authenticated).
   const rl = await checkRateLimit(service, `rec-talking-points:${token}`, 10, 60_000);
   if (!rl.ok) return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });

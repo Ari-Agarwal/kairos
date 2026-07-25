@@ -37,7 +37,7 @@ export default function MatchesPrepClient({
         const { error: updateError } = await supabase.from("profiles").update(patch).eq("user_id", user.id);
         if (updateError) return { error: updateError.message };
       } catch {
-        return { error: "Couldn't save your answers just now — check your connection and try again." };
+        return { error: "Couldn't save your answers just now, check your connection and try again." };
       }
     }
 
@@ -52,7 +52,7 @@ export default function MatchesPrepClient({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        return { error: body.error ?? "We hit a snag generating your matches — try again, or check back in a few minutes if it keeps happening." };
+        return { error: body.error ?? "We hit a snag generating your matches, try again, or check back in a few minutes if it keeps happening." };
       }
       const body = await res.json().catch(() => ({}));
       if (Array.isArray(body.failedCategories) && body.failedCategories.length > 0) {
@@ -64,8 +64,8 @@ export default function MatchesPrepClient({
       return {
         error:
           err instanceof DOMException && err.name === "AbortError"
-            ? "This is taking longer than expected — try again in a moment."
-            : "We hit a snag generating your matches — try again, or check back in a few minutes if it keeps happening.",
+            ? "This is taking longer than expected, try again in a moment."
+            : "We hit a snag generating your matches, try again, or check back in a few minutes if it keeps happening.",
       };
     } finally {
       clearTimeout(timeout);

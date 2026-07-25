@@ -1,4 +1,4 @@
-// Structured AI usage logging. Logs metadata only — never essay text,
+// Structured AI usage logging. Logs metadata only, never essay text,
 // profile content, or any user-supplied free-form data.
 // Shape is a single JSON line to stdout so log aggregators can parse it,
 // and (best-effort, fire-and-forget) persisted to ai_usage_log so a real
@@ -87,7 +87,7 @@ export function logAiUsage(
 
 // Flag if a single user has issued an unusually high number of AI calls
 // in a short window. Uses the in-process rate-limit memory bucket (same
-// mechanism as checkRateLimitMemory in rate-limit.ts) — no DB round-trip.
+// mechanism as checkRateLimitMemory in rate-limit.ts), no DB round-trip.
 // This is a soft anomaly flag only: it logs a warning, it does not block.
 // Threshold: >30 calls from one user in a 60-minute window.
 const ANOMALY_WINDOW_MS = 60 * 60 * 1000;

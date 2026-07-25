@@ -184,17 +184,17 @@ export default function StudentRosterClient({
           <p className="text-text font-medium mb-1.5">New here? A few things worth knowing:</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>
-              <strong>At-risk severity</strong> is weighted, not just a count of flags — never logged in weighs most,
+              <strong>At-risk severity</strong> is weighted, not just a count of flags, never logged in weighs most,
               then long inactivity, then no active matches, then overdue items/incomplete profile, added together.
             </li>
             <li>
               <strong>Snoozing</strong> a flagged student hides them from the main at-risk list for 14 days without
-              changing what&apos;s actually flagged — it&apos;s for &ldquo;I&apos;ve handled this,&rdquo; not
+              changing what&apos;s actually flagged, it&apos;s for &ldquo;I&apos;ve handled this,&rdquo; not
               &ldquo;this isn&apos;t a real issue.&rdquo;
             </li>
             <li>
               <strong>Aggregate trends</strong> compare today&apos;s numbers to a snapshot from your chosen window back
-              (7/14/30/90 days) — a school with under that much history just won&apos;t show a trend yet, which is
+              (7/14/30/90 days), a school with under that much history just won&apos;t show a trend yet, which is
               expected, not a bug.
             </li>
           </ul>
@@ -481,7 +481,7 @@ export default function StudentRosterClient({
           </Link>
           <span>
             Page {currentPage} of {totalPages}
-            <span className="hidden sm:inline"> — filters and search apply across your whole roster</span>
+            <span className="hidden sm:inline">, filters and search apply across your whole roster</span>
           </span>
           <Link
             href={

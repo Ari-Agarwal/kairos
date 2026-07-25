@@ -38,6 +38,31 @@ const STRENGTH_STYLES: Record<string, string> = {
   weak: "bg-red-tint text-red",
 };
 
+// Bucket selector (Software_Timeline.md QA item) replacing the old raw
+// number input -- real answers vary too much for a precise figure to feel
+// natural, and a free-text number field also invited "5.5" or "a lot"-style
+// noise. Each bucket stores a representative hours/week number so the rest
+// of the app (activity_hours is a plain number per activity) doesn't need
+// to change shape.
+const HOUR_BUCKETS = [
+  { value: "", label: "Not set" },
+  { value: "2", label: "1-3 hrs/wk" },
+  { value: "5", label: "4-6 hrs/wk" },
+  { value: "8", label: "7-10 hrs/wk" },
+  { value: "12", label: "10+ hrs/wk" },
+] as const;
+
+// Maps a previously-stored raw hour number back to the closest bucket, so
+// existing data (saved before this redesign) still shows a sensible
+// pre-selected option instead of always resetting to "Not set."
+function hoursToBucket(hours: number | undefined): string {
+  if (hours === undefined) return "";
+  if (hours <= 3) return "2";
+  if (hours <= 6) return "5";
+  if (hours <= 10) return "8";
+  return "12";
+}
+
 export default function ActivityEvalClient({
   activities: initialActivities,
   activityHours: initialActivityHours,
@@ -53,8 +78,8 @@ export default function ActivityEvalClient({
   const [draftActivities, setDraftActivities] = useState(activities.join("\n"));
   const [savingActivities, setSavingActivities] = useState(false);
 
-  async function updateActivityHours(activity: string, hours: string) {
-    const parsed = hours === "" ? null : Math.max(0, Math.min(168, Number(hours)));
+  async function updateActivityHours(activity: string, bucketValue: string) {
+    const parsed = bucketValue === "" ? null : Number(bucketValue);
     setActivityHours((prev) => {
       const next = { ...prev };
       if (parsed === null || Number.isNaN(parsed)) delete next[activity];
@@ -81,7 +106,10 @@ export default function ActivityEvalClient({
   const [regenFeedback, setRegenFeedback] = useState("");
 
   const activitiesText = activities
-    .map((a) => (activityHours[a] ? `${a} (${activityHours[a]} hrs/week)` : a))
+    .map((a) => {
+      const bucket = HOUR_BUCKETS.find((b) => b.value === hoursToBucket(activityHours[a]) && b.value !== "");
+      return bucket ? `${a} (${bucket.label})` : a;
+    })
     .join("\n");
   const hasActivities = activitiesText.trim().length > 0;
 
@@ -129,7 +157,7 @@ export default function ActivityEvalClient({
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "We hit a snag evaluating your activities — try again in a moment.");
+      setError(body.error ?? "We hit a snag evaluating your activities, try again in a moment.");
       setLoading(false);
       return;
     }
@@ -205,19 +233,18 @@ export default function ActivityEvalClient({
               {activities.map((a, i) => (
                 <li key={i} className="flex items-center justify-between gap-3 text-text-gray text-sm">
                   <span className="truncate">• {a}</span>
-                  <label className="flex items-center gap-1.5 text-xs shrink-0">
-                    <input
-                      type="number"
-                      min={0}
-                      max={168}
-                      value={activityHours[a] ?? ""}
-                      onChange={(e) => updateActivityHours(a, e.target.value)}
-                      placeholder="0"
-                      aria-label={`Hours per week for ${a}`}
-                      className="w-14 rounded-lg bg-bg border border-border px-2 py-1 text-text text-xs outline-none focus:border-primary"
-                    />
-                    hrs/wk
-                  </label>
+                  <select
+                    value={hoursToBucket(activityHours[a])}
+                    onChange={(e) => updateActivityHours(a, e.target.value)}
+                    aria-label={`Hours per week for ${a}`}
+                    className="shrink-0 rounded-lg bg-bg border border-border px-2 py-1 text-text text-xs outline-none focus:border-primary"
+                  >
+                    {HOUR_BUCKETS.map((b) => (
+                      <option key={b.value} value={b.value}>
+                        {b.label}
+                      </option>
+                    ))}
+                  </select>
                 </li>
               ))}
             </ul>
@@ -320,7 +347,7 @@ export default function ActivityEvalClient({
 
             <div className="space-y-3">
               <p className="text-text-gray text-xs">
-                AI-generated patterns based on your submitted activity list — not a guaranteed admissions outcome.
+                AI-generated patterns based on your submitted activity list, not a guaranteed admissions outcome.
               </p>
               {result.suggestions.map((s, idx) => (
                 <motion.div

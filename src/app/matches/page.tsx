@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import NavShell from "@/components/NavShell";
 import MatchListClient from "./MatchListClient";
-import { getCollegePhoto } from "@/lib/college-photo";
+import { getCollegeLogo } from "@/lib/college-scorecard";
 
 function weekStart(): string {
   const d = new Date();
@@ -48,10 +48,15 @@ export default async function MatchesPage() {
   const isPremium = profile.subscription_tier === "premium";
   const remaining = isPremium ? null : Math.max(0, 3 - (regenRow?.count ?? 0));
 
-  const photoEntries = await Promise.all(
-    (matches ?? []).map(async (m) => [m.id, await getCollegePhoto(m.school_name)] as const)
+  // Match-list cards show the school's logo, not a photo (Software_Timeline.md
+  // QA item: the previous photo slot never loaded -- the page's CSP silently
+  // blocked the external Wikipedia image host, and a logo reads better at
+  // card size anyway). School Detail's dedicated Photos tab still uses the
+  // Wikipedia photo lookup.
+  const logoEntries = await Promise.all(
+    (matches ?? []).map(async (m) => [m.id, await getCollegeLogo(m.school_name)] as const)
   );
-  const photos = Object.fromEntries(photoEntries);
+  const logos = Object.fromEntries(logoEntries);
 
   const studentName = (user.user_metadata?.full_name as string | undefined) || null;
 
@@ -61,7 +66,7 @@ export default async function MatchesPage() {
         initialMatches={matches ?? []}
         remaining={remaining}
         isPremium={isPremium}
-        photos={photos}
+        logos={logos}
         studentName={studentName}
       />
     </NavShell>

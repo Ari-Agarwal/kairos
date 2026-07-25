@@ -170,7 +170,7 @@ export default async function RecommenderPage({
             <h2 className="font-serif text-xl text-text mb-4">AI-Generated Talking Points</h2>
             <p className="text-text-gray text-sm mb-4">
               These suggestions are grounded strictly in what {student_first_name} wrote above.
-              They are a starting point — your own direct observations will make the letter most impactful.
+              They are a starting point, your own direct observations will make the letter most impactful.
             </p>
             <TalkingPointsClient token={token} />
           </section>

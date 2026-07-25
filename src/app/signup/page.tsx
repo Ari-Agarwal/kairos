@@ -43,7 +43,7 @@ export default function SignupPage() {
           const { pwned } = await checkRes.json();
           if (pwned) {
             showError(
-              "This password has appeared in a known data breach — please choose a different one."
+              "This password has appeared in a known data breach, please choose a different one."
             );
             return;
           }
@@ -58,7 +58,7 @@ export default function SignupPage() {
         options: {
           data: { full_name: fullName },
           // Without this, Supabase falls back to the project's default Site
-          // URL for the confirmation email link — wrong host entirely when
+          // URL for the confirmation email link, wrong host entirely when
           // testing through a tunnel/reverse proxy instead of on localhost.
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
@@ -87,8 +87,7 @@ export default function SignupPage() {
     }
     setError(null);
     setOauthLoading(provider);
-    // signInWithOAuth doesn't redirect the browser itself in this SDK/config —
-    // it just returns the authorize URL, so we have to navigate to it ourselves.
+    // signInWithOAuth doesn't redirect the browser itself in this SDK/config, // it just returns the authorize URL, so we have to navigate to it ourselves.
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo: `${window.location.origin}/auth/callback` },

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 
-// Public endpoint — no auth cookie required. Token validation and all data
+// Public endpoint, no auth cookie required. Token validation and all data
 // access go through the service-role client; no anon/public Supabase policy
 // exists on shared_links or the underlying tables.
 //
