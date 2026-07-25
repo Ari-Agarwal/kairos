@@ -10,7 +10,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   // running against an undefined backend (see src/lib/supabase/client.ts).
   console.warn(
     "Missing EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY. " +
-      "Copy the values from the web app's .env.local into mobile/.env — see mobile/README.md."
+      "Copy the values from the web app's .env.local into mobile/.env, see mobile/README.md."
   );
 }
 
@@ -23,5 +23,9 @@ export const supabase = createClient(supabaseUrl ?? "", supabaseAnonKey ?? "", {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    // PKCE so the Google OAuth-in-browser flow (src/lib/oauth.ts) can
+    // exchange the callback ?code= for a session without an implicit-grant
+    // fragment. Password and Apple id-token sign-in are unaffected.
+    flowType: "pkce",
   },
 });

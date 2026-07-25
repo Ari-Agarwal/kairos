@@ -1,23 +1,24 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
+import React, { useCallback, useState } from "react";
+import {
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import type { RootStackParamList, TimelineRow } from "../lib/types";
 import { theme } from "../lib/theme";
 
 // Same shape/query as the web app's src/app/timeline/page.tsx and
-// TimelineClient.tsx. Read-only: no complete/regenerate/ICS export here --
-// the ICS-download flow in particular needs a native calendar equivalent
-// (expo-calendar) per Software_Timeline.md Section 7, out of scope for
-// this scaffold.
-interface TimelineItem {
-  id: string;
-  title: string;
-  due_date: string | null;
-  school_tags: string[] | null;
-  tier: "free" | "premium";
-  completed: boolean;
-  why_text: string;
-}
+// TimelineClient.tsx. Completion toggling lives on the Task detail screen;
+// this list reloads on focus so toggles made there show up here.
+// Regenerate/ICS export stay web-only.
+type TimelineItem = TimelineRow;
 
 function sortItems(items: TimelineItem[]): TimelineItem[] {
   return [...items].sort((a, b) => {
@@ -36,6 +37,7 @@ function formatDate(dateStr: string | null): string {
 
 export default function TimelineScreen() {
   const { session } = useAuth();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [items, setItems] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -58,9 +60,11 @@ export default function TimelineScreen() {
     setRefreshing(false);
   }, [session?.user]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
 
   function onRefresh() {
     setRefreshing(true);
@@ -101,7 +105,11 @@ export default function TimelineScreen() {
       contentContainerStyle={styles.list}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       renderItem={({ item }) => (
-        <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate("TaskDetail", { item })}
+          accessibilityRole="button"
+        >
           <View style={styles.cardHeader}>
             <Text
               style={[styles.itemTitle, item.completed && styles.itemTitleCompleted]}
@@ -130,7 +138,7 @@ export default function TimelineScreen() {
           {item.tier === "premium" ? (
             <Text style={styles.premiumTag}>Premium</Text>
           ) : null}
-        </View>
+        </TouchableOpacity>
       )}
     />
   );

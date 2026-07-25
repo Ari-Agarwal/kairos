@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import * as AppleAuthentication from "expo-apple-authentication";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -10,22 +11,36 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import {
+  appleSignInAvailable,
+  signInWithApple,
+  signInWithGoogle,
+  type AuthResult,
+} from "../lib/oauth";
 import { theme } from "../lib/theme";
 
-// Password sign-in only for this scaffold. Kairos students onboard on web
-// today with email/password (see src/app/login); this reuses the same
-// Supabase Auth users, so a student who onboarded on web can sign into the
-// app with the same credentials -- no separate mobile account. Magic-link /
-// social providers, and any store-required "Sign in with Apple" (flagged in
-// Software_Timeline.md Section 7's submission-realities bullet), are left
-// for whoever wires up real store submission, since that's an Apple/Google
-// developer-account-gated step this scaffold can't complete.
+// One Kairos account across web and app: email/password reuses the same
+// Supabase Auth users students created on web, and "Continue with Google"
+// goes through the same Google provider as the web login page. Sign in
+// with Apple is here because App Store guideline 4.8 requires it once
+// Google login is offered (see Software_Timeline.md, mobile section).
 export default function LoginScreen() {
   const { signInWithPassword } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<"password" | "google" | "apple" | null>(null);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    appleSignInAvailable().then((available) => {
+      if (mounted) setAppleAvailable(available);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   async function handleSubmit() {
     setError(null);
@@ -33,10 +48,18 @@ export default function LoginScreen() {
       setError("Enter your email and password.");
       return;
     }
-    setLoading(true);
+    setLoading("password");
     const { error: signInError } = await signInWithPassword(email.trim(), password);
-    setLoading(false);
+    setLoading(null);
     if (signInError) setError(signInError);
+  }
+
+  async function handleProvider(kind: "google" | "apple", fn: () => Promise<AuthResult>) {
+    setError(null);
+    setLoading(kind);
+    const result = await fn();
+    setLoading(null);
+    if (result.error && !result.cancelled) setError(result.error);
   }
 
   return (
@@ -71,21 +94,52 @@ export default function LoginScreen() {
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[styles.button, loading !== null && styles.buttonDisabled]}
           onPress={handleSubmit}
-          disabled={loading}
+          disabled={loading !== null}
           accessibilityRole="button"
         >
-          {loading ? (
+          {loading === "password" ? (
             <ActivityIndicator color={theme.card} />
           ) : (
             <Text style={styles.buttonText}>Sign in</Text>
           )}
         </TouchableOpacity>
 
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <TouchableOpacity
+          style={[styles.providerButton, loading !== null && styles.buttonDisabled]}
+          onPress={() => handleProvider("google", signInWithGoogle)}
+          disabled={loading !== null}
+          accessibilityRole="button"
+        >
+          {loading === "google" ? (
+            <ActivityIndicator color={theme.text} />
+          ) : (
+            // Dark text on a light-filled button, per the design rules.
+            <Text style={styles.providerButtonText}>Continue with Google</Text>
+          )}
+        </TouchableOpacity>
+
+        {appleAvailable ? (
+          // Apple's HIG requires their own button component for this.
+          <AppleAuthentication.AppleAuthenticationButton
+            buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+            cornerRadius={12}
+            style={styles.appleButton}
+            onPress={() => handleProvider("apple", signInWithApple)}
+          />
+        ) : null}
+
         <Text style={styles.hint}>
-          Same email/password as the Kairos website -- this is one account,
-          not a separate app login.
+          Same account as the Kairos website -- signing in here connects to
+          the matches, timeline, and essays you already have.
         </Text>
       </View>
     </KeyboardAvoidingView>
@@ -147,6 +201,39 @@ const styles = StyleSheet.create({
     color: theme.card,
     fontSize: 16,
     fontWeight: "600",
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginVertical: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.border,
+  },
+  dividerText: {
+    fontSize: 12,
+    color: theme.secondary,
+  },
+  providerButton: {
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    backgroundColor: theme.bg,
+    marginBottom: 12,
+  },
+  providerButtonText: {
+    color: theme.text,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  appleButton: {
+    height: 48,
+    width: "100%",
   },
   hint: {
     marginTop: 16,

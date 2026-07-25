@@ -1,14 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/", "/login", "/signup", "/api/stripe/webhook", "/auth/callback", "/preview-heroes", "/terms", "/privacy", "/about", "/methodology", "/notify", "/notify/join", "/api/waitlist", "/admin/waitlist", "/admin/reports", "/admin/ai-usage", "/api/sms/send-nudges", "/api/cron/aggregate-snapshot", "/api/cron/waitlist-nurture", "/api/cron/waitlist-growth-snapshot", "/api/cron/reengagement"];
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/api/stripe/webhook", "/auth/callback", "/preview-heroes", "/terms", "/privacy", "/support", "/about", "/methodology", "/notify", "/notify/join", "/api/waitlist", "/admin/waitlist", "/admin/reports", "/admin/ai-usage", "/api/sms/send-nudges", "/api/cron/aggregate-snapshot", "/api/cron/waitlist-nurture", "/api/cron/waitlist-growth-snapshot", "/api/cron/reengagement"];
 
-// Prefix-matched public paths — for routes with dynamic segments that must
+// Prefix-matched public paths, for routes with dynamic segments that must
 // stay reachable by an unauthenticated visitor (share links, recommender
 // pages). Token/existence validation happens inside each route itself;
 // the proxy's job is only to not block the request before it gets there.
 // Deliberately narrow: only the specific public sub-routes, never a bare
-// "/api/recommendations/" prefix — that would also unauth-gate the
+// "/api/recommendations/" prefix, that would also unauth-gate the
 // authenticated CRUD routes ([id] list/update/delete) at the proxy layer,
 // leaving their own internal getUser()/401 check as the only remaining
 // guard instead of defense-in-depth.

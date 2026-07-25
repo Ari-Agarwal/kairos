@@ -296,7 +296,9 @@ async function main() {
         grade_level: GRADES[i % GRADES.length],
         unweighted_gpa: student.unweighted,
         weighted_gpa: student.weighted,
-        intended_major: student.major,
+        // profiles.intended_major became text[] (migration_010 intake
+        // expansion); wrap the single seeded major accordingly.
+        intended_major: [student.major],
       })
       .eq("user_id", user.id);
     if (profileError) throw profileError;

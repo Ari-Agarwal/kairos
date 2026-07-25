@@ -1,21 +1,24 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
+import {
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import type { MatchRow, RootStackParamList } from "../lib/types";
 import { theme, categoryColor } from "../lib/theme";
 
 // Same shape/query as the web app's src/app/matches/page.tsx --
 // school_matches filtered to is_active, ordered reach/target/safety --
 // so this can't drift from the schema (Section 7's "ports cleanly" bullet).
-// Read-only: no regenerate/lock/manual-add here, those stay web-only for now.
-interface Match {
-  id: string;
-  school_name: string;
-  category: "reach" | "target" | "safety";
-  percentage: number;
-  why_text: string;
-  is_manual: boolean;
-}
+// Read-only list: no regenerate/lock/manual-add here, those stay web-only.
+type Match = MatchRow;
 
 const CATEGORY_ORDER: Record<string, number> = { reach: 0, target: 1, safety: 2 };
 const CATEGORY_LABEL: Record<string, string> = {
@@ -26,6 +29,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 export default function MatchesScreen() {
   const { session } = useAuth();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -35,7 +39,7 @@ export default function MatchesScreen() {
     if (!session?.user) return;
     const { data, error: queryError } = await supabase
       .from("school_matches")
-      .select("id, school_name, category, percentage, why_text, is_manual")
+      .select("id, school_name, category, percentage, why_text, is_manual, factors")
       .eq("user_id", session.user.id)
       .eq("is_active", true)
       .order("percentage", { ascending: false });
@@ -96,7 +100,11 @@ export default function MatchesScreen() {
       contentContainerStyle={styles.list}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       renderItem={({ item }) => (
-        <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate("SchoolDetail", { match: item })}
+          accessibilityRole="button"
+        >
           <View style={styles.cardHeader}>
             <Text style={styles.schoolName}>{item.school_name}</Text>
             <View
@@ -111,12 +119,12 @@ export default function MatchesScreen() {
             </View>
           </View>
           <Text style={styles.percentage}>{item.percentage}% estimated fit</Text>
-          <Text style={styles.whyText}>
+          <Text style={styles.whyText} numberOfLines={3}>
             {item.is_manual
               ? "This school was added manually, so an AI assessment isn't available."
               : item.why_text}
           </Text>
-        </View>
+        </TouchableOpacity>
       )}
     />
   );

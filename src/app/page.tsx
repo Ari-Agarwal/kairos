@@ -37,6 +37,8 @@ export default async function IntroPage() {
         <Link href="/terms" className="hover:text-text">Terms</Link>
         {" · "}
         <Link href="/privacy" className="hover:text-text">Privacy</Link>
+        {" · "}
+        <Link href="/support" className="hover:text-text">Support</Link>
       </footer>
     </>
   );
