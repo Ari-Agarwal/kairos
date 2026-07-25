@@ -17,11 +17,11 @@ export function AboutContent({ showLogo }: { showLogo: boolean }) {
         </Link>
       )}
       <h1 className={`font-serif text-3xl text-text mb-4 ${showLogo ? "mt-6" : ""}`}>Our mission</h1>
-      <p className="font-serif text-xl text-text mb-8 leading-relaxed">
+      <p className="font-serif font-normal text-xl text-text mb-8 leading-relaxed">
         Kairos is the Greek word for the right, opportune moment, the instant when timing and
-        readiness meet. That&apos;s what this app is named for: helping students find the right
-        school, at the right time, with the right steps in between. Our goal is to give every
-        student a real, data-backed read on where they stand and where they could go, for free.
+        readiness meet. That&apos;s what this app is named for. It helps students find the right
+        school, with the right steps in between. Our goal is to give every student the smoothest
+        application process possible.
       </p>
 
       <div className="grid grid-cols-2 gap-4 mb-10">

@@ -21,19 +21,6 @@ const ROUND_TITLES = ["Getting to know you", "The basics", "Major", "Extracurric
 const GRADE_LEVELS = ["Freshman", "Sophomore", "Junior", "Senior"];
 const EC_LENGTHS = ["Less than 1 year", "1 year", "2 years", "3 years", "4+ years"];
 
-// Software_Timeline.md Section 11: optional, skippable applicant-type flag so
-// a student who isn't a standard first-time freshman/senior applicant isn't
-// silently run through freshman-framed timeline/matches prompts. "standard"
-// is the default/skip value, not a forced choice.
-const APPLICANT_TYPES: { value: string; label: string }[] = [
-  { value: "standard", label: "First-time (standard)" },
-  { value: "transfer", label: "Transfer student" },
-  { value: "homeschooled", label: "Homeschooled" },
-  { value: "international", label: "International student" },
-  { value: "recruited_athlete", label: "Recruited athlete" },
-  { value: "gap_year", label: "Returning after a gap year" },
-];
-
 interface Activity {
   idea: string;
   length: string;
@@ -56,13 +43,10 @@ export default function OnboardingPage() {
   const [intendedMajors, setIntendedMajors] = useState<string[]>([]);
   const [majorOther, setMajorOther] = useState("");
   const [interests, setInterests] = useState("");
-  const [mattersToYou, setMattersToYou] = useState("");
-  const [beyondTranscript, setBeyondTranscript] = useState("");
   const [careerGoals, setCareerGoals] = useState("");
   const [showCareerQuiz, setShowCareerQuiz] = useState(false);
   const [useChatIntake, setUseChatIntake] = useState(false);
 
-  const [applicantType, setApplicantType] = useState("standard");
   const [accessibilityPref, setAccessibilityPref] = useState("");
 
   const [activities, setActivities] = useState<Activity[]>([{ idea: "", length: "" }]);
@@ -181,7 +165,7 @@ export default function OnboardingPage() {
       fetch("/api/onboarding/reflect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ interests, mattersToYou, beyondTranscript }),
+        body: JSON.stringify({ interests }),
       })
         .then((res) => (res.ok ? res.json() : { reflection: null }))
         .then((body) => setReflection(body?.reflection ?? null))
@@ -244,18 +228,7 @@ export default function OnboardingPage() {
       .map((a) => (a.idea.trim() ? `${a.idea.trim()}${a.length ? ` (${a.length})` : ""}` : ""))
       .filter(Boolean);
 
-    // The two open-ended "get to know you" prompts aren't separate DB columns
-    // -- they fold into the existing free-text `interests` field (already fed
-    // verbatim into the matches-generation prompt), so the counselor-style
-    // discovery questions translate directly into sharper matches rather than
-    // sitting unused.
-    const combinedInterests = [
-      interests.trim(),
-      mattersToYou.trim() && `What matters to them in a college: ${mattersToYou.trim()}`,
-      beyondTranscript.trim() && `Beyond the transcript: ${beyondTranscript.trim()}`,
-    ]
-      .filter(Boolean)
-      .join(" | ");
+    const combinedInterests = interests.trim();
 
     // Schools-already-considering, campus preferences, and the deeper context
     // fields (financial aid, class rank, career goals, etc.) are intentionally
@@ -305,7 +278,6 @@ export default function OnboardingPage() {
       act_score: actScore ? parseInt(actScore, 10) : null,
       career_goals: careerGoals || null,
       financial_aid_need: financialAidNeed,
-      applicant_type: applicantType !== "standard" ? applicantType : null,
       accessibility_pref: accessibilityPref.trim() || null,
     });
 
@@ -377,54 +349,6 @@ export default function OnboardingPage() {
               onChange={(e) => setInterests(e.target.value)}
               className={inputClass}
             />
-          </div>
-          <div>
-            <label htmlFor="ob-matters" className="block text-sm text-text-gray mb-1">
-              What matters to you in choosing a college? <span className="text-text-gray/70">, optional</span>
-            </label>
-            <textarea
-              id="ob-matters"
-              rows={2}
-              maxLength={500}
-              placeholder="e.g. being close to home, a strong pre-med track, a real sense of community"
-              value={mattersToYou}
-              onChange={(e) => setMattersToYou(e.target.value)}
-              className={`${inputClass} resize-none`}
-            />
-          </div>
-          <div>
-            <label htmlFor="ob-beyond-transcript" className="block text-sm text-text-gray mb-1">
-              What&apos;s something about you a transcript wouldn&apos;t show? <span className="text-text-gray/70">, optional</span>
-            </label>
-            <textarea
-              id="ob-beyond-transcript"
-              rows={2}
-              maxLength={500}
-              placeholder="e.g. I run a small Etsy shop, or I've been the primary caregiver for a sibling"
-              value={beyondTranscript}
-              onChange={(e) => setBeyondTranscript(e.target.value)}
-              className={`${inputClass} resize-none`}
-            />
-          </div>
-          <div>
-            <label htmlFor="ob-applicant-type" className="block text-sm text-text-gray mb-1">
-              Which of these describes you? <span className="text-text-gray/70">, optional</span>
-            </label>
-            <p className="text-text-gray text-xs mb-2">
-              We&apos;ll shape your timeline and matches to fit, leave this as-is if none apply.
-            </p>
-            <select
-              id="ob-applicant-type"
-              value={applicantType}
-              onChange={(e) => setApplicantType(e.target.value)}
-              className={inputClass}
-            >
-              {APPLICANT_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
           </div>
           <div>
             <label htmlFor="ob-accessibility" className="block text-sm text-text-gray mb-1">

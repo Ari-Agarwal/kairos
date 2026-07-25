@@ -24,42 +24,25 @@ export async function POST(req: Request) {
   }
 
   let interests = "";
-  let mattersToYou = "";
-  let beyondTranscript = "";
   try {
     const body = await req.json();
-    for (const [key, ref] of [
-      ["interests", "Interests"],
-      ["mattersToYou", "What matters to you"],
-      ["beyondTranscript", "Beyond the transcript"],
-    ] as const) {
-      const value = body?.[key];
-      if (typeof value === "string" && value.trim()) {
-        if (value.length > MAX_FIELD_LENGTH) {
-          return NextResponse.json({ error: `${ref} is too long.` }, { status: 400 });
-        }
-        rejectScriptTags(value, ref);
+    if (typeof body?.interests === "string" && body.interests.trim()) {
+      if (body.interests.length > MAX_FIELD_LENGTH) {
+        return NextResponse.json({ error: "Interests is too long." }, { status: 400 });
       }
+      rejectScriptTags(body.interests, "Interests");
     }
     interests = typeof body?.interests === "string" ? body.interests.trim() : "";
-    mattersToYou = typeof body?.mattersToYou === "string" ? body.mattersToYou.trim() : "";
-    beyondTranscript = typeof body?.beyondTranscript === "string" ? body.beyondTranscript.trim() : "";
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  if (!interests && !mattersToYou && !beyondTranscript) {
+  if (!interests) {
     // Nothing to reflect on yet -- not an error, just nothing to say.
     return NextResponse.json({ reflection: null });
   }
 
-  const userContent = [
-    interests && `Interests: ${interests}`,
-    mattersToYou && `What matters to them in a college: ${mattersToYou}`,
-    beyondTranscript && `Something a transcript wouldn't show: ${beyondTranscript}`,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const userContent = `Interests: ${interests}`;
 
   flagAnomalousUsage("onboarding-reflect", user.id);
   const t0 = Date.now();
