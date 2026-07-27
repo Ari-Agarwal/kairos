@@ -7,8 +7,7 @@ import LivingProfileNudge from "@/components/LivingProfileNudge";
 import CountUp from "@/components/CountUp";
 import GenerateTimelineCard from "./GenerateTimelineCard";
 import InviteFriendCard from "@/components/InviteFriendCard";
-import { MatchesEmptyArt, ScholarshipsEmptyArt } from "@/components/EmptyStateIllustration";
-import { getAllScholarships, getFitTier, type ScholarshipProfile } from "@/lib/scholarships";
+import { MatchesEmptyArt } from "@/components/EmptyStateIllustration";
 
 const CATEGORY_STYLES: Record<string, string> = {
   reach: "bg-red-tint text-red",
@@ -91,19 +90,6 @@ export default async function DashboardPage({
     .maybeSingle();
 
   if (narrativeError) console.error("dashboard narrative query failed:", narrativeError);
-
-  const scholarshipProfile: ScholarshipProfile = {
-    first_gen: (profile.first_gen as boolean | null) ?? null,
-    financial_aid_need: (profile.financial_aid_need as boolean | null) ?? null,
-    intended_major: (profile.intended_major as string[] | null) ?? null,
-    extracurriculars: (profile.extracurriculars as string[] | null) ?? null,
-  };
-
-  const topScholarships = getAllScholarships()
-    .map((s) => ({ scholarship: s, fit: getFitTier(s, scholarshipProfile) }))
-    .filter((s) => s.fit.tier !== "Reach")
-    .sort((a, b) => (a.fit.tier === b.fit.tier ? 0 : a.fit.tier === "Strong Fit" ? -1 : 1))
-    .slice(0, 2);
 
   const name = (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] || "there";
 
@@ -237,7 +223,7 @@ export default async function DashboardPage({
           )}
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-5 mb-8">
+        <div className="mb-8">
           <Link
             href="/narrative"
             className="reveal block min-w-0 bg-card border border-border rounded-2xl px-6 py-7 min-h-[200px] hover:border-primary/40 hover:-translate-y-0.5 transition-all"
@@ -253,42 +239,6 @@ export default async function DashboardPage({
                   No throughline yet, tap Narrative Builder below to find the story tying your application together.
                 </p>
               </div>
-            )}
-          </Link>
-
-          <Link
-            href="/scholarships"
-            className="reveal block min-w-0 bg-card border border-border rounded-2xl px-6 py-7 min-h-[200px] hover:border-primary/40 hover:-translate-y-0.5 transition-all"
-            style={{ ["--reveal-delay" as string]: "0.26s" }}
-          >
-            <p className="text-text-gray text-sm mb-4">Top scholarship matches</p>
-            {topScholarships.length > 0 ? (
-              <div className="space-y-3">
-                {topScholarships.map(({ scholarship, fit }) => (
-                  <div key={scholarship.name} className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <span
-                        className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full mb-1.5 ${
-                          fit.tier === "Strong Fit" ? "bg-green-tint text-green" : "bg-amber-tint text-amber-text-on-tint"
-                        }`}
-                      >
-                        {fit.tier}
-                      </span>
-                      <p className="font-serif text-base text-text truncate">{scholarship.name}</p>
-                    </div>
-                    {scholarship.award_amount && (
-                      <span className="text-text-gray text-sm shrink-0">{scholarship.award_amount}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <>
-                <ScholarshipsEmptyArt />
-                <p className="text-text-gray text-sm mt-2">
-                  No strong scholarship matches surfaced yet, tap Scholarships below to browse the full list.
-                </p>
-              </>
             )}
           </Link>
         </div>
