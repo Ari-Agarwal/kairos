@@ -43,7 +43,7 @@ export default async function NarrativePage({
         <h1 className="font-serif text-2xl text-text mb-2">Narrative Builder</h1>
         <p className="text-text-gray text-sm mb-6">
           Answer a few guided questions and get a clear, specific throughline you can use to anchor your essays and
-          activities descriptions, not a generic summary, something grounded in what's actually true about you.
+          activities descriptions, not a generic summary, something grounded in what&apos;s actually true about you.
         </p>
         <p className="text-text-gray text-xs mb-6">
           Your answers are sent to our AI provider (Anthropic) to generate this synthesis.
