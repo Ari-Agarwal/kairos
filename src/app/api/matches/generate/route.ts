@@ -92,12 +92,20 @@ export async function POST(req: Request) {
   // under its own cap.
   const requestStart = Date.now();
   // The LLM phase gets a fixed slice of the ~60s total, leaving the rest
-  // for DB reads/writes and platform overhead either side of it.
-  const LLM_DEADLINE_MS = 38_000;
+  // for DB reads/writes and platform overhead either side of it. Real
+  // production latency (Vercel logs, 2026-08-27) shows the DB reads/writes
+  // in this handler cost well under 2s combined -- the earlier 22s split
+  // was overly conservative and left too little runway for a genuine retry
+  // of a single call that itself commonly takes 17-25s, so a category
+  // needing a real second attempt almost always got its retry skipped by
+  // MIN_ATTEMPT_MS below instead of actually getting to try again.
+  const LLM_DEADLINE_MS = 50_000;
   // Below this much remaining budget, a retry attempt's own timeout would be
   // so short it's essentially guaranteed to fail -- skip it and report the
-  // category as failed instead of wasting the call.
-  const MIN_ATTEMPT_MS = 12_000;
+  // category as failed instead of wasting the call. Set below the low end
+  // of the observed 17-25s real-call range so a retry is actually attempted
+  // in the common case, not skipped preemptively.
+  const MIN_ATTEMPT_MS = 15_000;
 
   if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
@@ -229,6 +237,11 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
       properties: {
         schools: {
           type: "array" as const,
+          // Structural nudge against the empty-array failure mode seen in
+          // production logs (2026-08-27): tool-use isn't a hard schema lock,
+          // but minItems still measurably discourages an empty submission
+          // beyond what the prompt instructions alone were achieving.
+          minItems: 1,
           items: {
             type: "object" as const,
             properties: {
