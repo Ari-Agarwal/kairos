@@ -79,6 +79,26 @@ function missingFields(profile: Profile): string[] {
 }
 
 export async function POST(req: Request) {
+  // Wall-clock budget for the ENTIRE handler, not just the LLM calls --
+  // maxDuration is 60s and is a HARD ceiling on Vercel's Hobby plan; if
+  // Vercel kills the function, the client gets a bare timeout instead of a
+  // clean JSON response, and every category's results (including ones that
+  // already succeeded) are lost. This must be set before the very first
+  // await: the profile/regeneration_log/locked-schools/active-count reads
+  // below, and the deactivate/insert/upsert writes after generation, are
+  // real time too -- a budget that only covered the LLM phase (as an
+  // earlier version of this fix did) could still let (DB reads + LLM phase
+  // + DB writes) add up past 60s even while the LLM phase alone stayed
+  // under its own cap.
+  const requestStart = Date.now();
+  // The LLM phase gets a fixed slice of the ~60s total, leaving the rest
+  // for DB reads/writes and platform overhead either side of it.
+  const LLM_DEADLINE_MS = 38_000;
+  // Below this much remaining budget, a retry attempt's own timeout would be
+  // so short it's essentially guaranteed to fail -- skip it and report the
+  // category as failed instead of wasting the call.
+  const MIN_ATTEMPT_MS = 12_000;
+
   if (!isTrustedOrigin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const supabase = await createClient();
@@ -199,19 +219,6 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}
 ${lockedNames.size > 0 ? `\nThe student has locked in the following schools already on their list -- they are staying regardless of this generation, so do NOT include them in your results: ${lockedNamesOriginal.join(", ")}.` : ""}
 ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from your last list?" and said: "${feedback}", this is feedback on the list they just saw, so treat it as a direct correction (e.g. if they said "too many reach schools," shift the new list's balance accordingly), not just a general preference.` : `The student was asked "what are you looking for in your matches?" and said: "${feedback}"`} Weigh this alongside the profile above; don't let it override hard constraints like GPA/test-score realism, but do let it steer emphasis (e.g. toward a specific region, school size, or program strength).` : ""}`;
 
-  // Wall-clock budget for this request, checked before any retry attempt.
-  // maxDuration is 60s and is a HARD ceiling on Vercel's Hobby plan -- if
-  // Vercel kills the function mid-request, the client gets a bare network
-  // error instead of a clean JSON response, and every category's results
-  // (including ones that already succeeded) are lost. A single attempt has
-  // been observed taking up to ~30s, so two sequential attempts for one
-  // category can land right at that ceiling. Budgeting a hard stop well
-  // before 60s means a stubborn category gives up and returns its error
-  // cleanly (handled by Promise.allSettled below) instead of risking the
-  // whole function being killed.
-  const requestStart = Date.now();
-  const DEADLINE_MS = 45_000;
-
   const CATEGORIES = ["reach", "target", "safety"] as const;
 
   const SCHOOLS_TOOL = {
@@ -290,13 +297,17 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
     const maxAttempts = 2;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const t0 = Date.now();
-      // Hard per-call timeout tied to whatever's left of the request's own
+      // Hard per-call timeout tied to whatever's left of the LLM phase's own
       // budget, so a single stalled/hanging Anthropic call can't silently
       // burn the entire remaining time -- without this, a hang here is
       // indistinguishable from a slow-but-working call until Vercel's own
-      // 60s ceiling kills the whole function (see DEADLINE_MS above).
-      const remainingMs = DEADLINE_MS - (t0 - requestStart);
-      if (remainingMs <= 0) {
+      // 60s ceiling kills the whole function (see LLM_DEADLINE_MS above).
+      // Below MIN_ATTEMPT_MS remaining, don't even start the call -- a call
+      // given only a few seconds is essentially guaranteed to time out
+      // anyway, so it's better to fail the category immediately and leave
+      // that time for the DB writes still to come after this settles.
+      const remainingMs = LLM_DEADLINE_MS - (t0 - requestStart);
+      if (remainingMs < MIN_ATTEMPT_MS) {
         console.error(`generateCategory(${category}) out of time budget before attempt ${attempt + 1}`);
         break;
       }
