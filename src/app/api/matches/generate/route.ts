@@ -334,7 +334,14 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
           messages: [{ role: "user", content: userMessage }],
           tools: [SCHOOLS_TOOL],
           tool_choice: { type: "tool", name: "submit_schools" },
-        }, { timeout: remainingMs });
+        // maxRetries: 0 -- the Anthropic SDK defaults to 2 internal retries
+        // on a timeout/transient error, which would silently re-issue this
+        // same call inside the `timeout` window multiple times, multiplying
+        // real wall-clock time well past both remainingMs and our own outer
+        // retry loop's accounting for it. This endpoint already has its own
+        // budget-aware retry (the attempt loop above), so the SDK's own
+        // retries are pure redundant risk here, not safety.
+        }, { timeout: remainingMs, maxRetries: 0 });
         if (response.stop_reason === "max_tokens") {
           throw new Error(`Response truncated at max_tokens for category ${category}`);
         }
