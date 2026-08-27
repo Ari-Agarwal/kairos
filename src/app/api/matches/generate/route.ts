@@ -199,6 +199,19 @@ ${missing.length > 0 ? `Missing fields: ${missing.join(", ")}` : ""}
 ${lockedNames.size > 0 ? `\nThe student has locked in the following schools already on their list -- they are staying regardless of this generation, so do NOT include them in your results: ${lockedNamesOriginal.join(", ")}.` : ""}
 ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from your last list?" and said: "${feedback}", this is feedback on the list they just saw, so treat it as a direct correction (e.g. if they said "too many reach schools," shift the new list's balance accordingly), not just a general preference.` : `The student was asked "what are you looking for in your matches?" and said: "${feedback}"`} Weigh this alongside the profile above; don't let it override hard constraints like GPA/test-score realism, but do let it steer emphasis (e.g. toward a specific region, school size, or program strength).` : ""}`;
 
+  // Wall-clock budget for this request, checked before any retry attempt.
+  // maxDuration is 60s and is a HARD ceiling on Vercel's Hobby plan -- if
+  // Vercel kills the function mid-request, the client gets a bare network
+  // error instead of a clean JSON response, and every category's results
+  // (including ones that already succeeded) are lost. A single attempt has
+  // been observed taking up to ~30s, so two sequential attempts for one
+  // category can land right at that ceiling. Budgeting a hard stop well
+  // before 60s means a stubborn category gives up and returns its error
+  // cleanly (handled by Promise.allSettled below) instead of risking the
+  // whole function being killed.
+  const requestStart = Date.now();
+  const DEADLINE_MS = 45_000;
+
   const CATEGORIES = ["reach", "target", "safety"] as const;
 
   const SCHOOLS_TOOL = {
@@ -253,12 +266,15 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
     // schema lock at the token level, and a "guaranteed inclusion" case (many named
     // schools + full factor writeups) can still run the output close to the token
     // ceiling, so one bounded retry with headroom guards the rare truncated/malformed
-    // miss. Capped at 2 attempts normally, not more: a single attempt can take up to
-    // ~50s, and maxDuration is hard-capped at 60s on Vercel's Hobby plan, a 3rd
-    // attempt risks the platform killing the whole request mid-retry instead of us
-    // returning a clean 502. A first-ever generation gets a 3rd attempt specifically
-    // (see isFirstGeneration below): a partial first list (e.g. reach-only) is a much
-    // worse outcome than occasionally running closer to the timeout.
+    // miss. Capped at 2 attempts, never more, for every generation including the
+    // first: a single attempt has been observed taking up to ~30s, and maxDuration
+    // is hard-capped at 60s on Vercel's Hobby plan -- a 3rd attempt doesn't reliably
+    // finish inside that budget, and when it doesn't, the whole function is killed by
+    // Vercel's own timeout, which throws away every OTHER category's results too
+    // (including ones that already succeeded), a strictly worse outcome than the
+    // stubborn category alone coming back empty. See matches generate route: a
+    // missing/empty category no longer hard-fails the whole request either, so
+    // there's no longer an upside to risking the 3rd attempt on a first generation.
     let lastErr: unknown;
     // A retry after an empty-schools miss reuses the identical prompt, so without
     // added pressure the model can repeat the same "too uncertain to commit" empty
@@ -266,14 +282,24 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
     // qualifier makes the model more willing to return nothing than a list it isn't
     // fully confident clears that bar). Telling it plainly that empty is invalid and
     // some real answer is required fixes the retry without touching the base prompt.
-    // On a first-ever generation, apply that same pressure from attempt 1 instead of
-    // waiting for an empty miss -- there's no existing list to fall back on, so every
-    // category needs its best shot at a non-empty result immediately, not just on retry.
+    // Only added on an actual retry (attempt > 0) -- claiming "your previous attempt
+    // returned zero schools" on attempt 0 would be false and just confuses the model.
+    // The base prompt's "never return zero schools" rule already covers attempt 0.
     flagAnomalousUsage("matches/generate", userId);
-    let forceNonEmpty = isFirstGeneration;
-    const maxAttempts = isFirstGeneration ? 3 : 2;
+    let forceNonEmpty = false;
+    const maxAttempts = 2;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const t0 = Date.now();
+      // Hard per-call timeout tied to whatever's left of the request's own
+      // budget, so a single stalled/hanging Anthropic call can't silently
+      // burn the entire remaining time -- without this, a hang here is
+      // indistinguishable from a slow-but-working call until Vercel's own
+      // 60s ceiling kills the whole function (see DEADLINE_MS above).
+      const remainingMs = DEADLINE_MS - (t0 - requestStart);
+      if (remainingMs <= 0) {
+        console.error(`generateCategory(${category}) out of time budget before attempt ${attempt + 1}`);
+        break;
+      }
       try {
         const response = await getAnthropic().messages.create({
           model: MODEL,
@@ -297,7 +323,7 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
           messages: [{ role: "user", content: userMessage }],
           tools: [SCHOOLS_TOOL],
           tool_choice: { type: "tool", name: "submit_schools" },
-        });
+        }, { timeout: remainingMs });
         if (response.stop_reason === "max_tokens") {
           throw new Error(`Response truncated at max_tokens for category ${category}`);
         }
@@ -349,23 +375,8 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
   // judged you don't need one" (the two are indistinguishable from the match
   // list alone).
   const failedCategories = CATEGORIES.filter((_, i) => settled[i].status === "rejected");
-
-  // A first-ever generation must never save a partial list (e.g. reach-only)
-  // -- there's no existing list behind it for the student to fall back on,
-  // so a category that never produced a usable result outright fails the
-  // whole request with a real error, instead of silently persisting an
-  // incomplete reach/target/safety spread alongside a soft "some tiers
-  // failed" banner.
   if (isFirstGeneration && failedCategories.length > 0) {
     console.error("First-ever match generation came back partial:", failedCategories);
-    return NextResponse.json(
-      {
-        error: `Couldn't generate a full reach/target/safety list right now (the ${failedCategories.join(" and ")} tier${
-          failedCategories.length > 1 ? "s" : ""
-        } failed). Please try again.`,
-      },
-      { status: 502 }
-    );
   }
 
   const seen = new Set<string>();
