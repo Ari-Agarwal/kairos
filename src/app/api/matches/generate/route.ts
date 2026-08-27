@@ -31,6 +31,7 @@ interface SchoolResult {
 }
 
 interface Profile {
+  unweighted_gpa: number | null;
   intended_major: string[] | null;
   interests: string | null;
   current_school: string | null;
@@ -69,8 +70,23 @@ function affordabilitySignal(profile: Profile): string | null {
   return parts.join(", ");
 }
 
+// unweighted_gpa/weighted_gpa are NOT NULL columns, so a student who skips
+// the GPA question during onboarding (skipping is a deliberate, supported
+// choice -- see Software_Timeline.md) still has to store SOMETHING, and
+// that something is a literal 0 (see safeGpa() in onboarding/page.tsx). A
+// 0.0 GPA read at face value is nonsensical for matching (an "F average"
+// mathematically fails every real target/reach comparison in the model's
+// methodology, while safety schools can still be named honestly regardless
+// -- this was confirmed in production, 2026-08-27: a profile with this
+// sentinel generated a safety-only list). Treat 0 as "not provided," the
+// same as a genuinely missing value, everywhere a GPA is used below.
+function hasRealGpa(profile: Profile): boolean {
+  return profile.unweighted_gpa !== null && profile.unweighted_gpa !== 0;
+}
+
 function missingFields(profile: Profile): string[] {
   const missing: string[] = [];
+  if (!hasRealGpa(profile)) missing.push("GPA");
   if (!profile.intended_major?.length) missing.push("intended major");
   if (!profile.extracurriculars || profile.extracurriculars.length === 0) missing.push("extracurriculars");
   if (!profile.test_scores && !profile.sat_score && !profile.act_score) missing.push("test scores");
@@ -199,10 +215,11 @@ export async function POST(req: Request) {
 
   const missing = missingFields(profile);
   const affordability = affordabilitySignal(profile);
+  const gpaGiven = hasRealGpa(profile);
   const userMessage = `Student profile:
 Grade level: ${profile.grade_level}
-Unweighted GPA: ${profile.unweighted_gpa}
-Weighted GPA: ${profile.weighted_gpa}
+Unweighted GPA: ${gpaGiven ? profile.unweighted_gpa : "not given"}
+Weighted GPA: ${gpaGiven ? profile.weighted_gpa : "not given"}
 Intended major: ${profile.intended_major?.length ? profile.intended_major.join(", ") : "missing"}
 Interests: ${profile.interests ?? "none given"}
 Current school: ${profile.current_school ?? "missing"}
