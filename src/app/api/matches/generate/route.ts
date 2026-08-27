@@ -246,6 +246,69 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
 
   const CATEGORIES = ["reach", "target", "safety"] as const;
 
+  // Last-resort, deterministic backstop -- used ONLY when a category
+  // exhausts both real attempts and still comes back empty/erroring.
+  // Production logs (2026-08-27) showed the model can decline to commit to
+  // "target" or "safety" schools for a given profile even with the prompt's
+  // explicit "never return zero schools" instruction and the tool schema's
+  // minItems constraint; no amount of prompt tuning can make an LLM call
+  // 100% reliable, so a request must never surface as a hard failure to the
+  // student regardless of what the model does. These are real,
+  // currently-operating schools chosen for genuinely broad applicability
+  // (well-known reach/target/safety bands that hold for the vast majority
+  // of US applicants), not personalized to any one student -- callers must
+  // mark these via failedCategories so the UI's existing "we couldn't
+  // generate X-tier matches, tap Regenerate" banner (MatchListClient.tsx)
+  // still tells the student honestly that this tier isn't personalized yet.
+  const FALLBACK_SCHOOLS: Record<(typeof CATEGORIES)[number], { name: string; percentage: number }[]> = {
+    reach: [
+      { name: "Massachusetts Institute of Technology", percentage: 5 },
+      { name: "Stanford University", percentage: 4 },
+      { name: "Duke University", percentage: 7 },
+      { name: "University of Southern California", percentage: 12 },
+      { name: "New York University", percentage: 9 },
+      { name: "University of Michigan", percentage: 11 },
+    ],
+    target: [
+      { name: "University of Wisconsin-Madison", percentage: 45 },
+      { name: "Purdue University", percentage: 52 },
+      { name: "University of Massachusetts Amherst", percentage: 55 },
+      { name: "Indiana University Bloomington", percentage: 68 },
+      { name: "University of Arizona", percentage: 78 },
+      { name: "University of Iowa", percentage: 82 },
+    ],
+    safety: [
+      { name: "Arizona State University", percentage: 90 },
+      { name: "University of Toledo", percentage: 92 },
+      { name: "Old Dominion University", percentage: 90 },
+      { name: "University of Wyoming", percentage: 93 },
+      { name: "Eastern Michigan University", percentage: 88 },
+      { name: "University of Kansas", percentage: 87 },
+    ],
+  };
+
+  function fallbackSchools(category: (typeof CATEGORIES)[number], exclude: Set<string>): SchoolResult[] {
+    return FALLBACK_SCHOOLS[category]
+      .filter((s) => !exclude.has(s.name.trim().toLowerCase()))
+      .slice(0, 5)
+      .map((s) => ({
+        name: s.name,
+        category,
+        percentage: s.percentage,
+        why_text:
+          "We couldn't generate a personalized assessment for this school right now, so this is a general suggestion based on typical admit rates rather than your specific profile. Tap Regenerate for a personalized list.",
+        factors: {
+          gpa_comparison: "Not evaluated against your profile -- generic suggestion.",
+          course_rigor: "Not evaluated against your profile -- generic suggestion.",
+          ec_strength: "Not evaluated against your profile -- generic suggestion.",
+          major_fit: "Not evaluated against your profile -- generic suggestion.",
+          social_fit: "Not evaluated against your profile -- generic suggestion.",
+        },
+        confidence: "low" as const,
+        merit_aid_likelihood: "moderate" as const,
+      }));
+  }
+
   const SCHOOLS_TOOL = {
     name: "submit_schools",
     description: "Submit the generated school list for this category.",
@@ -409,30 +472,36 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
       console.error(`Match generation failed for category ${CATEGORIES[i]}:`, result.reason);
     }
   });
-  const byCategory = settled
-    .filter((r): r is PromiseFulfilledResult<SchoolResult[]> => r.status === "fulfilled")
-    .map((r) => r.value);
-
-  if (byCategory.length === 0) {
-    return NextResponse.json({ error: "Failed to generate matches. Please try again." }, { status: 502 });
-  }
 
   // Which categories never produced a usable list after retries -- surfaced
   // to the client so a missing safety/reach tier reads as "we couldn't
-  // generate this" rather than silently looking identical to "the model
-  // judged you don't need one" (the two are indistinguishable from the match
-  // list alone).
+  // generate this personalized" rather than silently looking identical to
+  // "the model judged you don't need one" (the two are indistinguishable
+  // from the match list alone). This still fires even though every failed
+  // category now gets a fallback list below -- the student should still be
+  // told a tier isn't personalized, they just should never see a hard error.
   const failedCategories = CATEGORIES.filter((_, i) => settled[i].status === "rejected");
   if (isFirstGeneration && failedCategories.length > 0) {
     console.error("First-ever match generation came back partial:", failedCategories);
   }
 
+  // Every category gets real schools in the response no matter what --
+  // a category that exhausted its retries falls back to the deterministic
+  // FALLBACK_SCHOOLS list above instead of being dropped. This is what
+  // makes a hard "failed to generate matches" error structurally
+  // unreachable: no LLM call, however unreliable, can make byCategory end
+  // up empty anymore.
   const seen = new Set<string>();
-  const schools = byCategory.flat().filter((s) => {
-    const key = s.name.trim().toLowerCase();
-    if (seen.has(key) || lockedNames.has(key)) return false;
-    seen.add(key);
-    return true;
+  const schools: SchoolResult[] = [];
+  CATEGORIES.forEach((category, i) => {
+    const result = settled[i];
+    const categorySchools = result.status === "fulfilled" ? result.value : fallbackSchools(category, lockedNames);
+    for (const s of categorySchools) {
+      const key = s.name.trim().toLowerCase();
+      if (seen.has(key) || lockedNames.has(key)) continue;
+      seen.add(key);
+      schools.push(s);
+    }
   });
 
   // Locked rows are excluded from the deactivate sweep entirely, so a locked
