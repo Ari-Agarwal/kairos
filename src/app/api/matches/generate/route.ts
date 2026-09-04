@@ -414,15 +414,27 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
           // giving cleaner headroom for output, making stalls worse, not
           // better. Left at 8192; truncation retries are the lesser evil.
           max_tokens: 8192,
-          thinking: { type: "adaptive" },
+          // Retry (attempt > 0) disables thinking entirely -- production logs
+          // (2026-09-04) showed a retry that reuses "adaptive" thinking still
+          // takes 17-27s, the same as attempt 1, so by the time attempt 1's
+          // empty-schools failure eats its share of LLM_DEADLINE_MS, the
+          // retry frequently has less time left than IT needs and hits the
+          // SDK timeout itself -- i.e. the retry meant to recover from an
+          // empty response was itself failing from starvation, not from the
+          // model. A retry's job is narrow (produce *some* valid non-empty
+          // list fast, not re-derive the deepest possible reasoning), so
+          // trading thinking depth for speed here measurably increases the
+          // odds the retry actually completes inside whatever budget remains.
+          thinking: forceNonEmpty ? { type: "disabled" } : { type: "adaptive" },
           // "medium" rather than "high" -- cuts per-call wall time substantially,
           // which is the dominant driver of the 20-50s-per-category time. Traded
           // against somewhat less exhaustive reasoning per school; the prompt's
           // methodology section is what's carrying most of the accuracy here, not
-          // the effort tier, so this should stay close in quality.
-          output_config: { effort: "medium" },
+          // the effort tier, so this should stay close in quality. Retry drops
+          // to "low" for the same speed-over-depth reason as thinking above.
+          output_config: { effort: forceNonEmpty ? "low" : "medium" },
           system: schoolMatchingPrompt(category) + (forceNonEmpty
-            ? `\n\nYour previous attempt returned zero schools for this category. That response was invalid, an empty list is never an acceptable answer. Apply your best judgment and return at least 3 real, currently-operating schools that genuinely fit the "${category}" band for this student, even if you are not fully certain about every detail.`
+            ? `\n\nYour previous attempt returned zero schools for this category. That response was invalid, an empty list is never an acceptable answer. Apply your best judgment and return at least 3 real, currently-operating schools that genuinely fit the "${category}" band for this student, even if you are not fully certain about every detail. Decide quickly rather than deliberating at length -- a fast, reasonable answer is required here, not an exhaustively researched one.`
             : ""),
           messages: [{ role: "user", content: userMessage }],
           tools: [SCHOOLS_TOOL],
@@ -440,11 +452,34 @@ ${feedback ? `\n${isRegenerate ? `The student was asked "what should change from
         }
         const toolUse = response.content.find((b) => b.type === "tool_use");
         if (!toolUse) throw new Error(`No tool_use block in response for category ${category}`);
-        const parsed = toolUse.input as { schools?: Omit<SchoolResult, "category">[] };
-        if (!Array.isArray(parsed.schools) || parsed.schools.length === 0) {
+        const rawInput = toolUse.input as { schools?: unknown };
+        // Root cause of the "empty schools" failures seen in production (and
+        // reproduced directly against the API, 2026-09-04): the model does
+        // NOT actually return an empty list here -- it sometimes double-
+        // encodes the tool argument, putting a JSON *string* (itself
+        // containing a full, populated `{"schools": [...]}` object) into the
+        // `schools` field instead of a native array. The old
+        // `Array.isArray(parsed.schools)` check correctly saw a string, not
+        // an array, and threw the whole real response away as "empty",
+        // triggering a pointless retry (and, when retries were exhausted,
+        // the generic fallback list) for a call that had actually succeeded.
+        // Unwrap that shape before falling back to treating it as missing.
+        let schools: Omit<SchoolResult, "category">[] | undefined;
+        if (Array.isArray(rawInput.schools)) {
+          schools = rawInput.schools as Omit<SchoolResult, "category">[];
+        } else if (typeof rawInput.schools === "string") {
+          try {
+            const reparsed = JSON.parse(rawInput.schools);
+            schools = Array.isArray(reparsed) ? reparsed : reparsed?.schools;
+          } catch {
+            // fall through -- schools stays undefined, handled below
+          }
+        }
+        if (!Array.isArray(schools) || schools.length === 0) {
           forceNonEmpty = true;
           throw new Error(`tool_use input.schools was not a populated array for category ${category}`);
         }
+        const parsed = { schools };
         logAiUsage("matches/generate", userId, MODEL, t0, response);
         // Trust the category the call was scoped to, not the model's echo.
         // Clamp/round the model's percentage so it can't render as e.g. "73.4182%"
