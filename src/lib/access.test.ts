@@ -1,20 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAccessFeature, canRegenerate, isCounselor, weekStart, FREE_REGENERATION_WEEKLY_LIMIT } from "./access";
-
-describe("canAccessFeature", () => {
-  it("denies access for null/undefined users", () => {
-    expect(canAccessFeature(null, "essay_feedback")).toBe(false);
-    expect(canAccessFeature(undefined, "essay_feedback")).toBe(false);
-  });
-
-  it("denies access for free-tier users", () => {
-    expect(canAccessFeature({ subscription_tier: "free" }, "essay_feedback")).toBe(false);
-  });
-
-  it("grants access for premium users", () => {
-    expect(canAccessFeature({ subscription_tier: "premium" }, "essay_feedback")).toBe(true);
-  });
-});
+import { canRegenerate, isCounselor, weekStart, FREE_REGENERATION_WEEKLY_LIMIT } from "./access";
 
 describe("isCounselor", () => {
   it("denies null/undefined users", () => {
@@ -47,19 +32,15 @@ describe("weekStart", () => {
 });
 
 describe("canRegenerate (regeneration cap enforcement)", () => {
-  it("blocks free users at the weekly limit", () => {
-    expect(canRegenerate({ subscription_tier: "free" }, FREE_REGENERATION_WEEKLY_LIMIT)).toBe(false);
+  it("blocks at the weekly limit", () => {
+    expect(canRegenerate(FREE_REGENERATION_WEEKLY_LIMIT)).toBe(false);
   });
 
-  it("blocks free users beyond the weekly limit", () => {
-    expect(canRegenerate({ subscription_tier: "free" }, FREE_REGENERATION_WEEKLY_LIMIT + 5)).toBe(false);
+  it("blocks beyond the weekly limit", () => {
+    expect(canRegenerate(FREE_REGENERATION_WEEKLY_LIMIT + 5)).toBe(false);
   });
 
-  it("allows free users under the weekly limit", () => {
-    expect(canRegenerate({ subscription_tier: "free" }, FREE_REGENERATION_WEEKLY_LIMIT - 1)).toBe(true);
-  });
-
-  it("never blocks premium users regardless of count", () => {
-    expect(canRegenerate({ subscription_tier: "premium" }, 999)).toBe(true);
+  it("allows under the weekly limit", () => {
+    expect(canRegenerate(FREE_REGENERATION_WEEKLY_LIMIT - 1)).toBe(true);
   });
 });

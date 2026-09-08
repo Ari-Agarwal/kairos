@@ -84,8 +84,7 @@ export default async function TimelinePage() {
 
   if (jobError) console.error("timeline generation_jobs query failed:", jobError);
 
-  const isPremium = profile.subscription_tier === "premium";
-  const remaining = isPremium ? null : Math.max(0, 3 - (regenRow?.timeline_count ?? 0));
+  const remaining = Math.max(0, 3 - (regenRow?.timeline_count ?? 0));
   const youAreHereId = items ? computeYouAreHere(items as TimelineItem[]) : null;
 
   // Check-in streak (Software_Timeline.md 6b) -- weekly, not daily, since a
@@ -110,7 +109,6 @@ export default async function TimelinePage() {
     <NavShell>
       <TimelineClient
         items={items ?? []}
-        isPremium={isPremium}
         youAreHereId={youAreHereId}
         remaining={remaining}
         initialJobStatus={job?.status === "pending" ? "pending" : null}

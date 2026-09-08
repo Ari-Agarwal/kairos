@@ -214,11 +214,6 @@ export default function FeaturePrepFlow({
         {error && (
           <div>
             <p role="alert" className="text-red text-sm">{error}</p>
-            {error.toLowerCase().includes("upgrade to premium") && (
-              <Link href="/upgrade" className="text-primary text-sm hover:text-primary-hover underline underline-offset-2">
-                See Premium plans →
-              </Link>
-            )}
           </div>
         )}
 

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAnthropic, MODEL, ESSAY_BRAINSTORM_PROMPT, extractJson } from "@/lib/anthropic";
 import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
-import { canAccessFeature } from "@/lib/access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
 import { isTrustedOrigin } from "@/lib/origin-check";
@@ -22,17 +21,13 @@ export async function POST(req: Request) {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("subscription_tier, grade_level, unweighted_gpa, intended_major, interests, extracurriculars")
+    .select("grade_level, unweighted_gpa, intended_major, interests, extracurriculars")
     .eq("user_id", user.id)
     .single();
 
   if (profileError) {
     console.error("essay brainstorm profile query failed:", profileError);
     return NextResponse.json({ error: "Failed to load profile" }, { status: 500 });
-  }
-
-  if (!canAccessFeature(profile, "essay_feedback")) {
-    return NextResponse.json({ error: "Essay feedback is a Premium feature." }, { status: 403 });
   }
 
   let supplementPrompt: string;

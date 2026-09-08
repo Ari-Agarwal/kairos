@@ -66,13 +66,11 @@ interface Logo {
 export default function MatchListClient({
   initialMatches,
   remaining,
-  isPremium,
   logos = {},
   studentName = null,
 }: {
   initialMatches: Match[];
-  remaining: number | null;
-  isPremium: boolean;
+  remaining: number;
   logos?: Record<string, Logo | null>;
   studentName?: string | null;
 }) {
@@ -376,7 +374,7 @@ export default function MatchListClient({
   const autoTriggered = useRef(false);
   const wasEmptyOnFirstLoad = useRef(matches.length === 0);
   useEffect(() => {
-    if (matches.length === 0 && !autoTriggered.current && (isPremium || remaining !== 0)) {
+    if (matches.length === 0 && !autoTriggered.current && remaining !== 0) {
       autoTriggered.current = true;
       setShowConfirm(true);
     }
@@ -464,19 +462,21 @@ export default function MatchListClient({
 
   return (
     <div className="px-5 md:px-8 py-8 max-w-3xl mx-auto w-full">
-      <p className="text-text-gray text-xs mb-3 flex items-center gap-1.5">
-        Tap any card to see the school&apos;s info, percentage breakdown, and career path.
-        <InfoTooltip
-          label="What do reach/target/safety mean?"
-          text="Reach: admission is uncertain even for a strong applicant. Target: your stats are in line with typically-admitted students. Safety: admission is likely based on your stats. These are estimates, not guarantees."
-        />
-      </p>
+      {matches.length > 0 && (
+        <p className="text-text-gray text-xs mb-3 flex items-center gap-1.5">
+          Tap any card to see the school&apos;s info, percentage breakdown, and career path.
+          <InfoTooltip
+            label="What do reach/target/safety mean?"
+            text="Reach: admission is uncertain even for a strong applicant. Target: your stats are in line with typically-admitted students. Safety: admission is likely based on your stats. These are estimates, not guarantees."
+          />
+        </p>
+      )}
 
       <div className="flex items-center justify-between mb-3 mt-3">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowConfirm((v) => !v)}
-            disabled={!isPremium && remaining === 0}
+            disabled={remaining === 0}
             className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {matches.length === 0 ? "Generate List" : "Regenerate List"}
@@ -509,9 +509,11 @@ export default function MatchListClient({
             </button>
           )}
         </div>
-        <span className="text-text-gray text-xs">
-          {isPremium ? "Unlimited regenerations" : `${remaining} regeneration${remaining === 1 ? "" : "s"} left this week`}
-        </span>
+        {matches.length > 0 && (
+          <span className="text-text-gray text-xs">
+            {`${remaining} regeneration${remaining === 1 ? "" : "s"} left this week`}
+          </span>
+        )}
       </div>
 
       {compareMode && (
@@ -668,14 +670,15 @@ export default function MatchListClient({
 
       {showConfirm && (
         <div className="mb-6 rounded-xl border border-border bg-card px-4 py-3">
-          <p className="text-text text-sm mb-3">Are you ready to generate accurate college matches?</p>
+          <p className="text-text text-sm font-medium mb-1">
+            {matches.length === 0 ? "Build your college list" : "Regenerate your college list"}
+          </p>
+          <p className="text-text-gray text-sm mb-3">
+            {matches.length === 0
+              ? "We'll ask a few quick questions, then build a reach/target/safety list based on your profile. You can edit, lock, or remove any school afterward."
+              : "We'll ask what should change, then rebuild your list. Schools you've locked stay untouched."}
+          </p>
           <div className="flex gap-2">
-            <button
-              onClick={() => setShowConfirm(false)}
-              className="rounded-xl border border-border text-text-gray hover:text-text text-sm px-3 py-1.5 transition-colors"
-            >
-              Not yet
-            </button>
             <button
               onClick={() => {
                 // Only snapshot when a prior list actually exists -- on a
@@ -1032,14 +1035,8 @@ export default function MatchListClient({
                       </span>
                     </div>
                   )}
-                  {!m.is_manual && (
-                    <p className="text-text-gray/70 text-xs mt-2">
-                      Based on your GPA, course rigor, ECs, major &amp; social fit, {" "}
-                      <Link href="/methodology" className="underline underline-offset-2 hover:text-text-gray pointer-events-auto">
-                        how this is calculated
-                      </Link>
-                      {m.confidence && ` · ${CONFIDENCE_LABEL[m.confidence]}`}
-                    </p>
+                  {!m.is_manual && m.confidence && (
+                    <p className="text-text-gray/70 text-xs mt-2">{CONFIDENCE_LABEL[m.confidence]}</p>
                   )}
                   {!m.is_manual && m.merit_aid_likelihood && (
                     <p className="text-text-gray/70 text-xs mt-1">{MERIT_AID_LABEL[m.merit_aid_likelihood]}</p>
@@ -1057,13 +1054,15 @@ export default function MatchListClient({
         )}
       </div>
 
-      <p className="text-text-gray text-xs mt-6">
-        AI-generated estimates based on your profile and general acceptance data, not a
-        guarantee of admission.{" "}
-        <Link href="/methodology" className="underline underline-offset-2 hover:text-text transition-colors">
-          How is this calculated?
-        </Link>
-      </p>
+      {matches.length > 0 && (
+        <p className="text-text-gray text-xs mt-6">
+          Based on what we know for you today, treat reach/target/safety as a starting shape for
+          your list, not a final verdict, update your profile as things change and regenerate.{" "}
+          <Link href="/methodology" className="underline underline-offset-2 hover:text-text transition-colors">
+            How is this calculated?
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

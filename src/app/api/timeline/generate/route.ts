@@ -93,9 +93,9 @@ export async function POST(req: Request) {
   if (regenRowError) console.error("timeline generate regeneration_log query failed:", regenRowError);
 
   const currentCount = regenRow?.timeline_count ?? 0;
-  if (!canRegenerate(profile, currentCount)) {
+  if (!canRegenerate(currentCount)) {
     return NextResponse.json(
-      { error: "Weekly timeline regeneration limit reached. Upgrade to Premium for unlimited regenerations." },
+      { error: "Weekly timeline regeneration limit reached. Try again next week." },
       { status: 403 }
     );
   }
@@ -194,7 +194,13 @@ ${confirmedMatches
       try {
         const response = await getAnthropic().messages.create({
           model: MODEL,
-          max_tokens: 6144,
+          // Raised from 6144: the logistics prompt now requires a deadline
+          // item covering every matched school (previously capped at 8 items
+          // total, which could silently drop schools off a long match list),
+          // so a student with many matches needs more room before truncating.
+          // 8192 still truncated for a 9-school list with adaptive thinking's
+          // token overhead, so this goes further still.
+          max_tokens: 16000,
           thinking: { type: "adaptive" },
           // "medium" rather than "high" -- cuts per-call wall time substantially
           // (this is the dominant cost in the 60s Vercel duration budget) at the

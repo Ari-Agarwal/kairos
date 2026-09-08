@@ -81,14 +81,6 @@ function formatClusterDate(iso: string): string {
   return new Date(iso + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-// Usage-based upsell trigger (Software_Timeline.md 6c): hitting the regen
-// cap is a natural, non-annoying moment to surface /upgrade -- the API
-// error message already says "Upgrade to Premium," but it was rendered as
-// plain text with no actual link.
-function isRegenCapError(message: string): boolean {
-  return message.toLowerCase().includes("upgrade to premium");
-}
-
 function formatDue(due: string): string {
   const d = new Date(`${due}T00:00:00`);
   if (Number.isNaN(d.getTime())) return due;
@@ -97,16 +89,14 @@ function formatDue(due: string): string {
 
 export default function TimelineClient({
   items: initialItems,
-  isPremium,
   youAreHereId,
   remaining,
   initialJobStatus,
   checkinStreakWeeks,
 }: {
   items: TimelineItem[];
-  isPremium: boolean;
   youAreHereId: string | null;
-  remaining: number | null;
+  remaining: number;
   initialJobStatus: "pending" | null;
   checkinStreakWeeks: number;
 }) {
@@ -224,7 +214,7 @@ export default function TimelineClient({
     setSavingEdit(false);
   }
 
-  const regenDisabled = !isPremium && remaining === 0;
+  const regenDisabled = remaining === 0;
 
   function handleGenerate() {
     router.push("/timeline/prep");
@@ -313,16 +303,11 @@ export default function TimelineClient({
         <p className="font-serif text-xl text-text mb-1">Your path isn&apos;t charted yet.</p>
         <p className="text-text-gray text-sm mb-1">Generate a timeline to map out every step ahead.</p>
         <p className="text-text-gray text-xs mb-4">
-          {isPremium ? "Unlimited regenerations" : `${remaining} regeneration${remaining === 1 ? "" : "s"} left this week`}
+          {`${remaining} regeneration${remaining === 1 ? "" : "s"} left this week`}
         </p>
         {jobError && (
           <div className="mb-3">
             <p role="alert" className="text-red text-sm">{jobError}</p>
-            {isRegenCapError(jobError) && (
-              <Link href="/upgrade" className="text-primary text-sm hover:text-primary-hover underline underline-offset-2">
-                See Premium plans →
-              </Link>
-            )}
           </div>
         )}
         <button
@@ -357,11 +342,6 @@ export default function TimelineClient({
       {jobError && (
         <div className="mb-5 rounded-xl border border-red/30 bg-red-tint px-4 py-3">
           <p className="text-red text-sm">{jobError}</p>
-          {isRegenCapError(jobError) && (
-            <Link href="/upgrade" className="text-primary text-sm hover:text-primary-hover underline underline-offset-2">
-              See Premium plans →
-            </Link>
-          )}
         </div>
       )}
       <div className="flex items-center justify-between mb-1">
@@ -406,7 +386,7 @@ export default function TimelineClient({
           )}
         </p>
         <p className="text-text-gray text-xs">
-          {isPremium ? "Unlimited regenerations" : `${remaining} regen${remaining === 1 ? "" : "s"} left`}
+          {`${remaining} regen${remaining === 1 ? "" : "s"} left`}
         </p>
       </div>
       <div className="mb-7 h-1 w-full overflow-hidden rounded-full bg-border/60">
@@ -483,7 +463,6 @@ export default function TimelineClient({
         {items.map((item, i) => {
           const isHere = item.id === youAreHereId;
           const traveled = item.completed || (hereIndex !== -1 && i < hereIndex);
-          const locked = item.is_strategic && !isPremium;
           return (
             <motion.div
               key={item.id}
@@ -537,13 +516,13 @@ export default function TimelineClient({
                   isHere
                     ? "bg-card border-primary/40 shadow-[0_0_24px_-8px_var(--amber-glow-shadow)]"
                     : item.is_strategic
-                    ? "bg-premium-tint border-dashed border-premium hover:border-premium"
+                    ? "bg-secondary-tint border-dashed border-secondary hover:border-secondary"
                     : "bg-card border-border hover:border-primary/40"
                 }`}
               >
                 {editingId !== item.id && (
                   <Link
-                    href={locked ? "/upgrade" : `/timeline/${item.id}`}
+                    href={`/timeline/${item.id}`}
                     className="absolute inset-0 rounded-2xl"
                     aria-label={`View ${item.title} details`}
                   />
@@ -584,8 +563,8 @@ export default function TimelineClient({
                   </div>
                 ) : (
                 <div className="pointer-events-none">
-                  <div className={`flex items-center justify-between mb-1.5 ${editing ? "pr-24" : ""}`}>
-                    <div className="flex items-center gap-2 min-w-0">
+                  <div className={`flex items-start justify-between gap-2 mb-1.5 ${editing ? "pr-24" : ""}`}>
+                    <div className="flex items-start gap-2 min-w-0">
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -594,17 +573,17 @@ export default function TimelineClient({
                         }}
                         aria-label={item.completed ? "Mark incomplete" : "Mark complete"}
                         aria-pressed={item.completed}
-                        className={`pointer-events-auto shrink-0 w-4 h-4 rounded-full border-2 transition-[transform,background-color,border-color] duration-200 ease-out motion-reduce:transition-colors ${
+                        className={`pointer-events-auto shrink-0 mt-1 w-4 h-4 rounded-full border-2 transition-[transform,background-color,border-color] duration-200 ease-out motion-reduce:transition-colors ${
                           item.completed ? "bg-text-gray border-text-gray" : "border-border hover:border-primary"
                         } ${celebrateItemId === item.id ? "scale-125 motion-reduce:scale-100" : "scale-100"}`}
                       />
-                      <p className={`font-medium text-[15px] truncate ${item.completed ? "text-text-gray line-through" : "text-text"}`}>
+                      <p className={`font-medium text-[15px] leading-snug ${item.completed ? "text-text-gray line-through" : "text-text"}`}>
                         {item.title}
                       </p>
                     </div>
                     {item.is_strategic && (
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-premium text-bg shrink-0 ml-2">
-                        PREMIUM
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary-tint text-secondary shrink-0">
+                        STRATEGIC
                       </span>
                     )}
                   </div>
@@ -633,32 +612,7 @@ export default function TimelineClient({
                       You are here
                     </p>
                   )}
-                  {locked ? (
-                    <>
-                      <p className="text-text-gray text-sm leading-relaxed">
-                        <span>{item.why_text.split(" ").slice(0, 6).join(" ")} </span>
-                        <span className="blur-[3px] select-none">
-                          {item.why_text.split(" ").slice(6).join(" ")}
-                        </span>
-                      </p>
-                      <p className="text-premium text-xs italic mt-1.5">Unlock Premium to see the rest</p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-text-gray text-sm">{item.why_text}</p>
-                      {item.why_text !== "Added manually by you." && (
-                        <p className="text-text-gray/70 text-xs mt-1.5">
-                          Based on your saved schools &amp; deadline data, {" "}
-                          <Link
-                            href="/methodology"
-                            className="underline underline-offset-2 hover:text-text-gray pointer-events-auto"
-                          >
-                            how this is calculated
-                          </Link>
-                        </p>
-                      )}
-                    </>
-                  )}
+                  <p className="text-text-gray text-sm">{item.why_text}</p>
                 </div>
                 )}
               </div>
@@ -666,6 +620,12 @@ export default function TimelineClient({
           );
         })}
       </div>
+      <p className="text-text-gray text-xs mt-6">
+        Deadlines and priorities are based on your saved schools and profile data.{" "}
+        <Link href="/methodology" className="underline underline-offset-2 hover:text-text transition-colors">
+          How is this calculated?
+        </Link>
+      </p>
       {celebrationMessage && (
         <motion.div
           initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}

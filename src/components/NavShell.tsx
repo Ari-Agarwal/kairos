@@ -9,7 +9,6 @@ import {
   Target,
   CalendarClock,
   PenLine,
-  Crown,
   Info,
   ChevronDown,
   PanelLeftClose,
@@ -33,7 +32,6 @@ const TABS = [
   { href: "/matches", label: "Matches", icon: Target },
   { href: "/timeline", label: "Timeline", icon: CalendarClock },
   { href: "/essay-feedback", label: "Essay", icon: PenLine },
-  { href: "/upgrade", label: "Upgrade", icon: Crown },
   { href: "/about", label: "About", icon: Info },
 ];
 
@@ -68,10 +66,7 @@ const DESKTOP_NAV_GROUPS: { label: string | null; items: typeof TABS }[] = [
   },
   {
     label: null,
-    items: [
-      { href: "/upgrade", label: "Upgrade", icon: Crown },
-      { href: "/about", label: "About", icon: Info },
-    ],
+    items: [{ href: "/about", label: "About", icon: Info }],
   },
 ];
 

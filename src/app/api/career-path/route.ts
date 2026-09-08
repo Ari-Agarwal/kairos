@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getAnthropic, MODEL, extractJson } from "@/lib/anthropic";
 import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
-import { canAccessFeature } from "@/lib/access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
 import { isTrustedOrigin } from "@/lib/origin-check";
@@ -49,10 +48,6 @@ export async function POST(req: Request) {
     console.error("career-path profile query failed:", profileError);
     return NextResponse.json({ error: "Failed to load profile" }, { status: 500 });
   }
-  if (!canAccessFeature(profile, "career_path_explorer")) {
-    return NextResponse.json({ error: "Career Path is a Premium feature." }, { status: 403 });
-  }
-
   let schoolName: string;
   let regenFeedback: string | undefined;
   let majorOverride: string[] | undefined;

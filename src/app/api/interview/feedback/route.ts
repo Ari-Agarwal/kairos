@@ -5,7 +5,6 @@ import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
 import { isTrustedOrigin } from "@/lib/origin-check";
-import { canAccessFeature } from "@/lib/access";
 import { containsCrisisLanguage, getCrisisResource } from "@/lib/crisis-check";
 
 interface InterviewFeedback {
@@ -45,15 +44,6 @@ export async function POST(req: Request) {
 
   if (!(await checkRateLimit(supabase, `interview-feedback:${user.id}`, 15, 60_000)).ok) {
     return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
-  }
-
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("subscription_tier").eq("user_id", user.id).single();
-  if (profileError) {
-    console.error("interview feedback profile query failed:", profileError);
-    return NextResponse.json({ error: "Failed to load profile" }, { status: 500 });
-  }
-  if (!canAccessFeature(profile, "mock_interview")) {
-    return NextResponse.json({ error: "Mock Interview is a Premium feature." }, { status: 403 });
   }
 
   const VALID_CATEGORIES = ["General", "Why This School", "Behavioral", "Extracurricular", "Other"];

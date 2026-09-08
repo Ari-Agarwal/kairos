@@ -11,7 +11,7 @@ export default async function RecommendersPage() {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("subscription_tier")
+    .select("user_id")
     .eq("user_id", user.id)
     .maybeSingle();
   if (profileError) console.error("recommenders profile query failed:", profileError);

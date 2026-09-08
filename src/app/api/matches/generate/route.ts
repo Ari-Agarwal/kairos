@@ -178,9 +178,9 @@ export async function POST(req: Request) {
 
   const currentCount = regenRow?.count ?? 0;
 
-  if (!canRegenerate(profile, currentCount)) {
+  if (!canRegenerate(currentCount)) {
     return NextResponse.json(
-      { error: "Weekly regeneration limit reached. Upgrade to Premium for unlimited regenerations." },
+      { error: "Weekly regeneration limit reached. Try again next week." },
       { status: 403 }
     );
   }

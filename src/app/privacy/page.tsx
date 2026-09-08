@@ -108,10 +108,6 @@ export default function PrivacyPage() {
               with row-level security limiting every record to you.
             </li>
             <li>
-              <span className="text-text">Stripe</span>, if you upgrade to Premium, processes the
-              payment; we never see or store your card number.
-            </li>
-            <li>
               <span className="text-text">Resend</span>, sends your welcome email.
             </li>
             <li>

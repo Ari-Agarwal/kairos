@@ -45,8 +45,7 @@ export default async function MatchesPage() {
 
   if (regenRowError) console.error("matches regeneration_log query failed:", regenRowError);
 
-  const isPremium = profile.subscription_tier === "premium";
-  const remaining = isPremium ? null : Math.max(0, 3 - (regenRow?.count ?? 0));
+  const remaining = Math.max(0, 3 - (regenRow?.count ?? 0));
 
   // Match-list cards show the school's logo, not a photo (Software_Timeline.md
   // QA item: the previous photo slot never loaded -- the page's CSP silently
@@ -65,7 +64,6 @@ export default async function MatchesPage() {
       <MatchListClient
         initialMatches={matches ?? []}
         remaining={remaining}
-        isPremium={isPremium}
         logos={logos}
         studentName={studentName}
       />

@@ -11,10 +11,9 @@ export default function TermsPage() {
           <h2 className="text-text font-medium mb-2">1. What Kairos is</h2>
           <p>
             Kairos is a free web platform that gives high school students AI-generated college
-            admissions guidance: school match estimates, an application timeline, and (for
-            Premium subscribers) essay feedback and career path information. Kairos is a
-            planning aid, not a substitute for a licensed counselor, and does not guarantee
-            admission to any school.
+            admissions guidance: school match estimates, an application timeline, essay
+            feedback, and career path information. Kairos is a planning aid, not a substitute
+            for a licensed counselor, and does not guarantee admission to any school.
           </p>
         </section>
         <section>
@@ -42,21 +41,14 @@ export default function TermsPage() {
           </p>
         </section>
         <section>
-          <h2 className="text-text font-medium mb-2">5. Premium subscriptions</h2>
-          <p>
-            Premium is billed monthly or annually through Stripe. You can cancel at any time;
-            your Premium access continues until the end of the current billing period.
-          </p>
-        </section>
-        <section>
-          <h2 className="text-text font-medium mb-2">6. Acceptable use</h2>
+          <h2 className="text-text font-medium mb-2">5. Acceptable use</h2>
           <p>
             Don&apos;t submit content that is unlawful, abusive, or that infringes someone else&apos;s
             rights. We may suspend accounts that misuse the service.
           </p>
         </section>
         <section>
-          <h2 className="text-text font-medium mb-2">7. Disclaimer and limitation of liability</h2>
+          <h2 className="text-text font-medium mb-2">6. Disclaimer and limitation of liability</h2>
           <p>
             Kairos is provided &quot;as is&quot; without warranties of any kind. We are not liable for
             admissions outcomes, missed deadlines, or decisions made based on Kairos&apos;s
@@ -64,14 +56,14 @@ export default function TermsPage() {
           </p>
         </section>
         <section>
-          <h2 className="text-text font-medium mb-2">8. Changes</h2>
+          <h2 className="text-text font-medium mb-2">7. Changes</h2>
           <p>
             We may update these terms as the product changes. Continued use after an update
             means you accept the revised terms.
           </p>
         </section>
         <section>
-          <h2 className="text-text font-medium mb-2">9. Contact</h2>
+          <h2 className="text-text font-medium mb-2">8. Contact</h2>
           <p>Questions about these terms can be sent to the contact address listed on our homepage.</p>
         </section>
       </div>

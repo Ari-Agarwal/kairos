@@ -1,10 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Lock } from "lucide-react";
 import NavShell from "@/components/NavShell";
-import { canAccessFeature } from "@/lib/access";
-import LockedCard from "../essay-feedback/LockedCard";
 import CareerPathClient from "./CareerPathClient";
 import { getCollegePhoto } from "@/lib/college-photo";
 
@@ -22,7 +18,7 @@ export default async function CareerPathPage({
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("subscription_tier, intended_major")
+    .select("intended_major")
     .eq("user_id", user.id)
     .maybeSingle();
   if (profileError) console.error("career-path profile query failed:", profileError);
@@ -36,14 +32,12 @@ export default async function CareerPathPage({
     .order("school_name");
   if (matchesError) console.error("career-path matches query failed:", matchesError);
 
-  const isPremium = canAccessFeature({ subscription_tier: profile.subscription_tier }, "career_path_explorer");
-
   // Same primary Wikipedia photo used on Matches, here keyed by school name
   // (not match id) since Career Path's compare view also accepts free-typed
   // custom school names that don't have a match row.
-  const photoEntries = isPremium
-    ? await Promise.all((matches ?? []).map(async (m) => [m.school_name, await getCollegePhoto(m.school_name)] as const))
-    : [];
+  const photoEntries = await Promise.all(
+    (matches ?? []).map(async (m) => [m.school_name, await getCollegePhoto(m.school_name)] as const)
+  );
   const photos = Object.fromEntries(photoEntries);
 
   return (
@@ -55,29 +49,12 @@ export default async function CareerPathPage({
           school, not just one match at a time.
         </p>
 
-        {!isPremium ? (
-          <LockedCard>
-            <Lock className="text-premium w-7 h-7 mx-auto mb-2" />
-            <p className="text-text font-medium mb-1">Career Path is a Premium feature</p>
-            <p className="text-text-gray text-sm mb-4">
-              See typical internships, employer types, and salary patterns for your major at any
-              school you&apos;re considering.
-            </p>
-            <Link
-              href="/upgrade"
-              className="inline-block rounded-xl bg-premium hover:opacity-90 transition-opacity text-bg font-medium px-5 py-2.5"
-            >
-              See Premium Plans
-            </Link>
-          </LockedCard>
-        ) : (
-          <CareerPathClient
-            matches={matches ?? []}
-            intendedMajor={profile.intended_major}
-            preselectedSchool={preselectedSchool ?? null}
-            photos={photos}
-          />
-        )}
+        <CareerPathClient
+          matches={matches ?? []}
+          intendedMajor={profile.intended_major}
+          preselectedSchool={preselectedSchool ?? null}
+          photos={photos}
+        />
       </div>
     </NavShell>
   );

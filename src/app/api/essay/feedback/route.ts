@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAnthropic, MODEL, PROMPT_VERSION, ESSAY_FEEDBACK_PROMPT, ESSAY_RUBRIC_PROMPT, extractJson } from "@/lib/anthropic";
 import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
-import { canAccessFeature } from "@/lib/access";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireString, rejectScriptTags, ValidationError } from "@/lib/validate";
 import { isTrustedOrigin } from "@/lib/origin-check";
@@ -39,15 +38,6 @@ export async function POST(req: Request) {
 
   if (!(await checkRateLimit(supabase, `essay:${user.id}`, 5, 60_000)).ok) {
     return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
-  }
-
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("subscription_tier").eq("user_id", user.id).single();
-  if (profileError) {
-    console.error("essay feedback profile query failed:", profileError);
-    return NextResponse.json({ error: "Failed to load profile" }, { status: 500 });
-  }
-  if (!canAccessFeature(profile, "essay_feedback")) {
-    return NextResponse.json({ error: "Essay feedback is a Premium feature." }, { status: 403 });
   }
 
   let essay: string;

@@ -75,8 +75,12 @@ export default function MatchesPrepClient({
   return (
     <FeaturePrepFlow
       backHref="/matches"
-      heading="Let's refine your matches"
-      subheading="A few quick questions, then we'll generate your list."
+      heading={isRegenerate ? "Let's refine your matches" : "A few questions first"}
+      subheading={
+        isRegenerate
+          ? "Tell us what should change, then we'll rebuild your list."
+          : "The more we know, the more accurate your matches will be. This takes about a minute."
+      }
       inlineFields={inlineFields}
       linkOutFields={linkOutFields}
       feedbackQuestion={isRegenerate ? "What should change from your last list?" : "What are you looking for?"}

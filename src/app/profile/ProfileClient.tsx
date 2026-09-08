@@ -34,7 +34,6 @@ interface Profile {
   current_school: string;
   extracurriculars: string[] | null;
   schools_already_considering: string | null;
-  subscription_tier: string;
   campus_size_pref: string[] | null;
   campus_setting_pref: string[] | null;
   sat_score: number | null;
@@ -873,7 +872,7 @@ export default function ProfileClient({
           <p className="text-text font-medium text-sm mb-1">Accent color</p>
           <p className="text-text-gray text-xs mb-3">
             Make Kairos feel a little more yours. This only changes the accent shade, tier
-            colors, alerts, and premium stay exactly where they are.
+            colors and alerts stay exactly where they are.
           </p>
           <div className="flex gap-3">
             {ACCENT_COLORS.map((c) => (

@@ -1,24 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type FeatureKey =
-  | "career_path_explorer"
-  | "essay_feedback"
-  | "activity_evaluation"
-  | "unlimited_regenerations"
-  | "strategic_timeline_advice"
-  | "mock_interview";
-
-export interface AccessUser {
-  subscription_tier: "free" | "premium";
-}
-
-// featureKey is intentionally ignored, all premium features gate on subscription_tier only for MVP
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function canAccessFeature(user: AccessUser | null | undefined, featureKey: FeatureKey): boolean {
-  if (!user) return false;
-  return user.subscription_tier === "premium";
-}
-
 export interface CounselorUser {
   role: "counselor" | "student";
 }
@@ -38,8 +19,7 @@ export function weekStart(now: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function canRegenerate(user: AccessUser | null | undefined, currentWeekCount: number): boolean {
-  if (canAccessFeature(user, "unlimited_regenerations")) return true;
+export function canRegenerate(currentWeekCount: number): boolean {
   return currentWeekCount < FREE_REGENERATION_WEEKLY_LIMIT;
 }
 

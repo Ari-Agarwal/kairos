@@ -4,7 +4,6 @@ import { getAnthropic, MODEL, extractJson, INTERVIEW_QUESTION_PROMPT } from "@/l
 import { logAiUsage, flagAnomalousUsage } from "@/lib/ai-usage-log";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isTrustedOrigin } from "@/lib/origin-check";
-import { canAccessFeature } from "@/lib/access";
 import { rejectScriptTags } from "@/lib/validate";
 import { getSchoolInterviewPattern } from "@/lib/interview-patterns";
 
@@ -33,13 +32,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Too many requests. Please wait a moment and try again." }, { status: 429 });
   }
 
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("intended_major, career_goals, subscription_tier").eq("user_id", user.id).single();
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("intended_major, career_goals").eq("user_id", user.id).single();
   if (!profile) {
     if (profileError) console.error("interview/question profile lookup failed:", profileError);
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
-  }
-  if (!canAccessFeature(profile, "mock_interview")) {
-    return NextResponse.json({ error: "Mock Interview is a Premium feature." }, { status: 403 });
   }
 
   let category: Category = "General";
