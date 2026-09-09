@@ -29,7 +29,11 @@ export default async function EssayFeedbackPage() {
           <ArrowLeft className="w-4 h-4" />
           Back
         </Link>
-        <h1 className="font-serif text-2xl text-text mb-6">Essay &amp; Supplemental Feedback</h1>
+        <h1 className="font-serif text-2xl text-text mb-2">Essay &amp; Supplemental Feedback</h1>
+        <p className="text-text-gray text-sm mb-6">
+          Paste a draft to get specific, line-level feedback, or switch to Brainstorm Angles if you
+          haven&apos;t started writing yet and want ideas grounded in your profile.
+        </p>
 
         <EssayFeedbackClient />
       </div>

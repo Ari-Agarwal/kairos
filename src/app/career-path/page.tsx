@@ -45,8 +45,9 @@ export default async function CareerPathPage({
       <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
         <h1 className="font-serif text-2xl text-text mb-1">Career Path</h1>
         <p className="text-text-gray text-sm mb-6">
-          Typical internships, employer types, and salary patterns for your intended major, at any
-          school, not just one match at a time.
+          See what careers your intended major typically leads to at a given school: common internships,
+          employer types, and salary ranges. Pick any school on your list or type in any school you&apos;re
+          curious about.
         </p>
 
         <CareerPathClient

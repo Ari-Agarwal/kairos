@@ -263,21 +263,6 @@ export default function CareerPathClient({
         />
       )}
 
-      {/* Software_Timeline.md QA item: the old per-school "Compare schools"
-          box (wall-of-text summaries side by side) is replaced with an
-          essay-help box -- a shortcut into Essay Feedback, since that's the
-          more useful next step from this page than a text-heavy comparison. */}
-      <Link
-        href="/essay-feedback"
-        className="block bg-card border border-border rounded-2xl p-5 mb-6 hover:border-primary/50 transition-colors"
-      >
-        <p className="text-text font-medium text-sm mb-1">Need help with an essay?</p>
-        <p className="text-text-gray text-xs leading-relaxed">
-          Get AI feedback on a draft, or brainstorm essay angles grounded in your actual profile.{" "}
-          <span className="text-primary">Go to Essay Feedback →</span>
-        </p>
-      </Link>
-
       <div className="bg-card border border-border rounded-2xl p-5 mb-6 space-y-3">
         {matches.length > 0 && (
           <div className="flex gap-2 mb-1">
@@ -433,6 +418,19 @@ export default function CareerPathClient({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {careerPath && (
+        <Link
+          href="/essay-feedback"
+          className="block bg-card border border-border rounded-2xl p-5 mt-6 hover:border-primary/50 transition-colors"
+        >
+          <p className="text-text font-medium text-sm mb-1">Working on an essay for this school?</p>
+          <p className="text-text-gray text-xs leading-relaxed">
+            Get AI feedback on a draft, or brainstorm angles grounded in your actual profile.{" "}
+            <span className="text-primary">Go to Essay Feedback →</span>
+          </p>
+        </Link>
+      )}
     </div>
   );
 }

@@ -289,16 +289,16 @@ export default function MockInterviewClient() {
           {showHistory ? "Hide History" : "History"}
         </button>
       </div>
-      <p className="text-text-gray text-sm mb-2 leading-relaxed">
-        Practice answering a real admissions interview question out loud, then get direct feedback.
-      </p>
-      <p className="text-text-gray text-xs mb-2 leading-relaxed">
-        Your voice is converted to text entirely in your browser, audio is never sent to or stored
-        on our servers, only the text you see below.{!speechSupported && " Voice input isn't supported in this browser; type your answer instead."}
-        {recordingSupported && " If you allow camera/mic access, we'll also keep a recording for you to play back, it stays on your device for this session only and is never uploaded."}
+      <p className="text-text-gray text-sm mb-3 leading-relaxed">
+        Practice answering a real admissions interview question out loud, then get direct feedback on
+        what to keep and what to tighten.
       </p>
       <p className="text-text-gray text-xs mb-6 leading-relaxed">
-        Questions and feedback are AI-generated (sent to our AI provider, Anthropic), a starting point for practice, not a verdict on a real interview.
+        Questions and feedback are AI-generated, a starting point for practice, not a verdict on a
+        real interview.{" "}
+        {speechSupported
+          ? `Voice is converted to text in your browser${recordingSupported ? " and, if you allow camera/mic access, we'll also save a local recording for you to play back (it stays on your device only, never uploaded)" : ""} — only the text is sent to our AI provider.`
+          : "Voice input isn't supported in this browser; type your answer instead. Text is sent to our AI provider (Anthropic) to generate feedback."}
       </p>
 
       {showHistory && (

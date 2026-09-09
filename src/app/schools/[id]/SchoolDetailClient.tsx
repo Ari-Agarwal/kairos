@@ -350,8 +350,11 @@ export default function SchoolDetailClient({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: EASE }}
           >
-            <p className="text-text-gray text-sm mb-4">
-              How we calculated <span className="text-text font-medium">{match.percentage}%</span>
+            <p className="text-text-gray text-sm mb-1">
+              Your estimated match score: <span className="text-text font-medium">{match.percentage}%</span>
+            </p>
+            <p className="text-text-gray text-xs mb-4">
+              This is how well your profile lines up with what this school typically admits, based on the five factors below. It&apos;s a directional signal, not a prediction of your actual admissions outcome.
             </p>
             <div className="space-y-6">
               {Object.entries(FACTOR_LABELS).map(([key, label], i) => {
