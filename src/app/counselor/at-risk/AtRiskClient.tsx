@@ -115,7 +115,7 @@ export default function AtRiskClient({ students: initialStudents }: { students: 
         <InfoTooltip text="Severity weights how cold a student's engagement is: never logged in counts most, then long inactivity, then having no active matches, then overdue timeline items and an incomplete profile (each worth less, and additive). Higher severity means more of these reasons stacked at once." />
       </h1>
       <p className="text-text-gray text-sm mb-6">
-        Students with overdue deadlines, no active matches, or extended inactivity, worth a check-in.
+        Students whose engagement signals are cold enough to warrant outreach. Each card shows exactly which criteria triggered the flag.
       </p>
 
       {visible.length === 0 ? (

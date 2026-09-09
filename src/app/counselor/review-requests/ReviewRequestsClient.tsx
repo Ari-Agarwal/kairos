@@ -12,7 +12,7 @@ interface ReviewRequest {
 
 const STATUS_STYLES: Record<ReviewRequest["status"], string> = {
   pending: "bg-amber-tint text-amber-text-on-tint",
-  in_progress: "bg-premium/10 text-premium",
+  in_progress: "bg-secondary-tint text-secondary",
   completed: "bg-green-tint text-green",
 };
 
@@ -57,7 +57,7 @@ export default function ReviewRequestsClient({ initialRequests }: { initialReque
 
   return (
     <div className="px-5 md:px-8 py-10 max-w-3xl mx-auto w-full">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="font-serif text-2xl text-text">Review Requests</h1>
         {pendingCount > 0 && (
           <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-tint text-amber-text-on-tint">
@@ -66,9 +66,23 @@ export default function ReviewRequestsClient({ initialRequests }: { initialReque
         )}
       </div>
 
+      {/* Human Review is shelved -- the student-facing entry point has been
+          disabled and redirects to /dashboard, so no new requests can arrive.
+          Existing open requests are still shown so counselors can close them
+          out. This notice explains the quiet queue without requiring counselors
+          to dig into product history. */}
+      <div className="bg-card border border-border rounded-2xl px-5 py-4 mb-6 text-sm text-text-gray leading-relaxed">
+        <p className="text-text font-medium mb-1">Student intake is currently paused</p>
+        <p>
+          The student-facing &quot;Request a Review&quot; feature has been temporarily removed from the student
+          dashboard while it&apos;s being reworked. Students cannot submit new requests right now, which is why
+          this queue may be quiet. Any requests already open are listed below so you can still close them out.
+        </p>
+      </div>
+
       {requests.length === 0 ? (
         <div className="bg-card border border-border rounded-2xl px-6 py-8 text-center">
-          <p className="text-text-gray text-sm">No review requests from your students yet.</p>
+          <p className="text-text-gray text-sm">No open review requests for your students.</p>
         </div>
       ) : (
         <div className="space-y-4">
