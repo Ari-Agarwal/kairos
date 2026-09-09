@@ -163,8 +163,7 @@ export default function PrivacyPage() {
           <h2 className="text-text font-medium mb-2">5. Data storage and security</h2>
           <p>
             Data is stored in Supabase (Postgres) with row-level security restricting every table
-            to the owning user. Payments are processed by Stripe; we never see or store your
-            card number.
+            to the owning user.
           </p>
         </section>
         <section>

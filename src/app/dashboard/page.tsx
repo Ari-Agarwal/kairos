@@ -229,24 +229,34 @@ export default async function DashboardPage({
             className="reveal block min-w-0 bg-card border border-border rounded-2xl px-6 py-7 min-h-[200px] hover:border-primary/40 hover:-translate-y-0.5 transition-all"
             style={{ ["--reveal-delay" as string]: "0.22s" }}
           >
-            <p className="text-text-gray text-sm mb-4">Your narrative throughline</p>
+            <p className="text-text-gray text-sm mb-4">Your college narrative</p>
             {narrative?.throughline ? (
               <p className="font-serif text-lg text-text leading-snug">&ldquo;{narrative.throughline}&rdquo;</p>
             ) : (
               <div className="flex items-start gap-2.5">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-text-gray/70 ambient-star" style={{ ["--twinkle-max" as string]: "0.9" }} />
                 <p className="text-text-gray text-sm">
-                  No throughline yet, tap Narrative Builder below to find the story tying your application together.
+                  No throughline yet. The Narrative Builder finds the connecting theme across your activities, values, and goals so every essay feels cohesive.
                 </p>
               </div>
             )}
           </Link>
         </div>
 
-        <InviteFriendCard referralCode={profile.referral_code ?? null} referredCount={referredCount ?? 0} />
-        <Link href="/mock-interview" className="text-text-gray hover:text-text text-sm underline underline-offset-2">
-          Practice a mock interview →
-        </Link>
+        <div className="mb-6 space-y-4">
+          <InviteFriendCard referralCode={profile.referral_code ?? null} referredCount={referredCount ?? 0} />
+          <Link
+            href="/mock-interview"
+            className="reveal flex items-center justify-between bg-card border border-border rounded-2xl px-5 py-4 hover:border-primary/40 hover:-translate-y-0.5 transition-all"
+            style={{ ["--reveal-delay" as string]: "0.28s" }}
+          >
+            <div>
+              <p className="text-text text-sm font-medium">Practice a mock interview</p>
+              <p className="text-text-gray text-xs mt-0.5">AI-driven practice with feedback — good to run before any alumni or scholarship interview.</p>
+            </div>
+            <span className="text-text-gray text-sm shrink-0 ml-4">→</span>
+          </Link>
+        </div>
       </div>
     </NavShell>
   );

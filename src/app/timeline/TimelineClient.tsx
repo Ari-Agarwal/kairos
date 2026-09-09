@@ -1,7 +1,7 @@
 "use client";
 
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { CalendarDays, Repeat } from "lucide-react";
@@ -41,12 +41,6 @@ interface DeadlineCluster {
   end: string;
 }
 
-// Flags when 2+ incomplete, dated deadlines land within CLUSTER_WINDOW_DAYS
-// of each other -- e.g. two Nov 1 EA schools plus a scholarship -- so a
-// student sees the pile-up coming instead of being surprised by it. Simple
-// sequential grouping (sorted ascending, chain while the gap to the
-// previous item stays within the window) rather than a fixed calendar-week
-// bucket, since a cluster can span a boundary (e.g. Oct 30-Nov 3).
 function findDeadlineClusters(items: TimelineItem[]): DeadlineCluster[] {
   const dated = items
     .filter((i) => i.due_date && !i.completed)
@@ -56,24 +50,17 @@ function findDeadlineClusters(items: TimelineItem[]): DeadlineCluster[] {
   let current: TimelineItem[] = [];
 
   for (const item of dated) {
-    if (current.length === 0) {
-      current = [item];
-      continue;
-    }
+    if (current.length === 0) { current = [item]; continue; }
     const prev = current[current.length - 1];
     const gapDays = (new Date(item.due_date!).getTime() - new Date(prev.due_date!).getTime()) / MS_PER_DAY;
     if (gapDays <= CLUSTER_WINDOW_DAYS) {
       current.push(item);
     } else {
-      if (current.length >= 2) {
-        clusters.push({ items: current, start: current[0].due_date!, end: current[current.length - 1].due_date! });
-      }
+      if (current.length >= 2) clusters.push({ items: current, start: current[0].due_date!, end: current[current.length - 1].due_date! });
       current = [item];
     }
   }
-  if (current.length >= 2) {
-    clusters.push({ items: current, start: current[0].due_date!, end: current[current.length - 1].due_date! });
-  }
+  if (current.length >= 2) clusters.push({ items: current, start: current[0].due_date!, end: current[current.length - 1].due_date! });
   return clusters;
 }
 
@@ -85,6 +72,45 @@ function formatDue(due: string): string {
   const d = new Date(`${due}T00:00:00`);
   if (Number.isNaN(d.getTime())) return due;
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+type Phase = "overdue" | "now" | "prep" | "deadlines" | "after" | "ongoing" | "strategic";
+
+const PHASE_META: Record<Phase, { label: string; description: string }> = {
+  overdue:  { label: "Needs Attention",  description: "Past their deadline — act as soon as you can" },
+  now:      { label: "Act Now",          description: "Coming up in the next six weeks" },
+  prep:     { label: "Preparing to Apply", description: "Getting your application materials ready before deadlines hit" },
+  deadlines:{ label: "Application Deadlines", description: "ED, EA, and RD deadlines, plus financial aid forms" },
+  after:    { label: "After You Apply",  description: "Decisions, deposits, and what comes next" },
+  ongoing:  { label: "Ongoing",          description: "No fixed deadline — build these into your routine" },
+  strategic:{ label: "Strategic Advice", description: "Moves that shift your odds, not tied to a single date" },
+};
+
+// Buckets by each item's position relative to THIS student's own deadline
+// window (earliest to latest actual application deadline), not fixed day
+// counts from today. A fixed-day cutoff (e.g. "210+ days out = after you
+// apply") mislabels a far-out prep task like "request rec letters" as
+// post-application just because a student generated their timeline early --
+// it's really a "prep" task if it falls before their earliest real deadline.
+function getDeadlineWindow(items: TimelineItem[]): { earliest: number; latest: number } | null {
+  const deadlineMs = items
+    .filter((i) => !i.is_strategic && !i.is_recurring && i.due_date && /deadline/i.test(i.title))
+    .map((i) => new Date(i.due_date + "T00:00:00").getTime());
+  if (deadlineMs.length === 0) return null;
+  return { earliest: Math.min(...deadlineMs), latest: Math.max(...deadlineMs) };
+}
+
+function getPhase(item: TimelineItem, todayMs: number, window: { earliest: number; latest: number } | null): Phase {
+  if (item.is_strategic) return "strategic";
+  if (!item.due_date) return "ongoing";
+  const ms = new Date(item.due_date + "T00:00:00").getTime();
+  const days = (ms - todayMs) / MS_PER_DAY;
+  if (days < -0.5) return "overdue";
+  if (days <= 45) return "now";
+  if (!window) return days <= 210 ? "prep" : "after";
+  if (ms < window.earliest) return "prep";
+  if (ms <= window.latest) return "deadlines";
+  return "after";
 }
 
 export default function TimelineClient({
@@ -110,8 +136,6 @@ export default function TimelineClient({
     setItems(initialItems);
   }
 
-  // Generation runs as a background job now (see api/timeline/generate) --
-  // poll for completion instead of the old ~50s blocking foreground request.
   const [jobPending, setJobPending] = useState(initialJobStatus === "pending");
   const [jobError, setJobError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -129,13 +153,12 @@ export default function TimelineClient({
       } else if (data.status === "error") {
         if (pollRef.current) clearInterval(pollRef.current);
         setJobPending(false);
-        setJobError(data.error_message ?? "We hit a snag putting your timeline together, try regenerating, or check back in a few minutes if it keeps happening.");
+        setJobError(data.error_message ?? "We hit a snag putting your timeline together — try regenerating, or check back in a few minutes.");
       }
     }, 3000);
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [jobPending, router]);
+
   const [editing, setEditing] = useState(false);
   const [dismissedClusters, setDismissedClusters] = useState<Record<number, boolean>>({});
   const deadlineClusters = findDeadlineClusters(items);
@@ -149,10 +172,6 @@ export default function TimelineClient({
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
-  // Celebratory moment (Software_Timeline.md sec. 15): a brief, tasteful beat
-  // when a milestone is marked complete. Only fires for the first few
-  // completions so it stays genuine rather than becoming identical fanfare
-  // on someone's 50th checked item -- see CELEBRATION_LIMIT below.
   const CELEBRATION_LIMIT = 3;
   const [celebrateItemId, setCelebrateItemId] = useState<string | null>(null);
   const [celebrationMessage, setCelebrationMessage] = useState<string | null>(null);
@@ -160,24 +179,14 @@ export default function TimelineClient({
 
   useEffect(() => {
     const timers = celebrationTimers.current;
-    return () => {
-      timers.forEach(clearTimeout);
-    };
+    return () => { timers.forEach(clearTimeout); };
   }, []);
 
   function triggerCelebration(itemId: string) {
     let count = 0;
-    try {
-      count = Number(localStorage.getItem("kairos_timeline_celebrations") ?? "0");
-    } catch {
-      // localStorage unavailable (private mode, etc.) -- skip celebration, not critical
-    }
+    try { count = Number(localStorage.getItem("kairos_timeline_celebrations") ?? "0"); } catch { /* ignore */ }
     if (count >= CELEBRATION_LIMIT) return;
-    try {
-      localStorage.setItem("kairos_timeline_celebrations", String(count + 1));
-    } catch {
-      // ignore
-    }
+    try { localStorage.setItem("kairos_timeline_celebrations", String(count + 1)); } catch { /* ignore */ }
     const messages = ["Nice, one step closer.", "Done. Momentum builds.", "That's one more behind you."];
     setCelebrateItemId(itemId);
     setCelebrationMessage(messages[count] ?? messages[0]);
@@ -200,25 +209,15 @@ export default function TimelineClient({
       .from("timeline_items")
       .update({ title: editTitle.trim(), due_date: editDueDate || null })
       .eq("id", id);
-    if (updateError) {
-      setEditError("Failed to save changes. Please try again.");
-      setSavingEdit(false);
-      return;
-    }
-    setItems((prev) =>
-      sortItems(
-        prev.map((i) => (i.id === id ? { ...i, title: editTitle.trim(), due_date: editDueDate || null } : i))
-      )
-    );
+    if (updateError) { setEditError("Failed to save changes. Please try again."); setSavingEdit(false); return; }
+    setItems((prev) => sortItems(prev.map((i) => (i.id === id ? { ...i, title: editTitle.trim(), due_date: editDueDate || null } : i))));
     setEditingId(null);
     setSavingEdit(false);
   }
 
   const regenDisabled = remaining === 0;
 
-  function handleGenerate() {
-    router.push("/timeline/prep");
-  }
+  function handleGenerate() { router.push("/timeline/prep"); }
 
   async function handleDelete(id: string) {
     await supabase.from("timeline_items").delete().eq("id", id);
@@ -230,10 +229,7 @@ export default function TimelineClient({
     setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, completed } : i)));
     if (completed) triggerCelebration(item.id);
     const { error } = await supabase.from("timeline_items").update({ completed }).eq("id", item.id);
-    if (error) {
-      // revert on failure
-      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, completed: !completed } : i)));
-    }
+    if (error) setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, completed: !completed } : i)));
   }
 
   async function handleAddItem() {
@@ -241,10 +237,7 @@ export default function TimelineClient({
     setAdding(true);
     setAddError(null);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setAdding(false);
-      return;
-    }
+    if (!user) { setAdding(false); return; }
     const { data, error: insertError } = await supabase
       .from("timeline_items")
       .insert({
@@ -260,17 +253,25 @@ export default function TimelineClient({
       .select()
       .single();
 
-    if (insertError || !data) {
-      setAddError("Failed to add item. Please try again.");
-      setAdding(false);
-      return;
-    }
-
+    if (insertError || !data) { setAddError("Failed to add item. Please try again."); setAdding(false); return; }
     setItems((prev) => sortItems([...prev, data as TimelineItem]));
     setNewTitle("");
     setNewDueDate("");
     setAdding(false);
   }
+
+  // Pre-compute phases to inject section headers between items
+  const todayMs = useMemo(() => new Date().setHours(0, 0, 0, 0), []);
+  const deadlineWindow = useMemo(() => getDeadlineWindow(items), [items]);
+  const phasedItems = useMemo(() => {
+    let lastPhase = "" as string;
+    return items.map((item) => {
+      const phase = getPhase(item, todayMs, deadlineWindow);
+      const showHeader = phase !== lastPhase;
+      lastPhase = phase;
+      return { item, phase, showHeader };
+    });
+  }, [items, todayMs, deadlineWindow]);
 
   if (items.length === 0) {
     if (jobPending) {
@@ -283,7 +284,7 @@ export default function TimelineClient({
               transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
             />
           </div>
-          <p className="font-serif text-xl text-text mb-1">Mapping out your timeline...</p>
+          <p className="font-serif text-xl text-text mb-1">Mapping out your application journey...</p>
           <GenerationThinking messages={TIMELINE_THINKING} className="text-text-gray text-sm mb-1" />
           <p className="text-text-gray text-xs">This can take up to a minute. Feel free to check back.</p>
         </div>
@@ -292,7 +293,6 @@ export default function TimelineClient({
 
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-6 text-center min-h-[60vh]">
-        {/* a single dim star, waiting to light up */}
         <div className="relative mb-5 h-10 w-10">
           <motion.span
             className="absolute inset-0 m-auto h-2.5 w-2.5 rounded-full bg-text-gray"
@@ -301,15 +301,9 @@ export default function TimelineClient({
           />
         </div>
         <p className="font-serif text-xl text-text mb-1">Your path isn&apos;t charted yet.</p>
-        <p className="text-text-gray text-sm mb-1">Generate a timeline to map out every step ahead.</p>
-        <p className="text-text-gray text-xs mb-4">
-          {`${remaining} regeneration${remaining === 1 ? "" : "s"} left this week`}
-        </p>
-        {jobError && (
-          <div className="mb-3">
-            <p role="alert" className="text-red text-sm">{jobError}</p>
-          </div>
-        )}
+        <p className="text-text-gray text-sm mb-1">Generate a personalized timeline built around your matched schools.</p>
+        <p className="text-text-gray text-xs mb-4">{`${remaining} regeneration${remaining === 1 ? "" : "s"} left this week`}</p>
+        {jobError && <div className="mb-3"><p role="alert" className="text-red text-sm">{jobError}</p></div>}
         <button
           onClick={handleGenerate}
           disabled={regenDisabled}
@@ -330,13 +324,9 @@ export default function TimelineClient({
     <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
       {jobPending && (
         <div className="mb-5 rounded-xl border border-primary/30 bg-secondary-tint px-4 py-3 flex items-center gap-3">
-          <span
-            className="h-1.5 w-1.5 rounded-full bg-primary ambient-star shrink-0"
-            style={{ ["--twinkle-max" as string]: "1", ["--twinkle-duration" as string]: "1.2s" }}
-          />
-          <p className="text-text-gray text-sm">
-            Regenerating your timeline in the background, this list will update automatically once it&apos;s ready.
-          </p>
+          <span className="h-1.5 w-1.5 rounded-full bg-primary ambient-star shrink-0"
+            style={{ ["--twinkle-max" as string]: "1", ["--twinkle-duration" as string]: "1.2s" }} />
+          <p className="text-text-gray text-sm">Regenerating your timeline in the background — this list will update automatically when it&apos;s ready.</p>
         </div>
       )}
       {jobError && (
@@ -344,9 +334,13 @@ export default function TimelineClient({
           <p className="text-red text-sm">{jobError}</p>
         </div>
       )}
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="font-serif text-2xl text-text">Your Timeline</h1>
-        <div className="flex items-center gap-3">
+
+      <div className="flex items-start justify-between mb-1 gap-3">
+        <div className="min-w-0">
+          <h1 className="font-serif text-2xl text-text">Your Application Journey</h1>
+          <p className="text-text-gray text-sm mt-0.5">Every step from where you are now to decision day, built around your matched schools.</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0 mt-0.5">
           <button
             onClick={handleGenerate}
             disabled={regenDisabled}
@@ -375,19 +369,14 @@ export default function TimelineClient({
         </div>
       </div>
 
-      {/* journey progress: how far along the path you've traveled */}
-      <div className="mb-1 flex items-center justify-between">
+      <div className="mt-4 mb-1 flex items-center justify-between">
         <p className="text-text-gray text-xs">
-          {completedCount} of {total} milestone{total === 1 ? "" : "s"} complete
+          {completedCount} of {total} step{total === 1 ? "" : "s"} complete
           {checkinStreakWeeks >= 2 && (
-            <span className="ml-2 text-secondary">
-              · {checkinStreakWeeks} week{checkinStreakWeeks === 1 ? "" : "s"} checking in
-            </span>
+            <span className="ml-2 text-secondary">· {checkinStreakWeeks} week{checkinStreakWeeks === 1 ? "" : "s"} checking in</span>
           )}
         </p>
-        <p className="text-text-gray text-xs">
-          {`${remaining} regen${remaining === 1 ? "" : "s"} left`}
-        </p>
+        <p className="text-text-gray text-xs">{`${remaining} regen${remaining === 1 ? "" : "s"} left`}</p>
       </div>
       <div className="mb-7 h-1 w-full overflow-hidden rounded-full bg-border/60">
         <motion.div
@@ -409,12 +398,8 @@ export default function TimelineClient({
                 </p>
                 <p className="text-text-gray text-xs mt-0.5">{cluster.items.map((i) => i.title).join(", ")}</p>
               </div>
-              <button
-                onClick={() => setDismissedClusters((p) => ({ ...p, [idx]: true }))}
-                className="text-text-gray hover:text-text text-xs px-2 shrink-0"
-              >
-                Dismiss
-              </button>
+              <button onClick={() => setDismissedClusters((p) => ({ ...p, [idx]: true }))}
+                className="text-text-gray hover:text-text text-xs px-2 shrink-0">Dismiss</button>
             </div>
           </div>
         )
@@ -422,28 +407,16 @@ export default function TimelineClient({
 
       {editing && (
         <div className="bg-card border border-border rounded-2xl p-4 mb-6 space-y-3">
-          <p className="text-text text-sm font-medium">Add an item</p>
+          <p className="text-text text-sm font-medium">Add a step</p>
           <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="text"
-              aria-label="Item title"
-              placeholder="Title"
-              value={newTitle}
+            <input type="text" aria-label="Item title" placeholder="Title" value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              className="flex-1 rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
-            />
-            <input
-              type="date"
-              aria-label="Due date"
-              value={newDueDate}
+              className="flex-1 rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary" />
+            <input type="date" aria-label="Due date" value={newDueDate}
               onChange={(e) => setNewDueDate(e.target.value)}
-              className="rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary"
-            />
-            <button
-              onClick={handleAddItem}
-              disabled={adding || !newTitle.trim()}
-              className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-4 py-2.5 disabled:opacity-40"
-            >
+              className="rounded-xl bg-bg border border-border px-4 py-2.5 text-text outline-none focus:border-primary" />
+            <button onClick={handleAddItem} disabled={adding || !newTitle.trim()}
+              className="rounded-xl bg-primary hover:bg-primary-hover transition-colors text-bg text-sm font-medium px-4 py-2.5 disabled:opacity-40">
               {adding ? "Adding..." : "Add"}
             </button>
           </div>
@@ -452,7 +425,6 @@ export default function TimelineClient({
       )}
 
       <div className="relative pl-9">
-        {/* the path: draws itself in from the top, bright behind you and fading into the future */}
         <motion.div
           className="absolute left-[9px] top-2 bottom-2 w-px bg-gradient-to-b from-primary/70 via-text-gray/30 to-border"
           style={{ transformOrigin: "top" }}
@@ -460,172 +432,144 @@ export default function TimelineClient({
           animate={{ scaleY: 1 }}
           transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
         />
-        {items.map((item, i) => {
+
+        {phasedItems.map(({ item, phase, showHeader }, i) => {
           const isHere = item.id === youAreHereId;
           const traveled = item.completed || (hereIndex !== -1 && i < hereIndex);
+          const meta = PHASE_META[phase as Phase];
           return (
-            <motion.div
-              key={item.id}
-              className="relative mb-6"
-              initial={{ opacity: reduceMotion ? 1 : 0, x: reduceMotion ? 0 : -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.45, delay: reduceMotion ? 0 : 0.3 + Math.min(i * 0.07, 0.9), ease: [0.16, 1, 0.3, 1] }}
-            >
-              {/* node on the path */}
-              {isHere ? (
-                <>
-                  {/* soft beacon halo, the lighthouse, made literal */}
-                  <motion.div
-                    className="absolute -left-[41px] top-0 h-8 w-8 rounded-full bg-primary/25 blur-md"
-                    animate={reduceMotion ? undefined : { opacity: [0.5, 0.95, 0.5], scale: [0.9, 1.1, 0.9] }}
-                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                  <motion.div
-                    className="absolute -left-[33px] top-2 w-4 h-4 rounded-full bg-primary border border-primary"
-                    animate={reduceMotion ? undefined : { boxShadow: ["0 0 0 0 var(--amber-glow-ring)", "0 0 0 8px var(--amber-glow-ring-fade)"] }}
-                    transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
-                  />
-                </>
-              ) : (
-                <div
-                  className={`absolute -left-8 top-2.5 w-3 h-3 rounded-full ${
-                    traveled ? "bg-text-gray border-2 border-text-gray" : "bg-bg border-2 border-border"
-                  }`}
-                />
-              )}
-              {editing && editingId !== item.id && (
-                <div className="absolute top-3 right-3 z-10 flex gap-1">
-                  <button
-                    onClick={() => startEdit(item)}
-                    className="text-text-gray hover:text-text text-xs px-2.5 py-2 rounded-lg transition-colors"
-                    aria-label="Edit item"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="text-text-gray hover:text-red text-xs px-2.5 py-2 rounded-lg transition-colors"
-                    aria-label="Remove item"
-                  >
-                    Remove
-                  </button>
+            <Fragment key={item.id}>
+              {showHeader && (
+                <div className="relative mb-3 mt-2 first:mt-0">
+                  {/* pull the label slightly left to clear the path dot */}
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-primary/70 leading-none">
+                    {meta.label}
+                  </p>
+                  <p className="text-text-gray text-[11px] mt-0.5">{meta.description}</p>
+                  <div className="mt-2 h-px bg-border/50" />
                 </div>
               )}
-              <div
-                className={`group relative rounded-2xl p-5 border transition-all hover:-translate-y-0.5 ${
+              <motion.div
+                className="relative mb-6"
+                initial={{ opacity: reduceMotion ? 1 : 0, x: reduceMotion ? 0 : -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.45, delay: reduceMotion ? 0 : 0.3 + Math.min(i * 0.07, 0.9), ease: [0.16, 1, 0.3, 1] }}
+              >
+                {isHere ? (
+                  <>
+                    <motion.div
+                      className="absolute -left-[41px] top-0 h-8 w-8 rounded-full bg-primary/25 blur-md"
+                      animate={reduceMotion ? undefined : { opacity: [0.5, 0.95, 0.5], scale: [0.9, 1.1, 0.9] }}
+                      transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                    <motion.div
+                      className="absolute -left-[33px] top-2 w-4 h-4 rounded-full bg-primary border border-primary"
+                      animate={reduceMotion ? undefined : { boxShadow: ["0 0 0 0 var(--amber-glow-ring)", "0 0 0 8px var(--amber-glow-ring-fade)"] }}
+                      transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+                    />
+                  </>
+                ) : (
+                  <div className={`absolute -left-8 top-2.5 w-3 h-3 rounded-full ${
+                    traveled ? "bg-text-gray border-2 border-text-gray" : "bg-bg border-2 border-border"
+                  }`} />
+                )}
+
+                {editing && editingId !== item.id && (
+                  <div className="absolute top-3 right-3 z-10 flex gap-1">
+                    <button onClick={() => startEdit(item)}
+                      className="text-text-gray hover:text-text text-xs px-2.5 py-2 rounded-lg transition-colors" aria-label="Edit item">Edit</button>
+                    <button onClick={() => handleDelete(item.id)}
+                      className="text-text-gray hover:text-red text-xs px-2.5 py-2 rounded-lg transition-colors" aria-label="Remove item">Remove</button>
+                  </div>
+                )}
+
+                <div className={`group relative rounded-2xl p-5 border transition-all hover:-translate-y-0.5 ${
                   isHere
                     ? "bg-card border-primary/40 shadow-[0_0_24px_-8px_var(--amber-glow-shadow)]"
                     : item.is_strategic
                     ? "bg-secondary-tint border-dashed border-secondary hover:border-secondary"
                     : "bg-card border-border hover:border-primary/40"
-                }`}
-              >
-                {editingId !== item.id && (
-                  <Link
-                    href={`/timeline/${item.id}`}
-                    className="absolute inset-0 rounded-2xl"
-                    aria-label={`View ${item.title} details`}
-                  />
-                )}
-                {editingId === item.id ? (
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      aria-label="Edit item title"
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      className="w-full rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary"
-                    />
-                    <input
-                      type="date"
-                      aria-label="Edit due date"
-                      value={editDueDate}
-                      onChange={(e) => setEditDueDate(e.target.value)}
-                      className="w-full rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary"
-                    />
-                    {editError && <p role="alert" className="text-red text-xs">{editError}</p>}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleSaveEdit(item.id)}
-                        disabled={savingEdit || !editTitle.trim()}
-                        className="rounded-lg bg-primary hover:bg-primary-hover transition-colors text-bg text-xs font-medium px-3 py-1.5 disabled:opacity-50"
-                      >
-                        {savingEdit ? "Saving..." : "Save"}
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        disabled={savingEdit}
-                        className="rounded-lg border border-border text-text-gray hover:text-text text-xs px-3 py-1.5 transition-colors"
-                      >
-                        Cancel
-                      </button>
+                }`}>
+                  {editingId !== item.id && (
+                    <Link href={`/timeline/${item.id}`} className="absolute inset-0 rounded-2xl"
+                      aria-label={`View details for ${item.title}`} />
+                  )}
+                  {editingId === item.id ? (
+                    <div className="space-y-2">
+                      <input type="text" aria-label="Edit item title" value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        className="w-full rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary" />
+                      <input type="date" aria-label="Edit due date" value={editDueDate}
+                        onChange={(e) => setEditDueDate(e.target.value)}
+                        className="w-full rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary" />
+                      {editError && <p role="alert" className="text-red text-xs">{editError}</p>}
+                      <div className="flex gap-2">
+                        <button onClick={() => handleSaveEdit(item.id)} disabled={savingEdit || !editTitle.trim()}
+                          className="rounded-lg bg-primary hover:bg-primary-hover transition-colors text-bg text-xs font-medium px-3 py-1.5 disabled:opacity-50">
+                          {savingEdit ? "Saving..." : "Save"}
+                        </button>
+                        <button onClick={() => setEditingId(null)} disabled={savingEdit}
+                          className="rounded-lg border border-border text-text-gray hover:text-text text-xs px-3 py-1.5 transition-colors">Cancel</button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                <div className="pointer-events-none">
-                  <div className={`flex items-start justify-between gap-2 mb-1.5 ${editing ? "pr-24" : ""}`}>
-                    <div className="flex items-start gap-2 min-w-0">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleToggleComplete(item);
-                        }}
-                        aria-label={item.completed ? "Mark incomplete" : "Mark complete"}
-                        aria-pressed={item.completed}
-                        className={`pointer-events-auto shrink-0 mt-1 w-4 h-4 rounded-full border-2 transition-[transform,background-color,border-color] duration-200 ease-out motion-reduce:transition-colors ${
-                          item.completed ? "bg-text-gray border-text-gray" : "border-border hover:border-primary"
-                        } ${celebrateItemId === item.id ? "scale-125 motion-reduce:scale-100" : "scale-100"}`}
-                      />
-                      <p className={`font-medium text-[15px] leading-snug ${item.completed ? "text-text-gray line-through" : "text-text"}`}>
-                        {item.title}
-                      </p>
+                  ) : (
+                    <div className="pointer-events-none">
+                      <div className={`flex items-start justify-between gap-2 mb-1.5 ${editing ? "pr-24" : ""}`}>
+                        <div className="flex items-start gap-2 min-w-0">
+                          <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleComplete(item); }}
+                            aria-label={item.completed ? "Mark incomplete" : "Mark complete"}
+                            aria-pressed={item.completed}
+                            className={`pointer-events-auto shrink-0 mt-1 w-4 h-4 rounded-full border-2 transition-[transform,background-color,border-color] duration-200 ease-out motion-reduce:transition-colors ${
+                              item.completed ? "bg-text-gray border-text-gray" : "border-border hover:border-primary"
+                            } ${celebrateItemId === item.id ? "scale-125 motion-reduce:scale-100" : "scale-100"}`}
+                          />
+                          <p className={`font-medium text-[15px] leading-snug ${item.completed ? "text-text-gray line-through" : "text-text"}`}>
+                            {item.title}
+                          </p>
+                        </div>
+                        {item.is_strategic && (
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary-tint text-secondary shrink-0">STRATEGIC</span>
+                        )}
+                      </div>
+                      {item.due_date && <p className="text-text-gray text-xs mb-1.5">Due {formatDue(item.due_date)}</p>}
+                      {item.is_recurring && (
+                        <p className="text-secondary text-xs mb-1.5 flex items-center gap-1">
+                          <Repeat className="size-3" /> Ongoing, not a one-time task
+                        </p>
+                      )}
+                      {item.is_financial_aid && (
+                        <p className="text-primary text-xs mb-1.5 flex items-center gap-1 font-medium">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary" />
+                          Financial aid deadline — missing this can affect aid eligibility, not just admission
+                          <InfoTooltip
+                            label="What are FAFSA and the CSS Profile?"
+                            text="FAFSA is the free federal form every family fills out to qualify for any financial aid, including loans and grants. The CSS Profile is a separate, more detailed form some colleges also require to award their own (non-federal) aid. Both use last year's tax info, not a guess about affordability."
+                          />
+                        </p>
+                      )}
+                      {isHere && (
+                        <p className="text-text text-xs font-medium mb-1.5 flex items-center gap-1.5">
+                          <span className="inline-block w-1 h-1 rounded-full bg-text" /> You are here
+                        </p>
+                      )}
+                      <p className="text-text-gray text-sm">{item.why_text}</p>
                     </div>
-                    {item.is_strategic && (
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary-tint text-secondary shrink-0">
-                        STRATEGIC
-                      </span>
-                    )}
-                  </div>
-                  {item.due_date && (
-                    <p className="text-text-gray text-xs mb-1.5">Due {formatDue(item.due_date)}</p>
                   )}
-                  {item.is_recurring && (
-                    <p className="text-secondary text-xs mb-1.5 flex items-center gap-1">
-                      <Repeat className="size-3" />
-                      Ongoing, not a one-time task
-                    </p>
-                  )}
-                  {item.is_financial_aid && (
-                    <p className="text-primary text-xs mb-1.5 flex items-center gap-1 font-medium">
-                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary" />
-                      Financial aid deadline, missing this can affect aid eligibility, not just admission
-                      <InfoTooltip
-                        label="What are FAFSA and the CSS Profile?"
-                        text="FAFSA is the free federal form every family fills out to qualify for any financial aid, including loans and grants. The CSS Profile is a separate, more detailed form some colleges also require to award their own (non-federal) aid. Both use last year's tax info, not a guess about affordability."
-                      />
-                    </p>
-                  )}
-                  {isHere && (
-                    <p className="text-text text-xs font-medium mb-1.5 flex items-center gap-1.5">
-                      <span className="inline-block w-1 h-1 rounded-full bg-text" />
-                      You are here
-                    </p>
-                  )}
-                  <p className="text-text-gray text-sm">{item.why_text}</p>
                 </div>
-                )}
-              </div>
-            </motion.div>
+              </motion.div>
+            </Fragment>
           );
         })}
       </div>
+
       <p className="text-text-gray text-xs mt-6">
         Deadlines and priorities are based on your saved schools and profile data.{" "}
         <Link href="/methodology" className="underline underline-offset-2 hover:text-text transition-colors">
           How is this calculated?
         </Link>
       </p>
+
       {celebrationMessage && (
         <motion.div
           initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}

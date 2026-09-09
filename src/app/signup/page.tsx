@@ -19,6 +19,19 @@ export default function SignupPage() {
   const [confirmationSent, setConfirmationSent] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
 
+  function humanizeAuthError(message: string): string {
+    const msg = message.toLowerCase();
+    if (msg.includes("user already registered") || msg.includes("already been registered"))
+      return "An account with this email already exists. Try logging in instead.";
+    if (msg.includes("password should be at least"))
+      return "Password must be at least 6 characters.";
+    if (msg.includes("invalid email"))
+      return "Please enter a valid email address.";
+    if (msg.includes("too many requests") || msg.includes("rate limit"))
+      return "Too many attempts. Please wait a few minutes and try again.";
+    return message;
+  }
+
   function showError(message: string) {
     setError(message);
     setErrorKey((k) => k + 1);
@@ -64,7 +77,7 @@ export default function SignupPage() {
         },
       });
       if (error) {
-        showError(error.message);
+        showError(humanizeAuthError(error.message));
         return;
       }
       if (!data.session) {
@@ -94,7 +107,7 @@ export default function SignupPage() {
     });
     if (error) {
       setOauthLoading(null);
-      showError(error.message);
+      showError(humanizeAuthError(error.message));
       return;
     }
     if (data.url) {
@@ -140,9 +153,10 @@ export default function SignupPage() {
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
         className="w-full max-w-sm"
       >
-        <Link href="/" className="block text-center mb-6">
+        <Link href="/" className="block text-center mb-2">
           <h1 className="font-serif text-3xl text-text">Kairos</h1>
         </Link>
+        <p className="text-center text-text-gray text-sm mb-6">Your AI college planning companion</p>
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <div>
             <label htmlFor="signup-name" className="block text-sm text-text-gray mb-1">Full Name</label>
@@ -167,7 +181,9 @@ export default function SignupPage() {
             />
           </div>
           <div>
-            <label htmlFor="signup-password" className="block text-sm text-text-gray mb-1">Password</label>
+            <label htmlFor="signup-password" className="block text-sm text-text-gray mb-1">
+              Password <span className="text-xs">(at least 6 characters)</span>
+            </label>
             <input
               id="signup-password"
               type="password"

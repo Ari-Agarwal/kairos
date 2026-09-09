@@ -731,12 +731,17 @@ export default function ProfileClient({
             </Link>
           </>
         ) : (
-          <EmptyNote />
+          <p className="text-text-gray text-sm">No activities added yet. <button onClick={() => setEditing(true)} className="text-primary hover:text-primary-hover underline underline-offset-2">Add them in Edit Profile</button> so your matches reflect your full record.</p>
         ),
     },
-    { title: "Classes", content: <EmptyNote /> },
-    { title: "Internships and Research", content: <EmptyNote /> },
-    { title: "Achievements", content: <EmptyNote /> },
+    ...(profile.internships_research
+      ? [
+          {
+            title: "Internships and Research",
+            content: <p className="text-text-gray text-sm">{profile.internships_research}</p>,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -858,7 +863,7 @@ export default function ProfileClient({
       </div>
 
       <p className="text-text-gray text-xs text-center mt-8">
-        This profile updates automatically as you check off items on your timeline.
+        Keeping your profile current keeps your match odds and timeline accurate. Update it any time a grade, score, or activity changes.
       </p>
 
       <div className="mt-8 pt-6 border-t border-border">
@@ -987,6 +992,3 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function EmptyNote() {
-  return <p className="text-text-gray text-sm italic">Nothing here yet.</p>;
-}

@@ -21,6 +21,17 @@ export default function LoginPage() {
     setErrorKey((k) => k + 1);
   }
 
+  function humanizeAuthError(message: string): string {
+    const msg = message.toLowerCase();
+    if (msg.includes("invalid login credentials") || msg.includes("invalid credentials"))
+      return "Incorrect email or password. Please try again.";
+    if (msg.includes("email not confirmed"))
+      return "Please confirm your email first. Check your inbox for a link from Kairos.";
+    if (msg.includes("too many requests") || msg.includes("rate limit"))
+      return "Too many attempts. Please wait a few minutes and try again.";
+    return message;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -28,7 +39,7 @@ export default function LoginPage() {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      showError(error.message);
+      showError(humanizeAuthError(error.message));
       return;
     }
     if (data.user) {
@@ -63,7 +74,7 @@ export default function LoginPage() {
     });
     if (error) {
       setOauthLoading(null);
-      showError(error.message);
+      showError(humanizeAuthError(error.message));
       return;
     }
     if (data.url) {
@@ -79,9 +90,10 @@ export default function LoginPage() {
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
         className="w-full max-w-sm"
       >
-        <Link href="/" className="block text-center mb-6">
+        <Link href="/" className="block text-center mb-2">
           <h1 className="font-serif text-3xl text-text">Kairos</h1>
         </Link>
+        <p className="text-center text-text-gray text-sm mb-6">Your AI college planning companion</p>
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <div>
             <label htmlFor="login-email" className="block text-sm text-text-gray mb-1">Email</label>
