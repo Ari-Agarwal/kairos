@@ -20,7 +20,7 @@ interface Report {
 
 const STATUS_STYLES: Record<Report["status"], string> = {
   pending: "bg-amber-tint text-amber-text-on-tint",
-  reviewed: "bg-premium/10 text-premium",
+  reviewed: "bg-secondary-tint text-secondary",
   actioned: "bg-green-tint text-green",
   dismissed: "bg-bg text-text-gray",
 };
