@@ -46,6 +46,7 @@ export default function OnboardingPage() {
   const [careerGoals, setCareerGoals] = useState("");
   const [showCareerQuiz, setShowCareerQuiz] = useState(false);
   const [useChatIntake, setUseChatIntake] = useState(false);
+  const [modeChosen, setModeChosen] = useState(false);
 
   const [accessibilityPref, setAccessibilityPref] = useState("");
 
@@ -182,9 +183,8 @@ export default function OnboardingPage() {
     setStep((s) => Math.max(0, s - 1));
   }
 
-  // Per-question/per-step skip (Software_Timeline.md QA item): advances
-  // without running validateStep, so a student can move on even if this
-  // round's fields are the kind that would otherwise block "Continue."
+  // Per-question/per-step skip: advances without running validateStep, so a
+  // student can move on even if this round's fields would otherwise block "Continue."
   function skipStep() {
     setError(null);
     setDirection(1);
@@ -193,16 +193,6 @@ export default function OnboardingPage() {
     } else {
       setStep((s) => s + 1);
     }
-  }
-
-  // "Skip all questions" -- jumps straight to submission from wherever the
-  // student currently is, applying sensible defaults for the handful of
-  // fields the profile table requires (grade_level/GPA/current_school/
-  // intended_major are NOT NULL), so this can never fail with unanswered
-  // required fields the way validateStep would otherwise demand.
-  function skipAll() {
-    setError(null);
-    handleSubmit(true);
   }
 
   async function handleSubmit(skipValidation = false) {
@@ -330,6 +320,7 @@ export default function OnboardingPage() {
             <input
               id="ob-full-name"
               type="text"
+              placeholder="e.g. Alex Rivera"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className={inputClass}
@@ -337,30 +328,17 @@ export default function OnboardingPage() {
           </div>
           <div>
             <label htmlFor="ob-interests" className="block text-sm text-text-gray mb-1">
-              Interests <span className="text-text-gray/70">, optional</span>
+              Interests <span className="text-text-gray/70">(optional)</span>
             </label>
             <p className="text-text-gray text-xs mb-2">
-              Anything you&apos;re into that doesn&apos;t fit neatly into a major, e.g. &quot;robotics, creative writing, climate policy.&quot;
+              Anything you&apos;re curious about or passionate about that doesn&apos;t fit neatly into a major.
             </p>
             <input
               id="ob-interests"
               type="text"
+              placeholder="e.g. robotics, creative writing, climate policy"
               value={interests}
               onChange={(e) => setInterests(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label htmlFor="ob-accessibility" className="block text-sm text-text-gray mb-1">
-              Anything about campus accessibility or disability services that matters to your search? <span className="text-text-gray/70">, optional</span>
-            </label>
-            <input
-              id="ob-accessibility"
-              type="text"
-              placeholder="e.g. strong disability services office, physically accessible campus"
-              value={accessibilityPref}
-              onChange={(e) => setAccessibilityPref(e.target.value)}
-              maxLength={500}
               className={inputClass}
             />
           </div>
@@ -591,6 +569,23 @@ export default function OnboardingPage() {
             Haven&apos;t taken one yet
           </label>
           <div>
+            <label htmlFor="ob-accessibility" className="block text-sm text-text-gray mb-1">
+              Campus accessibility or disability services <span className="text-text-gray/70">(optional)</span>
+            </label>
+            <p className="text-text-gray text-xs mb-2">
+              Anything about physical access or support services that matters to your college search.
+            </p>
+            <input
+              id="ob-accessibility"
+              type="text"
+              placeholder="e.g. strong disability services office, physically accessible campus"
+              value={accessibilityPref}
+              onChange={(e) => setAccessibilityPref(e.target.value)}
+              maxLength={500}
+              className={inputClass}
+            />
+          </div>
+          <div>
             <span className="block text-sm text-text-gray mb-1">Is tuition cost a factor in your search?</span>
             <div className="flex gap-2">
               {[
@@ -618,6 +613,58 @@ export default function OnboardingPage() {
   ];
 
   const isLastRound = step === rounds.length - 1;
+
+  // Mode-choice screen: shown before any step or chat, so the student picks
+  // their onboarding style first.
+  if (!modeChosen && !useChatIntake) {
+    return (
+      <div className="flex-1 px-6 py-10 md:py-16 max-w-xl mx-auto w-full">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-text-gray hover:text-text text-sm mb-8 transition-colors"
+        >
+          <ArrowLeft className="size-4" />
+          Back to home
+        </Link>
+        <OnboardingIllustration step={0} />
+        <motion.h1
+          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: EASE }}
+          className="font-serif text-3xl text-text mb-2"
+        >
+          Let&apos;s find your schools
+        </motion.h1>
+        <p className="text-text-gray text-sm mb-8">
+          How would you like to share your info? Pick whichever feels more natural.
+        </p>
+        <div className="grid gap-4">
+          <button
+            type="button"
+            onClick={() => setModeChosen(true)}
+            className="bg-card border border-border rounded-2xl p-6 text-left hover:border-primary/50 transition-colors group"
+          >
+            <p className="font-serif text-lg text-text mb-1 group-hover:text-primary transition-colors">Answer questions one at a time</p>
+            <p className="text-text-gray text-sm mb-3">Five short rounds, one topic each. Takes about 3 minutes.</p>
+            <p className="text-xs text-text-gray/70 italic">
+              &ldquo;What&apos;s your grade level?&rdquo; &rarr; &ldquo;What are your extracurriculars?&rdquo; &rarr; done.
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setUseChatIntake(true); setModeChosen(true); }}
+            className="bg-card border border-border rounded-2xl p-6 text-left hover:border-primary/50 transition-colors group"
+          >
+            <p className="font-serif text-lg text-text mb-1 group-hover:text-primary transition-colors">Just tell us about yourself</p>
+            <p className="text-text-gray text-sm mb-3">Type a few sentences and our AI pulls out the details.</p>
+            <p className="text-xs text-text-gray/70 italic">
+              &ldquo;I&apos;m a junior with a 3.8 GPA, I do debate and robotics, and I&apos;m thinking about CS or engineering.&rdquo;
+            </p>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 px-6 py-10 md:py-16 max-w-xl mx-auto w-full">
@@ -685,7 +732,7 @@ export default function OnboardingPage() {
       {useChatIntake ? (
         <>
           <ChatIntakeArt />
-          <OnboardingChat onCancel={() => setUseChatIntake(false)} />
+          <OnboardingChat onCancel={() => { setUseChatIntake(false); setModeChosen(false); }} />
         </>
       ) : (
         <>
@@ -755,33 +802,22 @@ export default function OnboardingPage() {
               >
                 {isLastRound ? "Complete profile" : "Continue"}
               </button>
-            </div>
-
-            <div className="flex items-center justify-center gap-4">
               <button
                 type="button"
                 onClick={skipStep}
-                className="text-text-gray hover:text-text text-xs underline underline-offset-2"
+                className="rounded-xl border border-border text-text-gray hover:text-text text-sm font-medium py-3 px-4"
               >
-                Skip this question
-              </button>
-              <span className="text-text-gray/40 text-xs">·</span>
-              <button
-                type="button"
-                onClick={skipAll}
-                className="text-text-gray hover:text-text text-xs underline underline-offset-2"
-              >
-                Skip all questions
+                Skip
               </button>
             </div>
           </div>
 
           <button
             type="button"
-            onClick={() => setUseChatIntake(true)}
+            onClick={() => setModeChosen(false)}
             className="text-text-gray hover:text-text text-xs underline underline-offset-2 mt-5 block mx-auto"
           >
-            Prefer to chat instead?
+            Switch to a different mode
           </button>
         </>
       )}

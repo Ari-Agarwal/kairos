@@ -57,6 +57,7 @@ const CATEGORIES: Category[] = ["reach", "target", "safety"];
 
 const MANUAL_NOTE = "This school was added manually, so an AI assessment isn't available.";
 const REGENERATE_SNAPSHOT_KEY = "kairos_matches_regenerate_snapshot";
+const VIEWED_MATCHES_KEY = "kairos_viewed_matches_v1";
 
 interface Logo {
   logoUrl: string;
@@ -84,6 +85,39 @@ export default function MatchListClient({
     setMatches(initialMatches);
   }
   const [editing, setEditing] = useState(false);
+
+  // Viewed matches: persisted to localStorage so collapsed state survives
+  // navigation away and back (this component remounts on return from /schools/[id]).
+  const [viewedMatches, setViewedMatches] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem(VIEWED_MATCHES_KEY);
+      return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  // Cards manually expanded by the user in the current session (resets on remount --
+  // if they come back from a detail page the card re-collapses, which is the intent).
+  const [expandedMatches, setExpandedMatches] = useState<Set<string>>(new Set());
+
+  function markViewed(id: string) {
+    setViewedMatches((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      try { localStorage.setItem(VIEWED_MATCHES_KEY, JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  }
+
+  function toggleExpanded(id: string) {
+    setExpandedMatches((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
 
   // Side-by-side compare (Section 5f) -- reuses Career Path's compare-mode
   // pattern (pick 2-3, cap at 3), but no fetch is needed here since every
@@ -885,166 +919,234 @@ export default function MatchListClient({
 
       <div className="space-y-4">
         <AnimatePresence initial={false}>
-          {matches.map((m, i) => (
+          {matches.map((m, i) => {
+            // Collapsed when: viewed previously, not manual, not currently being edited.
+            // expandedMatches tracks cards the user has manually re-opened in this session.
+            const isViewed = viewedMatches.has(m.id) && !m.is_manual && editingSchoolId !== m.id;
+            const isCollapsed = isViewed && !expandedMatches.has(m.id);
+            const logo = logos[m.id];
+
+            return (
             <motion.div
               key={m.id}
               initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.2, ease: EASE } }}
               transition={{ duration: 0.4, ease: EASE, delay: reduceMotion ? 0 : i * 0.06 }}
-              className="bg-card border border-border rounded-2xl p-5 relative hover:border-text-gray/40 hover:-translate-y-0.5 transition-all"
+              className="bg-card border border-border rounded-2xl relative hover:border-text-gray/40 hover:-translate-y-0.5 transition-all"
             >
-              {editingSchoolId !== m.id && (
-                <Link href={`/schools/${m.id}`} className="absolute inset-0 rounded-2xl" aria-label={`View ${m.school_name} details`} />
-              )}
-
-              {editing ? (
-                <div className="absolute top-3 right-3 z-10 flex gap-1">
-                  {m.is_manual && (
-                    <button
-                      onClick={() => startEditSchool(m)}
-                      className="text-text-gray hover:text-primary text-xs px-2.5 py-2 rounded-lg transition-colors"
-                      aria-label={`Edit ${m.school_name}`}
-                    >
-                      Edit
-                    </button>
-                  )}
-                  <button
-                    onClick={() => toggleLock(m.id, m.locked)}
-                    className={`text-xs px-2.5 py-2 rounded-lg transition-colors ${m.locked ? "text-primary hover:text-primary-hover" : "text-text-gray hover:text-primary"}`}
-                    aria-label={m.locked ? `Unlock ${m.school_name}` : `Lock ${m.school_name}`}
-                  >
-                    {m.locked ? "Locked 🔒" : "Lock"}
-                  </button>
-                  <button
-                    onClick={() => handleRemove(m.id)}
-                    className="text-text-gray hover:text-red text-xs px-2.5 py-2 rounded-lg transition-colors"
-                    aria-label="Remove school"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-1">
-                  {m.locked && (
-                    <span className="text-primary text-xs px-2 py-1" aria-label={`${m.school_name} is locked`}>
-                      🔒
-                    </span>
-                  )}
-                  {aidOffers[m.id] !== undefined && Object.keys(aidOffers).length >= 2 && (
-                    <button
-                      onClick={() => setAppealMatchId(m.id)}
-                      className="text-primary hover:text-primary-hover text-xs px-2.5 py-1.5 rounded-lg border border-primary/30 hover:border-primary/60 transition-colors whitespace-nowrap"
-                      aria-label={`Draft aid appeal letter for ${m.school_name}`}
-                    >
-                      Appeal aid
-                    </button>
-                  )}
-                  {(outcomeDecisions[m.id] === "waitlist" || outcomeDecisions[m.id] === "defer") && (
-                    <button
-                      onClick={() => setLociMatchId(m.id)}
-                      className="text-primary hover:text-primary-hover text-xs px-2.5 py-1.5 rounded-lg border border-primary/30 hover:border-primary/60 transition-colors whitespace-nowrap"
-                      aria-label={`Draft letter of continued interest for ${m.school_name}`}
-                    >
-                      {outcomeDecisions[m.id] === "waitlist" ? "Waitlisted" : "Deferred"}, draft a letter
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {editingSchoolId === m.id ? (
-                <div className="pr-24">
-                  <div className="flex flex-col sm:flex-row gap-2 mb-2">
-                    <input
-                      type="text"
-                      aria-label="School name"
-                      value={editSchoolName}
-                      onChange={(e) => setEditSchoolName(e.target.value)}
-                      className="flex-1 rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary"
+              {/* ---- COLLAPSED VIEW ---- */}
+              {isCollapsed ? (
+                <button
+                  onClick={() => toggleExpanded(m.id)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                  aria-label={`Expand ${m.school_name}`}
+                  aria-expanded={false}
+                >
+                  {logo ? (
+                    <img
+                      src={logo.logoUrl}
+                      alt=""
+                      className="size-8 rounded-lg object-contain bg-bg border border-border shrink-0 p-1"
+                      loading="lazy"
                     />
-                    <select
-                      aria-label="School category"
-                      value={editSchoolCategory}
-                      onChange={(e) => setEditSchoolCategory(e.target.value as Category)}
-                      className="rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary capitalize"
-                    >
-                      {CATEGORIES.map((c) => (
-                        <option key={c} value={c} className="capitalize">
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleSaveEditSchool}
-                      disabled={savingEdit || !editSchoolName.trim()}
-                      className="rounded-lg bg-primary hover:bg-primary-hover transition-colors text-bg text-xs font-medium px-3 py-2 disabled:opacity-40"
-                    >
-                      {savingEdit ? "Saving..." : "Save"}
-                    </button>
-                    <button
-                      onClick={() => setEditingSchoolId(null)}
-                      className="text-text-gray hover:text-text text-xs px-2"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
+                  ) : (
+                    <div className="size-8 rounded-lg bg-secondary-tint border border-dashed border-border flex items-center justify-center shrink-0">
+                      <span className="font-serif text-xs text-secondary">{m.school_name.charAt(0)}</span>
+                    </div>
+                  )}
+                  <span
+                    className={`inline-block text-xs font-medium px-2.5 py-0.5 rounded-full capitalize shrink-0 ${CATEGORY_STYLES[m.category]}`}
+                  >
+                    {m.category}
+                  </span>
+                  <span className="font-serif text-base text-text flex-1 truncate">{m.school_name}</span>
+                  <span className="font-serif text-lg text-primary shrink-0">{m.percentage}%</span>
+                  <svg
+                    aria-hidden="true"
+                    className="size-4 text-text-gray/50 shrink-0"
+                    fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
               ) : (
-                <div className="pointer-events-none">
-                  <div className="flex items-start justify-between mb-2 pr-24">
-                    <div className="flex items-start gap-3">
-                      {logos[m.id] ? (
-                        <img
-                          src={logos[m.id]!.logoUrl}
-                          alt=""
-                          className="size-11 rounded-xl object-contain bg-bg border border-border shrink-0 p-1.5"
-                          loading="lazy"
-                        />
-                      ) : (
-                        // Deliberately distinct from the real-logo treatment above (dashed border,
-                        // dimmer secondary-tint fill) so a school with no logo reads as "no logo
-                        // available for this school" rather than looking like a broken image load
-                        // next to schools that do have one.
-                        <div className="size-11 rounded-xl bg-secondary-tint border border-dashed border-border flex items-center justify-center shrink-0">
-                          <span className="font-serif text-sm text-secondary">{m.school_name.charAt(0)}</span>
-                        </div>
-                      )}
-                      <div>
-                        <span
-                          className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full mb-2 capitalize ${CATEGORY_STYLES[m.category]}`}
+                /* ---- EXPANDED VIEW ---- */
+                <div className="p-5">
+                  {/* Overlay link to school detail -- only when not editing */}
+                  {editingSchoolId !== m.id && (
+                    <Link
+                      href={`/schools/${m.id}`}
+                      className="absolute inset-0 rounded-2xl"
+                      aria-label={`View ${m.school_name} details`}
+                      onClick={() => markViewed(m.id)}
+                    />
+                  )}
+
+                  {/* Collapse toggle (only visible when card was previously viewed/opened) */}
+                  {isViewed && editingSchoolId !== m.id && (
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleExpanded(m.id); }}
+                      className="absolute top-3 left-3 z-10 text-text-gray/40 hover:text-text-gray transition-colors p-1"
+                      aria-label={`Collapse ${m.school_name}`}
+                      aria-expanded={true}
+                    >
+                      <svg aria-hidden="true" className="size-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                      </svg>
+                    </button>
+                  )}
+
+                  {editing ? (
+                    <div className="absolute top-3 right-3 z-10 flex gap-1">
+                      {m.is_manual && (
+                        <button
+                          onClick={() => startEditSchool(m)}
+                          className="text-text-gray hover:text-primary text-xs px-2.5 py-2 rounded-lg transition-colors"
+                          aria-label={`Edit ${m.school_name}`}
                         >
-                          {m.category}
+                          Edit
+                        </button>
+                      )}
+                      <button
+                        onClick={() => toggleLock(m.id, m.locked)}
+                        className={`text-xs px-2.5 py-2 rounded-lg transition-colors ${m.locked ? "text-primary hover:text-primary-hover" : "text-text-gray hover:text-primary"}`}
+                        aria-label={m.locked ? `Unlock ${m.school_name}` : `Lock ${m.school_name}`}
+                      >
+                        {m.locked ? "Locked 🔒" : "Lock"}
+                      </button>
+                      <button
+                        onClick={() => handleRemove(m.id)}
+                        className="text-text-gray hover:text-red text-xs px-2.5 py-2 rounded-lg transition-colors"
+                        aria-label="Remove school"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-1">
+                      {m.locked && (
+                        <span className="text-primary text-xs px-2 py-1" aria-label={`${m.school_name} is locked`}>
+                          🔒
                         </span>
-                        <p className="font-serif text-lg text-text">{m.school_name}</p>
+                      )}
+                      {aidOffers[m.id] !== undefined && Object.keys(aidOffers).length >= 2 && (
+                        <button
+                          onClick={() => setAppealMatchId(m.id)}
+                          className="text-primary hover:text-primary-hover text-xs px-2.5 py-1.5 rounded-lg border border-primary/30 hover:border-primary/60 transition-colors whitespace-nowrap"
+                          aria-label={`Draft aid appeal letter for ${m.school_name}`}
+                        >
+                          Appeal aid
+                        </button>
+                      )}
+                      {(outcomeDecisions[m.id] === "waitlist" || outcomeDecisions[m.id] === "defer") && (
+                        <button
+                          onClick={() => setLociMatchId(m.id)}
+                          className="text-primary hover:text-primary-hover text-xs px-2.5 py-1.5 rounded-lg border border-primary/30 hover:border-primary/60 transition-colors whitespace-nowrap"
+                          aria-label={`Draft letter of continued interest for ${m.school_name}`}
+                        >
+                          {outcomeDecisions[m.id] === "waitlist" ? "Waitlisted" : "Deferred"}, draft a letter
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {editingSchoolId === m.id ? (
+                    <div className="pr-24">
+                      <div className="flex flex-col sm:flex-row gap-2 mb-2">
+                        <input
+                          type="text"
+                          aria-label="School name"
+                          value={editSchoolName}
+                          onChange={(e) => setEditSchoolName(e.target.value)}
+                          className="flex-1 rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary"
+                        />
+                        <select
+                          aria-label="School category"
+                          value={editSchoolCategory}
+                          onChange={(e) => setEditSchoolCategory(e.target.value as Category)}
+                          className="rounded-xl bg-bg border border-border px-3 py-2 text-text text-sm outline-none focus:border-primary capitalize"
+                        >
+                          {CATEGORIES.map((c) => (
+                            <option key={c} value={c} className="capitalize">
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleSaveEditSchool}
+                          disabled={savingEdit || !editSchoolName.trim()}
+                          className="rounded-lg bg-primary hover:bg-primary-hover transition-colors text-bg text-xs font-medium px-3 py-2 disabled:opacity-40"
+                        >
+                          {savingEdit ? "Saving..." : "Save"}
+                        </button>
+                        <button
+                          onClick={() => setEditingSchoolId(null)}
+                          className="text-text-gray hover:text-text text-xs px-2"
+                        >
+                          Cancel
+                        </button>
                       </div>
                     </div>
-                    <CountUp value={m.percentage} suffix="%" className="font-serif text-2xl text-primary shrink-0" />
-                  </div>
+                  ) : (
+                    <div className="pointer-events-none">
+                      <div className="flex items-start justify-between mb-2 pr-24">
+                        <div className="flex items-start gap-3">
+                          {logo ? (
+                            <img
+                              src={logo.logoUrl}
+                              alt=""
+                              className="size-11 rounded-xl object-contain bg-bg border border-border shrink-0 p-1.5"
+                              loading="lazy"
+                            />
+                          ) : (
+                            // Deliberately distinct from the real-logo treatment above (dashed border,
+                            // dimmer secondary-tint fill) so a school with no logo reads as "no logo
+                            // available for this school" rather than looking like a broken image load
+                            // next to schools that do have one.
+                            <div className="size-11 rounded-xl bg-secondary-tint border border-dashed border-border flex items-center justify-center shrink-0">
+                              <span className="font-serif text-sm text-secondary">{m.school_name.charAt(0)}</span>
+                            </div>
+                          )}
+                          <div>
+                            <span
+                              className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full mb-2 capitalize ${CATEGORY_STYLES[m.category]}`}
+                            >
+                              {m.category}
+                            </span>
+                            <p className="font-serif text-lg text-text">{m.school_name}</p>
+                          </div>
+                        </div>
+                        <CountUp value={m.percentage} suffix="%" className="font-serif text-2xl text-primary shrink-0" />
+                      </div>
 
-                  <p className="text-text-gray text-sm">{m.why_text}</p>
-                  {familyReactions[m.id] && (familyReactions[m.id].reaction || familyReactions[m.id].comment) && (
-                    <div className="mt-2 flex items-start gap-1.5 text-xs">
-                      {familyReactions[m.id].reaction && (
-                        <span aria-hidden="true">{familyReactions[m.id].reaction === "up" ? "👍" : "👎"}</span>
+                      <p className="text-text-gray text-sm">{m.why_text}</p>
+                      {familyReactions[m.id] && (familyReactions[m.id].reaction || familyReactions[m.id].comment) && (
+                        <div className="mt-2 flex items-start gap-1.5 text-xs">
+                          {familyReactions[m.id].reaction && (
+                            <span aria-hidden="true">{familyReactions[m.id].reaction === "up" ? "👍" : "👎"}</span>
+                          )}
+                          <span className="text-text-gray">
+                            <span className="font-medium">Family note:</span>{" "}
+                            {familyReactions[m.id].comment ?? (familyReactions[m.id].reaction === "up" ? "They like this one." : "They're not sure about this one.")}
+                          </span>
+                        </div>
                       )}
-                      <span className="text-text-gray">
-                        <span className="font-medium">Family note:</span>{" "}
-                        {familyReactions[m.id].comment ?? (familyReactions[m.id].reaction === "up" ? "They like this one." : "They're not sure about this one.")}
-                      </span>
+                      {!m.is_manual && m.confidence && (
+                        <p className="text-text-gray/70 text-xs mt-2">{CONFIDENCE_LABEL[m.confidence]}</p>
+                      )}
+                      {!m.is_manual && m.merit_aid_likelihood && (
+                        <p className="text-text-gray/70 text-xs mt-1">{MERIT_AID_LABEL[m.merit_aid_likelihood]}</p>
+                      )}
                     </div>
-                  )}
-                  {!m.is_manual && m.confidence && (
-                    <p className="text-text-gray/70 text-xs mt-2">{CONFIDENCE_LABEL[m.confidence]}</p>
-                  )}
-                  {!m.is_manual && m.merit_aid_likelihood && (
-                    <p className="text-text-gray/70 text-xs mt-1">{MERIT_AID_LABEL[m.merit_aid_likelihood]}</p>
                   )}
                 </div>
               )}
             </motion.div>
-          ))}
+            );
+          })}
         </AnimatePresence>
         {matches.length === 0 && (
           <div className="flex flex-col items-center gap-3 py-12 max-w-xs mx-auto">
