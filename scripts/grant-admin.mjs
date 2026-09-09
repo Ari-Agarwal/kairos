@@ -1,9 +1,8 @@
-// Manually grants premium to an account by email -- for comps, testing, or the
-// App Store reviewer demo account. Normally subscription_tier is set to
-// "premium" by the Stripe webhook (src/app/api/stripe/webhook/route.ts); this
-// bypasses that for accounts that won't go through checkout.
+// Grants admin access (profiles.is_admin = true) to an account by email, so
+// they can reach /admin/waitlist, /admin/reports, and /admin/ai-usage.
+// Replaces the old shared-secret-in-URL gate on those routes.
 //
-// Usage: node --env-file=.env.local scripts/grant-premium.mjs someone@example.com
+// Usage: node --env-file=.env.local scripts/grant-admin.mjs someone@example.com
 
 import { createClient } from "@supabase/supabase-js";
 
@@ -16,7 +15,7 @@ if (!supabaseUrl || !serviceRoleKey) {
 
 const email = process.argv[2];
 if (!email) {
-  console.error("Usage: node --env-file=.env.local scripts/grant-premium.mjs <email>");
+  console.error("Usage: node --env-file=.env.local scripts/grant-admin.mjs <email>");
   process.exit(1);
 }
 
@@ -45,11 +44,11 @@ async function main() {
 
   const { error } = await supabase
     .from("profiles")
-    .update({ subscription_tier: "premium" })
+    .update({ is_admin: true })
     .eq("user_id", user.id);
   if (error) throw error;
 
-  console.log(`Granted premium to ${email} (user_id: ${user.id}).`);
+  console.log(`Granted admin access to ${email} (user_id: ${user.id}).`);
 }
 
 main().catch((err) => {

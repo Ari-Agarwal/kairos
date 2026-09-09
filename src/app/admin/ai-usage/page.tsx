@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/access";
 
 // Rate-limit/cost monitoring dashboard (Software_Timeline.md 6d): with 8+
 // AI-backed features live, an admin-facing view of call volume/token spend
 // per feature catches a runaway cost source before it's a surprise bill.
-// Same key-protected pattern as /admin/waitlist and /admin/reports -- no
-// admin-role concept in this app, gates on a shared secret instead.
+// Gated on a real authenticated session with profiles.is_admin -- the proxy
+// already enforces this, this check is defense-in-depth.
 
 interface UsageRow {
   endpoint: string;
@@ -17,16 +18,10 @@ interface UsageRow {
 
 const LOOKBACK_DAYS = 7;
 
-export default async function AdminAiUsagePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ key?: string }>;
-}) {
-  const { key } = await searchParams;
-
-  if (!key || key !== process.env.AI_USAGE_ADMIN_KEY) {
-    notFound();
-  }
+export default async function AdminAiUsagePage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !(await isAdmin(supabase, user.id))) notFound();
 
   const service = createServiceClient();
   const since = new Date();

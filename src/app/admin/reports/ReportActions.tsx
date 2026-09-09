@@ -9,7 +9,7 @@ const ACTIONS: { status: "reviewed" | "actioned" | "dismissed"; label: string }[
   { status: "dismissed", label: "Dismiss" },
 ];
 
-export default function ReportActions({ reportId, adminKey }: { reportId: string; adminKey: string }) {
+export default function ReportActions({ reportId }: { reportId: string }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState<string | null>(null);
 
@@ -18,7 +18,7 @@ export default function ReportActions({ reportId, adminKey }: { reportId: string
     const res = await fetch(`/api/admin/reports/${reportId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: adminKey, status }),
+      body: JSON.stringify({ status }),
     });
     setSubmitting(null);
     if (res.ok) router.refresh();

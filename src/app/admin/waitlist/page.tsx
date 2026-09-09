@@ -1,22 +1,17 @@
 import { notFound } from "next/navigation";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/access";
 
-// Protected by a secret key in the URL (?key=...), same pattern as the
-// parent/counselor share links, not gated by Supabase auth since there's
-// no admin-role concept in this app. Deliberately returns a plain 404 on a
-// wrong/missing key instead of a 401/403, so the route's existence isn't
-// signaled to anyone probing it.
+// Gated on a real authenticated session with profiles.is_admin (the proxy
+// already enforces this and returns a plain 404 to a non-admin, mirroring
+// this route's original "don't signal existence" intent), this check is
+// defense-in-depth in case the page is ever reached without going through
+// the proxy.
 
-export default async function AdminWaitlistPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ key?: string }>;
-}) {
-  const { key } = await searchParams;
-
-  if (!key || key !== process.env.WAITLIST_ADMIN_KEY) {
-    notFound();
-  }
+export default async function AdminWaitlistPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !(await isAdmin(supabase, user.id))) notFound();
 
   const service = createServiceClient();
   const { data, error } = await service

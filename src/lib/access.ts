@@ -42,3 +42,22 @@ export async function getCounselorRecord(
   if (error) console.error("getCounselorRecord query failed:", error);
   return data;
 }
+
+// Gates /admin/* routes -- replaces the old shared-secret-in-URL pattern
+// (?key=...) with a real per-user flag on an authenticated session, so
+// access is tied to a specific account rather than an unrevocable key
+// anyone could hold indefinitely. Takes a service-role client (the admin
+// pages already use one for every other query) so this works regardless of
+// RLS.
+export async function isAdmin(supabase: SupabaseClient, userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) {
+    console.error("isAdmin query failed:", error);
+    return false;
+  }
+  return data?.is_admin === true;
+}

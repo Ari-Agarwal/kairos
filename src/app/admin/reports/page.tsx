@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/access";
 import ReportActions from "./ReportActions";
 
 // Section 8's still-open item: `reports` rows exist and are queryable by the
 // reporter, but there was no counselor/admin-facing surface to triage them.
-// Same key-protected pattern as /admin/waitlist -- no admin-role concept in
-// this app yet, so this gates on a shared secret instead of Supabase auth.
+// Gated on a real authenticated session with profiles.is_admin -- the proxy
+// already enforces this, this check is defense-in-depth.
 
 interface Report {
   id: string;
@@ -25,16 +26,10 @@ const STATUS_STYLES: Record<Report["status"], string> = {
   dismissed: "bg-bg text-text-gray",
 };
 
-export default async function AdminReportsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ key?: string }>;
-}) {
-  const { key } = await searchParams;
-
-  if (!key || key !== process.env.MODERATION_ADMIN_KEY) {
-    notFound();
-  }
+export default async function AdminReportsPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !(await isAdmin(supabase, user.id))) notFound();
 
   const service = createServiceClient();
   const { data, error } = await service
@@ -107,7 +102,7 @@ export default async function AdminReportsPage({
                   </span>
                 </div>
                 <p className="text-text-gray text-sm whitespace-pre-wrap">{r.reason}</p>
-                {r.status === "pending" && <ReportActions reportId={r.id} adminKey={key} />}
+                {r.status === "pending" && <ReportActions reportId={r.id} />}
               </div>
             ))}
           </div>

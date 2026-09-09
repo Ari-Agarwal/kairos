@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/", "/login", "/signup", "/auth/callback", "/terms", "/privacy", "/support", "/about", "/methodology", "/notify", "/notify/join", "/api/waitlist", "/admin/waitlist", "/admin/reports", "/admin/ai-usage", "/api/sms/send-nudges", "/api/cron/aggregate-snapshot", "/api/cron/waitlist-nurture", "/api/cron/waitlist-growth-snapshot", "/api/cron/reengagement"];
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/auth/callback", "/terms", "/privacy", "/support", "/about", "/methodology", "/notify", "/notify/join", "/api/waitlist", "/api/sms/send-nudges", "/api/cron/aggregate-snapshot", "/api/cron/waitlist-nurture", "/api/cron/waitlist-growth-snapshot", "/api/cron/reengagement"];
 
 // Prefix-matched public paths, for routes with dynamic segments that must
 // stay reachable by an unauthenticated visitor (share links, recommender
@@ -68,6 +68,28 @@ export async function proxy(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);
+    }
+  }
+
+  // Replaces the old ?key=<shared secret> gate: a logged-out visitor is
+  // redirected to login like any other protected route (this reveals
+  // nothing an anonymous prober couldn't already infer from any other page),
+  // but a logged-in non-admin gets a plain 404, preserving the original
+  // "don't confirm this route exists" intent for anyone but the admin.
+  if (path.startsWith("/admin")) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (profileError) console.error("proxy admin lookup failed:", profileError);
+    if (!profile?.is_admin) {
+      return new NextResponse("Not Found", { status: 404 });
     }
   }
 
