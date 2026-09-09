@@ -177,8 +177,10 @@ export default async function RecommenderPage({
         )}
 
         <p className="text-text-gray text-xs text-center border-t border-border pt-6">
-          This page was shared by {student_first_name} for the sole purpose of supporting their college recommendation letter.
-          Powered by Kairos.
+          This page was shared by {student_first_name} to help you write their college recommendation letter.
+          No account or sign-in is needed to view it.{" "}
+          <a href="https://kairosadmissions.com" className="underline underline-offset-2 hover:text-text transition-colors">Kairos</a>
+          {" "}is a college planning tool for high school students.
         </p>
       </div>
     </div>

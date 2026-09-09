@@ -97,8 +97,8 @@ export default function MentorsClient({
     <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
       <h1 className="font-serif text-2xl text-text mb-2">Mentors</h1>
       <p className="text-text-gray text-sm mb-6 leading-relaxed">
-        Connect with students who got into a school you&apos;re applying to. Messaging only starts once a
-        mentor accepts your request.
+        Connect with students who were admitted to schools you&apos;re applying to. You send a request with a short intro;
+        if they accept, a private message thread opens between you two. Your message stays private until they accept.
       </p>
 
       <div className="bg-card border border-border rounded-2xl p-5 mb-6">
@@ -164,12 +164,13 @@ export default function MentorsClient({
 
       {received.length > 0 && (
         <div className="mb-6">
-          <p className="text-text-gray text-xs mb-2">Requests to you</p>
+          <p className="text-text-gray text-xs mb-1">Mentorship requests for you to review</p>
+          <p className="text-text-gray text-xs mb-2 opacity-70">Accepting opens a private message thread between you and that student.</p>
           <div className="space-y-3">
             {received.map((r) => (
               <div key={r.id} className="bg-card border border-border rounded-2xl p-4">
-                <p className="text-text text-sm mb-1">{r.school_name}</p>
-                <p className="text-text-gray text-sm mb-2">{r.intro}</p>
+                <p className="text-text text-sm font-medium mb-0.5">Applying to {r.school_name}</p>
+                <p className="text-text-gray text-sm mb-2 leading-relaxed">{r.intro}</p>
                 {r.status === "pending" ? (
                   <div className="flex gap-2">
                     <button
@@ -202,12 +203,17 @@ export default function MentorsClient({
 
       {sentRequests.length > 0 && (
         <div>
-          <p className="text-text-gray text-xs mb-2">Your requests</p>
+          <p className="text-text-gray text-xs mb-2">Your mentorship requests</p>
           <div className="space-y-3">
             {sentRequests.map((r) => (
               <div key={r.id} className="bg-card border border-border rounded-2xl p-4">
-                <p className="text-text text-sm mb-1">{r.school_name}</p>
-                <p className="text-text-gray text-xs capitalize mb-2">{r.status}</p>
+                <p className="text-text text-sm font-medium mb-0.5">{r.school_name}</p>
+                <p className="text-text-gray text-xs mb-2">
+                  {r.status === "pending" ? "Awaiting mentor response" :
+                   r.status === "accepted" ? "Accepted — message thread open" :
+                   r.status === "declined" ? "Declined" :
+                   r.status}
+                </p>
                 {r.status === "accepted" && (
                   <Link href={`/mentors/${r.id}`} className="text-primary hover:text-primary-hover text-sm underline underline-offset-2">
                     Open conversation →

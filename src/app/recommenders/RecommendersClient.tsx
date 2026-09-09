@@ -14,7 +14,7 @@ type BragKey = "activities" | "achievements" | "anecdotes" | "additional_context
 
 const STATUS_META: Record<string, { label: string; color: string; icon: LucideIcon }> = {
   requested: { label: "Requested", color: "text-text-gray", icon: Clock },
-  reminded:  { label: "Reminded",  color: "text-amber",     icon: Send },
+  reminded:  { label: "Followed up",  color: "text-amber",     icon: Send },
   submitted: { label: "Submitted", color: "text-green",     icon: CheckCircle },
 };
 
@@ -172,18 +172,20 @@ export default function RecommendersClient({ initialRecommenders, origin }: Prop
               <div className="flex flex-wrap gap-2 mt-4">
                 <button
                   onClick={() => copyLink(rec.share_token)}
+                  title="Copy a private link to email or text your recommender — no login required for them"
                   className="flex items-center gap-1.5 text-xs rounded-xl border border-border px-3 py-1.5 text-text-gray hover:text-text hover:border-amber/40 transition-colors"
                 >
                   <Copy className="w-3.5 h-3.5" />
-                  {copied === rec.share_token ? "Copied!" : "Copy Share Link"}
+                  {copied === rec.share_token ? "Copied!" : "Copy Link to Share"}
                 </button>
                 {rec.status === "requested" && (
                   <button
                     onClick={() => markReminded(rec)}
+                    title="Track that you've followed up with your recommender — this only updates your status here, it doesn't send a message"
                     className="flex items-center gap-1.5 text-xs rounded-xl border border-border px-3 py-1.5 text-text-gray hover:text-amber hover:border-amber/40 transition-colors"
                   >
                     <Send className="w-3.5 h-3.5" />
-                    Mark as Reminded
+                    Mark as Followed Up
                   </button>
                 )}
                 <button

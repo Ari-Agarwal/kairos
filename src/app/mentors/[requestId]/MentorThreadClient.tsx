@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import ReportBlockMenu from "@/components/ReportBlockMenu";
 
 interface Message {
@@ -60,6 +61,9 @@ export default function MentorThreadClient({
 
   return (
     <div className="px-5 md:px-8 py-8 max-w-2xl mx-auto w-full">
+      <Link href="/mentors" className="text-text-gray hover:text-text text-sm mb-4 inline-block">
+        ← Mentors
+      </Link>
       <div className="flex items-center justify-between mb-4">
         <h1 className="font-serif text-xl text-text">{schoolName}</h1>
         <ReportBlockMenu targetUserId={otherUserId} contentType="mentor_thread" contentId={requestId} />
@@ -88,9 +92,9 @@ export default function MentorThreadClient({
       </div>
 
       {isMentor && (
-        <label className="flex items-center gap-2 mb-2 text-sm text-text-gray">
+        <label className="flex items-center gap-2 mb-2 text-sm text-text-gray cursor-pointer">
           <input type="checkbox" checked={reviewMode} onChange={(e) => setReviewMode(e.target.checked)} />
-          Send as application review feedback (not just chat)
+          Tag as application review feedback
         </label>
       )}
 

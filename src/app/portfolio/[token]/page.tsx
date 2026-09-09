@@ -80,13 +80,19 @@ export default async function PublicPortfolioPage({
     <div className="min-h-screen bg-bg text-text">
       <div className="max-w-2xl mx-auto px-5 py-10">
         <div className="mb-10">
-          <p className="text-text-gray text-xs uppercase tracking-widest mb-2">Student Portfolio</p>
+          <p className="text-text-gray text-xs uppercase tracking-widest mb-2">College Applicant Portfolio</p>
           <h1 className="font-serif text-3xl text-text mb-1">{first_name}</h1>
+          <p className="text-text-gray text-sm mt-2 leading-relaxed">
+            {first_name} shared this portfolio with you using Kairos, a college planning tool.
+            It shows their activities, interests, and the narrative thread they&apos;re building across their applications.
+            Grades, test scores, essays, and their school list are never included here.
+          </p>
         </div>
 
         {throughline && (
           <section className="mb-8">
-            <h2 className="font-serif text-xl text-text mb-3">Throughline</h2>
+            <h2 className="font-serif text-xl text-text mb-1">Throughline</h2>
+            <p className="text-text-gray text-xs mb-3">The connecting thread across everything {first_name} does</p>
             <div className="bg-card border border-border rounded-2xl p-5">
               <p className="text-text text-sm leading-relaxed">{throughline}</p>
               {core_values && core_values.length > 0 && (
@@ -130,8 +136,10 @@ export default async function PublicPortfolioPage({
         )}
 
         <p className="text-text-gray text-xs text-center border-t border-border pt-6">
-          This is a public portfolio shared by {first_name}. It never includes grades, test scores,
-          financial details, essays, or school lists. Powered by Kairos.
+          This portfolio was shared by {first_name}. It never includes grades, test scores,
+          financial details, essays, or school lists.{" "}
+          <a href="https://kairosadmissions.com" className="underline underline-offset-2 hover:text-text transition-colors">Kairos</a>
+          {" "}is a college planning tool for high school students.
         </p>
       </div>
     </div>

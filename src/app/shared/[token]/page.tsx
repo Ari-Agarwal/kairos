@@ -128,7 +128,7 @@ export default async function SharedView({
     <div className="min-h-screen bg-bg text-text">
       <div className="max-w-2xl mx-auto px-5 py-10">
         <div className="mb-8">
-          <p className="text-text-gray text-xs uppercase tracking-widest mb-2">Shared by student · React to a school below</p>
+          <p className="text-text-gray text-xs uppercase tracking-widest mb-2">College List · Shared by student</p>
           <h1 className="font-serif text-3xl text-text mb-1">{student.display_name}&apos;s College List</h1>
           <p className="text-text-gray text-sm">
             {[student.grade_level, student.current_school, student.intended_major?.length ? `Applying for ${student.intended_major.join(", ")}` : null]
@@ -149,7 +149,8 @@ export default async function SharedView({
         </div>
 
         <section className="mb-10">
-          <h2 className="font-serif text-xl text-text mb-4">School Matches</h2>
+          <h2 className="font-serif text-xl text-text mb-1">School Matches</h2>
+          <p className="text-text-gray text-xs mb-4">Tap the thumbs on any school to leave feedback — {firstName} will see your reactions and notes.</p>
           {matches.length === 0 ? (
             <p className="text-text-gray text-sm">{firstName} hasn&apos;t generated school matches yet.</p>
           ) : (
@@ -177,7 +178,8 @@ export default async function SharedView({
         </section>
 
         <section className="mb-10">
-          <h2 className="font-serif text-xl text-text mb-4">Upcoming Tasks</h2>
+          <h2 className="font-serif text-xl text-text mb-1">Application To-Dos</h2>
+          <p className="text-text-gray text-xs mb-4">{firstName}&apos;s upcoming deadlines and application steps</p>
           {upcoming_tasks.length === 0 ? (
             <p className="text-text-gray text-sm">No upcoming tasks.</p>
           ) : (
@@ -202,8 +204,10 @@ export default async function SharedView({
         </section>
 
         <p className="text-text-gray text-xs text-center border-t border-border pt-6">
-          Admission odds are AI-generated estimates based on the student&apos;s profile and general acceptance data, not a guarantee of any outcome.
-          This view is shared by {student.display_name}; grades, scores, financial details, and essays are never included. Powered by Kairos.
+          Match percentages are AI-generated estimates based on {firstName}&apos;s profile and general acceptance data — not a guarantee of any outcome.
+          Grades, scores, financial details, and essays are never included in this view.{" "}
+          <a href="https://kairosadmissions.com" className="underline underline-offset-2 hover:text-text transition-colors">Kairos</a>
+          {" "}is a college planning tool for high school students.
         </p>
       </div>
     </div>
